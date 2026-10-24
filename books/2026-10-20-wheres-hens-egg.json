@@ -1,0 +1,566 @@
+{
+ "id": "2026-10-20-wheres-hens-egg",
+ "series": "Sunny Side Farm",
+ "title": "Where Is Hen's Egg?",
+ "made": "2026-10-20",
+ "status": "draft",
+ "start": "cover",
+ "pages": {
+  "cover": {
+   "scene": "yard",
+   "text": "<b>Where Is Hen's Egg?</b><br>A Sunny Side Farm story",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 820,
+     "y": 930,
+     "s": 1.4
+    },
+    {
+     "who": "nest",
+     "x": 1080,
+     "y": 940
+    }
+   ],
+   "next": "p1"
+  },
+  "p1": {
+   "scene": "yard",
+   "text": "Good morning, Sunny Side Farm! Hen fluffs her feathers and goes to her nest.",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 760,
+     "y": 930,
+     "s": 1.2
+    },
+    {
+     "who": "nest",
+     "x": 1080,
+     "y": 940
+    },
+    {
+     "who": "cow",
+     "x": 330,
+     "y": 980,
+     "s": 0.8
+    }
+   ],
+   "next": "p2",
+   "find": [
+    [
+     "ladybug",
+     1300,
+     600
+    ],
+    [
+     "bee",
+     230,
+     560
+    ]
+   ],
+   "letter": [
+    "Hh",
+    "/h/",
+    "hen"
+   ]
+  },
+  "p2": {
+   "scene": "yard",
+   "text": "Oh no! The nest is empty. Where is Hen's egg?",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 760,
+     "y": 930,
+     "s": 1.2
+    },
+    {
+     "who": "nest",
+     "x": 1080,
+     "y": 940
+    }
+   ],
+   "next": "c1",
+   "find": [
+    [
+     "caterpillar",
+     220,
+     900
+    ],
+    [
+     "ladybug",
+     1350,
+     640
+    ]
+   ],
+   "letter": [
+    "Ee",
+    "/e/",
+    "egg"
+   ]
+  },
+  "c1": {
+   "scene": "yard",
+   "text": "Where should Hen look first?",
+   "choice": {
+    "options": [
+     {
+      "label": "The barn",
+      "go": "b1",
+      "scene": "yard",
+      "view": "0 300 800 500"
+     },
+     {
+      "label": "The pond",
+      "go": "d1",
+      "scene": "pond",
+      "view": "400 600 800 500",
+      "actors": [
+       {
+        "who": "duck",
+        "x": 980,
+        "y": 860
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "b1": {
+   "scene": "barn",
+   "text": "Hen looks in the big red barn. <b>Moo!</b> Cow is munching hay. No egg here.",
+   "actors": [
+    {
+     "who": "cow",
+     "x": 560,
+     "y": 930,
+     "s": 1.1
+    },
+    {
+     "who": "hen",
+     "x": 1000,
+     "y": 950
+    }
+   ],
+   "next": "b2",
+   "find": [
+    [
+     "ladybug",
+     1330,
+     700
+    ],
+    [
+     "caterpillar",
+     250,
+     880
+    ]
+   ],
+   "letter": [
+    "Cc",
+    "/k/",
+    "cow"
+   ]
+  },
+  "b2": {
+   "scene": "barn",
+   "text": "Pig finds something round. Is it Hen's egg? No! It's a potato! Silly Pig.",
+   "actors": [
+    {
+     "who": "pig",
+     "x": 600,
+     "y": 940,
+     "s": 1.1
+    },
+    {
+     "who": "potato",
+     "x": 860,
+     "y": 950
+    },
+    {
+     "who": "hen",
+     "x": 1150,
+     "y": 950
+    }
+   ],
+   "next": "m1",
+   "find": [
+    [
+     "bee",
+     260,
+     420
+    ],
+    [
+     "ladybug",
+     1450,
+     640
+    ]
+   ],
+   "letter": [
+    "Pp",
+    "/p/",
+    "pig"
+   ]
+  },
+  "d1": {
+   "scene": "pond",
+   "text": "Hen looks by the pond. <b>Quack!</b> Duck is splashing. Splash, splash, splash!",
+   "actors": [
+    {
+     "who": "duck",
+     "x": 820,
+     "y": 850
+    },
+    {
+     "who": "hen",
+     "x": 330,
+     "y": 950
+    },
+    {
+     "who": "frog",
+     "x": 1060,
+     "y": 830
+    }
+   ],
+   "next": "d2",
+   "find": [
+    [
+     "ladybug",
+     1420,
+     520
+    ],
+    [
+     "snail",
+     200,
+     900
+    ]
+   ],
+   "letter": [
+    "Dd",
+    "/d/",
+    "duck"
+   ]
+  },
+  "d2": {
+   "scene": "pond",
+   "text": "Duck finds something round. Is it Hen's egg? No! It's a rock! Silly Duck.",
+   "actors": [
+    {
+     "who": "duck",
+     "x": 620,
+     "y": 950
+    },
+    {
+     "who": "rock",
+     "x": 880,
+     "y": 960
+    },
+    {
+     "who": "hen",
+     "x": 1180,
+     "y": 960
+    }
+   ],
+   "next": "m1",
+   "find": [
+    [
+     "caterpillar",
+     150,
+     880
+    ],
+    [
+     "bee",
+     1350,
+     500
+    ]
+   ]
+  },
+  "m1": {
+   "scene": "meadow",
+   "text": "Then Hen hears a tiny sound. <b>Peep... peep...</b> It's coming from the meadow!",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 800,
+     "y": 960,
+     "s": 1.1
+    }
+   ],
+   "next": "c2",
+   "find": [
+    [
+     "bee",
+     1120,
+     520
+    ],
+    [
+     "ladybug",
+     350,
+     640
+    ],
+    [
+     "caterpillar",
+     1250,
+     880
+    ]
+   ]
+  },
+  "c2": {
+   "scene": "meadow",
+   "text": "Where is the peep coming from?",
+   "choice": {
+    "options": [
+     {
+      "label": "The flowers",
+      "go": "f1",
+      "scene": "meadow",
+      "view": "100 650 600 375"
+     },
+     {
+      "label": "The big tree",
+      "go": "t1",
+      "scene": "meadow",
+      "view": "880 350 600 375"
+     }
+    ]
+   }
+  },
+  "f1": {
+   "scene": "meadow",
+   "text": "Hen peeks in the flowers. Is her egg in here? Can you find it?",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 820,
+     "y": 960,
+     "s": 1.1
+    },
+    {
+     "who": "egg",
+     "x": 330,
+     "y": 965,
+     "hide": true,
+     "icon": "\ud83e\udd5a",
+     "found": "THERE IT IS!"
+    },
+    {
+     "who": "rock",
+     "x": 560,
+     "y": 970,
+     "s": 0.8
+    }
+   ],
+   "front": [
+    {
+     "who": "flower",
+     "x": 290,
+     "y": 985,
+     "args": [
+      "#f4ead2",
+      1.15
+     ]
+    },
+    {
+     "who": "flower",
+     "x": 370,
+     "y": 990,
+     "args": [
+      "#e58a8a",
+      1.1
+     ]
+    },
+    {
+     "who": "flower",
+     "x": 330,
+     "y": 1000,
+     "args": [
+      "#f0c055",
+      1
+     ]
+    },
+    {
+     "who": "flower",
+     "x": 620,
+     "y": 990,
+     "args": [
+      "#f4ead2",
+      0.95
+     ]
+    }
+   ],
+   "find": [
+    [
+     "bee",
+     700,
+     470
+    ]
+   ],
+   "next": "h1"
+  },
+  "t1": {
+   "scene": "meadow",
+   "text": "Hen peeks under the big tree. Is her egg down by the roots? Can you find it?",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 700,
+     "y": 960,
+     "s": 1.1
+    },
+    {
+     "who": "egg",
+     "x": 1230,
+     "y": 840,
+     "hide": true,
+     "icon": "\ud83e\udd5a",
+     "found": "THERE IT IS!"
+    },
+    {
+     "who": "rock",
+     "x": 1000,
+     "y": 930,
+     "s": 0.7
+    }
+   ],
+   "front": [
+    {
+     "who": "flower",
+     "x": 1200,
+     "y": 860,
+     "args": [
+      "#f4ead2",
+      1.1
+     ]
+    },
+    {
+     "who": "flower",
+     "x": 1270,
+     "y": 865,
+     "args": [
+      "#e9874a",
+      1
+     ]
+    },
+    {
+     "who": "flower",
+     "x": 1235,
+     "y": 875,
+     "args": [
+      "#f0c055",
+      0.9
+     ]
+    }
+   ],
+   "find": [
+    [
+     "caterpillar",
+     380,
+     890
+    ],
+    [
+     "ladybug",
+     200,
+     560
+    ]
+   ],
+   "next": "h1"
+  },
+  "h1": {
+   "scene": "meadow",
+   "text": "The egg wiggles. The egg wobbles. <b>Crack... crack... CRACK!</b>",
+   "actors": [
+    {
+     "who": "egg",
+     "x": 800,
+     "y": 940,
+     "wobble": true,
+     "s": 1.6
+    },
+    {
+     "who": "hen",
+     "x": 500,
+     "y": 960
+    }
+   ],
+   "next": "h2"
+  },
+  "h2": {
+   "scene": "meadow",
+   "text": "<b>Peep!</b> It's a fluffy baby chick! Hello, little one!",
+   "sound": "fanfare",
+   "actors": [
+    {
+     "who": "crackedEgg",
+     "x": 960,
+     "y": 960
+    },
+    {
+     "who": "chick",
+     "x": 800,
+     "y": 960,
+     "s": 1.4
+    },
+    {
+     "who": "hen",
+     "x": 500,
+     "y": 960
+    }
+   ],
+   "next": "n1",
+   "find": [
+    [
+     "ladybug",
+     1450,
+     800
+    ],
+    [
+     "bee",
+     1200,
+     450
+    ]
+   ],
+   "letter": [
+    "Ch ch",
+    "/ch/",
+    "chick"
+   ]
+  },
+  "n1": {
+   "scene": "night",
+   "text": "Hen and Chick snuggle in the nest. The stars come out. Goodnight, Hen. Goodnight, Chick. Goodnight, farm.",
+   "actors": [
+    {
+     "who": "nest",
+     "x": 800,
+     "y": 880,
+     "s": 1.4
+    },
+    {
+     "who": "hen",
+     "x": 760,
+     "y": 860
+    },
+    {
+     "who": "chick",
+     "x": 900,
+     "y": 860,
+     "s": 0.8
+    }
+   ],
+   "next": "end"
+  },
+  "end": {
+   "scene": "night",
+   "text": "<b>The End.</b> Next time, try looking somewhere else!",
+   "actors": [
+    {
+     "who": "chick",
+     "x": 800,
+     "y": 900,
+     "s": 1.3
+    }
+   ],
+   "end": true
+  }
+ }
+}

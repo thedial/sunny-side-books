@@ -1,0 +1,446 @@
+{
+ "id": "2026-10-21-bees-busy-day",
+ "series": "Sunny Side Farm",
+ "title": "Bee's Busy Day",
+ "made": "2026-10-21",
+ "status": "draft",
+ "start": "cover",
+ "coverView": "300 300 1300 900",
+ "pages": {
+  "cover": {
+   "scene": "meadow",
+   "text": "<b>Bee's Busy Day</b><br>A Sunny Side Farm story",
+   "actors": [
+    {
+     "who": "hive",
+     "x": 1000,
+     "y": 900
+    },
+    {
+     "who": "beeBig",
+     "x": 700,
+     "y": 740
+    }
+   ],
+   "next": "p1"
+  },
+  "p1": {
+   "scene": "meadow",
+   "text": "<b>Buzz, buzz!</b> Bee wakes up in her hive. Time to find some flowers!",
+   "actors": [
+    {
+     "who": "hive",
+     "x": 1000,
+     "y": 900
+    },
+    {
+     "who": "beeBig",
+     "x": 660,
+     "y": 720
+    }
+   ],
+   "find": [
+    [
+     "ladybug",
+     300,
+     600
+    ],
+    [
+     "caterpillar",
+     1380,
+     890
+    ]
+   ],
+   "letter": [
+    "Bb",
+    "/b/",
+    "bee"
+   ],
+   "next": "p2"
+  },
+  "p2": {
+   "scene": "yard",
+   "text": "Bee flies over the farm. Look, pigs in the mud! How many pigs? Let's count!",
+   "actors": [
+    {
+     "who": "pig",
+     "x": 560,
+     "y": 950,
+     "s": 0.75
+    },
+    {
+     "who": "pig",
+     "x": 840,
+     "y": 970,
+     "s": 0.75
+    },
+    {
+     "who": "pig",
+     "x": 1120,
+     "y": 950,
+     "s": 0.75
+    },
+    {
+     "who": "beeBig",
+     "x": 1350,
+     "y": 560,
+     "s": 0.7
+    }
+   ],
+   "find": [
+    [
+     "ladybug",
+     1520,
+     700
+    ]
+   ],
+   "letter": [
+    "Pp",
+    "/p/",
+    "pig"
+   ],
+   "next": "c1"
+  },
+  "c1": {
+   "scene": "yard",
+   "text": "Where should Bee look for flowers?",
+   "choice": {
+    "options": [
+     {
+      "label": "The garden",
+      "go": "g1",
+      "scene": "garden",
+      "view": "100 600 900 560",
+      "actors": [
+       {
+        "who": "bunny",
+        "x": 700,
+        "y": 960
+       }
+      ]
+     },
+     {
+      "label": "The pond",
+      "go": "d1",
+      "scene": "pond",
+      "view": "400 620 800 500",
+      "actors": [
+       {
+        "who": "frog",
+        "x": 800,
+        "y": 860
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "g1": {
+   "scene": "garden",
+   "text": "In the garden, Bunny munches a carrot. <b>Crunch, crunch!</b> Lots of veggies, but no flowers.",
+   "actors": [
+    {
+     "who": "bunny",
+     "x": 980,
+     "y": 960
+    },
+    {
+     "who": "beeBig",
+     "x": 560,
+     "y": 620,
+     "s": 0.75
+    }
+   ],
+   "find": [
+    [
+     "caterpillar",
+     1200,
+     720
+    ],
+    [
+     "ladybug",
+     150,
+     640
+    ]
+   ],
+   "next": "g2"
+  },
+  "g2": {
+   "scene": "garden",
+   "text": "Scarecrow points the way. Other bees are buzzing by! Can you find them?",
+   "actors": [
+    {
+     "who": "beeBig",
+     "x": 900,
+     "y": 640,
+     "s": 0.8
+    }
+   ],
+   "find": [
+    [
+     "bee",
+     560,
+     520
+    ],
+    [
+     "bee",
+     300,
+     600
+    ],
+    [
+     "bee",
+     1150,
+     480
+    ]
+   ],
+   "next": "m1"
+  },
+  "d1": {
+   "scene": "pond",
+   "text": "At the pond, frogs sit by the water. One, two, three frogs! <b>Ribbit!</b>",
+   "actors": [
+    {
+     "who": "frog",
+     "x": 620,
+     "y": 870,
+     "s": 0.7
+    },
+    {
+     "who": "frog",
+     "x": 820,
+     "y": 890,
+     "s": 0.7
+    },
+    {
+     "who": "frog",
+     "x": 1020,
+     "y": 870,
+     "s": 0.7
+    },
+    {
+     "who": "beeBig",
+     "x": 1280,
+     "y": 560,
+     "s": 0.7
+    }
+   ],
+   "find": [
+    [
+     "snail",
+     200,
+     900
+    ]
+   ],
+   "letter": [
+    "Ff",
+    "/f/",
+    "frog"
+   ],
+   "next": "d2"
+  },
+  "d2": {
+   "scene": "pond",
+   "text": "Duck says, <b>\"Quack!</b> The flowers are in the meadow!\"",
+   "actors": [
+    {
+     "who": "duck",
+     "x": 800,
+     "y": 860
+    },
+    {
+     "who": "beeBig",
+     "x": 1200,
+     "y": 580,
+     "s": 0.7
+    }
+   ],
+   "find": [
+    [
+     "ladybug",
+     220,
+     620
+    ],
+    [
+     "caterpillar",
+     1350,
+     900
+    ]
+   ],
+   "next": "m1"
+  },
+  "m1": {
+   "scene": "meadow",
+   "text": "Bee finds the meadow. Flowers everywhere! Red ones, yellow ones, purple ones!",
+   "actors": [
+    {
+     "who": "beeBig",
+     "x": 800,
+     "y": 620,
+     "s": 0.85
+    }
+   ],
+   "find": [
+    [
+     "caterpillar",
+     1300,
+     880
+    ],
+    [
+     "ladybug",
+     600,
+     520
+    ],
+    [
+     "bee",
+     1450,
+     420
+    ]
+   ],
+   "next": "c2"
+  },
+  "c2": {
+   "scene": "meadow",
+   "text": "Which flower should Bee visit?",
+   "choice": {
+    "options": [
+     {
+      "label": "The yellow flower",
+      "go": "f1",
+      "scene": "meadow",
+      "view": "255 760 260 165"
+     },
+     {
+      "label": "The purple flower",
+      "go": "f2",
+      "scene": "meadow",
+      "view": "30 770 260 165"
+     }
+    ]
+   }
+  },
+  "f1": {
+   "scene": "meadow",
+   "text": "Bee lands on the yellow flower. <b>Wiggle, wiggle!</b> Her legs get dusty with yellow pollen.",
+   "actors": [
+    {
+     "who": "beeBig",
+     "x": 460,
+     "y": 790,
+     "s": 0.6
+    },
+    {
+     "who": "butterfly",
+     "x": 900,
+     "y": 600,
+     "s": 0.8
+    },
+    {
+     "who": "butterfly",
+     "x": 1350,
+     "y": 520,
+     "s": 0.7
+    }
+   ],
+   "find": [
+    [
+     "ladybug",
+     1100,
+     860
+    ]
+   ],
+   "next": "h1"
+  },
+  "f2": {
+   "scene": "meadow",
+   "text": "Bee lands on the purple flower. <b>Sip, sip!</b> Sweet nectar. Yum!",
+   "actors": [
+    {
+     "who": "beeBig",
+     "x": 220,
+     "y": 800,
+     "s": 0.6
+    },
+    {
+     "who": "butterfly",
+     "x": 900,
+     "y": 580,
+     "s": 0.8
+    }
+   ],
+   "find": [
+    [
+     "caterpillar",
+     700,
+     900
+    ],
+    [
+     "ladybug",
+     1350,
+     640
+    ]
+   ],
+   "next": "h1"
+  },
+  "h1": {
+   "scene": "meadow",
+   "text": "Bee flies home. Her friends say hello! How many bees?",
+   "actors": [
+    {
+     "who": "hive",
+     "x": 900,
+     "y": 900
+    },
+    {
+     "who": "beeBig",
+     "x": 560,
+     "y": 640,
+     "s": 0.7
+    },
+    {
+     "who": "beeBig",
+     "x": 1250,
+     "y": 600,
+     "s": 0.6
+    },
+    {
+     "who": "beeBig",
+     "x": 1400,
+     "y": 800,
+     "s": 0.5
+    }
+   ],
+   "next": "n1"
+  },
+  "n1": {
+   "scene": "night",
+   "text": "The moon comes up. <b>Shhh...</b> the bees are snuggled in the hive. Goodnight, Bee.",
+   "actors": [
+    {
+     "who": "hive",
+     "x": 900,
+     "y": 880
+    }
+   ],
+   "find": [
+    [
+     "ladybug",
+     1300,
+     800
+    ]
+   ],
+   "next": "end"
+  },
+  "end": {
+   "scene": "night",
+   "text": "<b>The End.</b> Next time, try a different flower!",
+   "actors": [
+    {
+     "who": "beeBig",
+     "x": 800,
+     "y": 760
+    }
+   ],
+   "end": true
+  }
+ }
+}

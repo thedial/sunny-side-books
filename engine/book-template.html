@@ -1,0 +1,863 @@
+<title>Sunny Side Farm Books</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Bangers&display=swap">
+<style>
+/* Layout: a picture-book spread; the scene fills the screen, the words sit on a paper strip for the grown-up to read. Single bright look by design. */
+:root{
+  color-scheme: light;
+  --ink:#1d1a17; --paper:#fff8e7; --sun:#ffd23f; --red:#e8382f; --grass:#7cc242;
+  --display:"Baloo 2","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
+}
+html,body{height:100%;margin:0;background:var(--grass);overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.tap{cursor:pointer}.nohit{pointer-events:none}
+.anim{transform-box:fill-box;transform-origin:50% 100%}
+.boing{animation:boing .6s ease-out}
+@keyframes boing{0%{transform:scale(1)}30%{transform:scale(1.25,.8)}55%{transform:scale(.88,1.15)}80%{transform:scale(1.06,.95)}100%{transform:scale(1)}}
+.spin{animation:spin 1s ease-in-out}@keyframes spin{to{transform:rotate(360deg)}}
+.shake{animation:shake .7s ease-in-out}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-6deg)}40%{transform:rotate(5deg)}60%{transform:rotate(-4deg)}80%{transform:rotate(3deg)}}
+.wiggle .seg{animation:segbob .35s ease-in-out 4 alternate}
+.seg{transform-box:fill-box;transform-origin:50% 100%}@keyframes segbob{to{transform:translateY(-14px)}}
+.fly{animation:fly 2.2s ease-in-out}
+@keyframes fly{0%{transform:translate(0,0)}25%{transform:translate(90px,-160px) rotate(25deg)}50%{transform:translate(-60px,-230px) rotate(-30deg)}75%{transform:translate(-90px,-90px) rotate(10deg)}100%{transform:translate(0,0)}}
+.fly .wingL{animation:flapL .12s linear 16 alternate}.fly .wingR{animation:flapR .12s linear 16 alternate}
+.wingL,.wingR{transform-box:fill-box}.wingL{transform-origin:100% 0}.wingR{transform-origin:0 0}
+@keyframes flapL{to{transform:rotate(-55deg)}}@keyframes flapR{to{transform:rotate(55deg)}}
+.hide .sbody{animation:hide 1.6s ease-in-out}.sbody{transform-box:fill-box;transform-origin:0% 50%}
+@keyframes hide{0%{transform:scaleX(1)}25%,60%{transform:scaleX(.05)}85%{transform:scaleX(1.15)}100%{transform:scaleX(1)}}
+.bob{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-8px)}}
+.wobbleEgg{animation:wegg .5s ease-in-out infinite}@keyframes wegg{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.blink{animation:blink 1.2s ease-in-out infinite alternate}@keyframes blink{from{opacity:.2}to{opacity:1}}
+.pulse{animation:pulse 1.3s ease-in-out infinite}@keyframes pulse{50%{transform:scale(1.08)}}
+.bubble{font-family:Bangers,'Baloo 2',sans-serif;letter-spacing:1.5px}
+.say{animation:say 1.6s ease-out forwards;transform-box:fill-box;transform-origin:0% 100%}
+@keyframes say{0%{transform:scale(0)}20%{transform:scale(1.1)}30%,80%{transform:scale(1);opacity:1}100%{opacity:0}}
+.found{animation:found .9s ease-out forwards;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes found{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1) translateY(-40px);opacity:0}}
+#words{position:fixed;left:calc(84px + env(safe-area-inset-left,0px));right:calc(100px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  max-width:1100px;margin-inline:auto;box-sizing:border-box;background:var(--paper);border:5px solid var(--ink);border-radius:26px;
+  padding:12px 22px;font:600 clamp(18px,3.2vw,40px)/1.3 var(--display);color:var(--ink);text-align:center;text-wrap:balance;
+  background:#fff6d8;border-radius:12px;box-shadow:6px 6px 0 var(--ink)}
+#words b{font-weight:800}
+#words[hidden]{display:none}
+.navbtn{position:fixed;bottom:calc(30px + env(safe-area-inset-bottom,0px));width:76px;height:76px;border-radius:50%;
+  border:5px solid var(--ink);background:var(--sun);font:800 34px var(--display);color:var(--ink);display:grid;place-items:center;padding:0;box-shadow:4px 4px 0 var(--ink)}
+.navbtn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+#next{right:max(12px, env(safe-area-inset-right,0px))}
+#back{left:max(12px, env(safe-area-inset-left,0px));background:var(--paper);width:58px;height:58px;font-size:26px;bottom:calc(38px + env(safe-area-inset-bottom,0px))}
+.navbtn[hidden]{display:none}
+#choices{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;gap:4vw;padding-bottom:18vh;box-sizing:border-box}
+#choices[hidden]{display:none}
+.choice{box-shadow:8px 8px 0 var(--ink)!important;width:min(38vw,440px);aspect-ratio:1.15;max-width:100%;border:6px solid var(--ink);border-radius:30px;background:var(--paper);padding:0;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 10px 0 rgba(42,29,22,.35)}
+.choice svg{flex:1;width:100%;display:block}
+.choice span{font:800 clamp(22px,3vw,38px) var(--display);color:var(--ink);padding:6px 0 10px;background:var(--sun);border-top:5px solid var(--ink)}
+.choice:active{transform:translateY(6px);box-shadow:0 4px 0 rgba(42,29,22,.35)}
+#hunt{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:max(18px, env(safe-area-inset-left,0px));font:800 20px var(--display);color:var(--ink);
+  background:#fff6d8;border:4px solid var(--ink);border-radius:12px;padding:4px 14px;box-shadow:4px 4px 0 var(--ink);letter-spacing:2px}
+#hunt span{font-size:26px;vertical-align:middle}
+#hunt .got{opacity:.35;filter:grayscale(1)}
+#frame{position:fixed;inset:max(6px,env(safe-area-inset-top,0px)) max(6px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));
+  border:6px solid var(--ink);border-radius:20px;pointer-events:none;box-shadow:0 0 0 30px #fff6d8;z-index:3}
+#home{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:calc(66px + env(safe-area-inset-right,0px));width:48px;height:48px;border-radius:50%;border:4px solid var(--ink);background:#fff6d8;font-size:22px;padding:0;box-shadow:3px 3px 0 var(--ink);z-index:4}
+#shelf{overflow:auto;position:fixed;inset:0;z-index:2;background:#8fc3b8 radial-gradient(#ffffff55 2px,transparent 2.5px) 0 0/18px 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;padding:24px;box-sizing:border-box}
+#shelf[hidden]{display:none}
+#shelf h1{text-align:center;font:400 clamp(40px,7vw,84px) Bangers,var(--display);letter-spacing:3px;color:#f6c84c;-webkit-text-stroke:3px var(--ink);text-shadow:5px 5px 0 var(--ink);margin:0}
+#shelf .covers{display:flex;gap:3vw;flex-wrap:wrap;justify-content:center}
+#shelf button{width:min(28vw,340px);min-width:200px;border:6px solid var(--ink);border-radius:18px;background:#fff6d8;padding:0;overflow:hidden;box-shadow:8px 8px 0 var(--ink);display:flex;flex-direction:column}
+#shelf button:active{transform:translate(4px,4px);box-shadow:4px 4px 0 var(--ink)}
+#shelf svg{width:100%;aspect-ratio:1.45;display:block}
+#shelf span{flex:1;display:flex;align-items:center;justify-content:center;font:400 clamp(20px,2.6vw,32px) Bangers,var(--display);letter-spacing:1.5px;color:var(--ink);padding:8px 6px 10px;border-top:5px solid var(--ink);background:#f6c84c}
+#mute{z-index:4;position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px, env(safe-area-inset-right,0px));width:44px;height:44px;border-radius:50%;border:3px solid rgba(42,29,22,.3);background:rgba(255,248,231,.7);font-size:20px;padding:0}
+button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
+
+.sway{transform-box:fill-box;transform-origin:50% 100%;animation:sway 4s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-1.6deg)}to{transform:rotate(1.6deg)}}
+.drift{animation:drift 14s ease-in-out infinite alternate}@keyframes drift{from{transform:translateX(-40px)}to{transform:translateX(40px)}}
+.breathe{transform-box:fill-box;transform-origin:50% 100%;animation:breathe 3.2s ease-in-out infinite}@keyframes breathe{50%{transform:scale(1.02,.985)}}
+.fxfly{animation:fxfly 2.4s ease-in forwards}@keyframes fxfly{to{transform:translate(var(--dx),var(--dy))}}
+.flap{transform-box:fill-box;transform-origin:50% 100%;animation:flap .14s linear infinite alternate}@keyframes flap{to{transform:scaleY(-.6)}}
+.fxdrop{animation:fxdrop .9s linear forwards}@keyframes fxdrop{from{transform:translateY(0);opacity:1}to{transform:translateY(260px);opacity:0}}
+.fxfloat{animation:fxfloat 2.6s ease-in-out forwards}@keyframes fxfloat{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+.fxring{transform-box:fill-box;transform-origin:50% 50%;animation:fxring 1.4s ease-out forwards}@keyframes fxring{from{transform:scale(.2);opacity:1}to{transform:scale(1.6);opacity:0}}
+.fxjump{animation:fxjump 1.2s ease-in-out forwards}@keyframes fxjump{0%{transform:translate(0,0) rotate(-40deg);opacity:1}50%{transform:translate(70px,-150px) rotate(0)}100%{transform:translate(140px,0) rotate(40deg);opacity:0}}
+.fxpeek{animation:fxpeek 2.4s ease-in-out forwards}@keyframes fxpeek{0%,100%{transform:translateY(60px)}25%,75%{transform:translateY(0)}}
+.doorL,.doorR{transform-box:fill-box;animation:door 2.6s ease-in-out forwards}.doorL{transform-origin:0% 50%}.doorR{transform-origin:100% 50%}
+@keyframes door{0%,100%{transform:scaleX(1)}20%,80%{transform:scaleX(.12)}}
+.fxsplat{animation:fxsplat .9s ease-out forwards}@keyframes fxsplat{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
+.fxspark{transform-box:fill-box;transform-origin:50% 50%;animation:fxspark .7s ease-out forwards}@keyframes fxspark{0%{transform:scale(0) rotate(0)}50%{transform:scale(1.2) rotate(40deg)}100%{transform:scale(.6) rotate(90deg);opacity:0}}
+.fxshades{animation:fxshades 2.6s ease-out forwards}@keyframes fxshades{0%{transform:translateY(-160px);opacity:0}25%{transform:translateY(0);opacity:1}80%{opacity:1}100%{opacity:0}}
+.fxbow{transform-box:fill-box;transform-origin:50% 100%;animation:fxbow 3s ease-out forwards}@keyframes fxbow{0%{transform:scale(.2,0);opacity:0}25%{transform:scale(1);opacity:.9}75%{opacity:.9}100%{opacity:0}}
+.fxacross{animation:fxacross 3.2s ease-in-out forwards}@keyframes fxacross{0%{transform:translate(0,0)}25%{transform:translate(calc(var(--dx)*.25),-40px)}50%{transform:translate(calc(var(--dx)*.5),10px)}75%{transform:translate(calc(var(--dx)*.75),-50px)}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.fxstar{animation:fxstar 1.3s ease-in forwards}@keyframes fxstar{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(-520px,260px);opacity:0}}
+.fxglow{transform-box:fill-box;transform-origin:50% 50%;animation:fxglow 1.6s ease-out forwards}@keyframes fxglow{0%{transform:scale(.6);opacity:.8}100%{transform:scale(1.6);opacity:0}}
+.fxhold{animation:fxhold 2.6s linear forwards}@keyframes fxhold{0%,85%{opacity:1}100%{opacity:0}}
+.hot{fill:transparent}.debug .hot{fill:rgba(255,0,0,.15);stroke:red;stroke-width:4}
+.pop{transform-box:fill-box;transform-origin:50% 50%;animation:pop 1.4s ease-out forwards}@keyframes pop{0%{transform:scale(0) rotate(-10deg)}18%{transform:scale(1.18) rotate(3deg)}30%,75%{transform:scale(1);opacity:1}100%{transform:scale(1.05);opacity:0}}
+.popin{transform-box:fill-box;transform-origin:50% 50%;animation:popin .5s ease-out forwards}@keyframes popin{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+.peekUp{animation:peekUp 2.2s ease-in-out}@keyframes peekUp{0%,100%{transform:translateY(0)}25%,75%{transform:translateY(-90px)}}
+.squirt{animation:squirt 1.5s ease-in-out}@keyframes squirt{0%,100%{transform:translate(0,0) scale(1)}15%{transform:translate(0,10px) scale(1.2,.8)}45%{transform:translate(-40px,-170px) scale(.85,1.2)}75%{transform:translate(20px,-60px)}}
+.spinC{transform-box:fill-box;transform-origin:50% 50%;animation:spin 1s ease-in-out}
+.hover{animation:hover 2.6s ease-in-out infinite alternate}@keyframes hover{from{transform:translate(0,-6px)}to{transform:translate(0,10px)}}
+.flapW{transform-box:fill-box;transform-origin:50% 100%;animation:flapW .12s linear infinite alternate}@keyframes flapW{to{transform:scaleY(.45)}}
+.flutterW{transform-box:fill-box;animation:flutterW .5s ease-in-out infinite alternate}@keyframes flutterW{to{transform:scaleX(.55)}}
+.flutterW.l{transform-origin:100% 50%}.flutterW.r{transform-origin:0% 50%}
+.rise{animation:rise 6s linear infinite}@keyframes rise{from{transform:translateY(0);opacity:0}10%{opacity:.8}to{transform:translateY(-700px);opacity:0}}
+.wave{transform-box:fill-box;transform-origin:50% 100%;animation:wave 3.4s ease-in-out infinite alternate}@keyframes wave{from{transform:skewX(-6deg)}to{transform:skewX(6deg)}}
+.glow{animation:glow 2.2s ease-in-out infinite alternate}@keyframes glow{from{opacity:.55}to{opacity:1}}
+.clamOpen .lid{transform-box:fill-box;transform-origin:50% 100%;animation:lid 2.2s ease-in-out}@keyframes lid{0%,100%{transform:rotate(0)}25%,75%{transform:rotate(-38deg)}}
+.scuttle{animation:scuttle 1.4s ease-in-out}@keyframes scuttle{0%,100%{transform:translateX(0)}25%{transform:translateX(70px)}50%{transform:translateX(-50px)}75%{transform:translateX(30px)}}
+.fxink{transform-box:fill-box;transform-origin:50% 50%;animation:fxink 2.4s ease-out forwards}@keyframes fxink{0%{transform:scale(.2);opacity:.95}40%{transform:scale(1.4);opacity:.9}100%{transform:scale(2);opacity:0}}
+#letter{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:4;min-width:84px;height:64px;padding:0 16px;border:5px solid var(--ink);border-radius:14px;
+  background:#fff6d8;box-shadow:5px 5px 0 var(--ink);font:400 44px/1 Bangers,var(--display);letter-spacing:3px;color:#d0452f}
+#letter[hidden]{display:none}#letter:active{transform:translateX(-50%) translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+@media (max-height:520px){#words{font-size:16px;padding:6px 14px;border-width:4px;border-radius:18px;left:calc(64px + env(safe-area-inset-left,0px));right:calc(76px + env(safe-area-inset-right,0px))}
+  .navbtn{width:56px;height:56px;font-size:24px;bottom:calc(10px + env(safe-area-inset-bottom,0px))} #back{width:46px;height:46px;font-size:20px;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  #hunt{font-size:13px}}
+#turn{display:none}
+@media (orientation:portrait){ body.painted:not(.anyway) #turn{display:flex;position:fixed;inset:0;z-index:5;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+  background:rgba(31,42,46,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)} }
+#turn .card{background:var(--paper);border:5px solid var(--ink);border-radius:26px;padding:22px 26px;max-width:300px;text-align:center;font:700 22px/1.3 var(--display);color:var(--ink)}
+#turn .phone{font-size:64px;display:inline-block;animation:rot 2.4s ease-in-out infinite}@keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+#turn button{margin-top:14px;font:700 16px var(--display);color:var(--ink);background:transparent;border:3px solid var(--ink);border-radius:20px;padding:6px 16px}
+@media (prefers-reduced-motion: reduce){.bob,.pulse,.wobbleEgg,.sway,.drift,.breathe,.hover,.flapW,.flutterW,.rise,.wave,.glow{animation:none}}
+</style>
+
+<svg id="stage" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid meet" aria-label="Picture book page">
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".45"/></linearGradient>
+    <pattern id="grain" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="4" r="1.1" fill="#2a1d16" opacity=".06"/><circle cx="10" cy="11" r=".9" fill="#2a1d16" opacity=".05"/><circle cx="11" cy="3" r=".7" fill="#fff" opacity=".12"/></pattern>
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0 V9" stroke="#1f2a2e" stroke-width="2.2" opacity=".55"/></pattern>
+    <pattern id="hatch2" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><path d="M0 0 V9" stroke="#1f2a2e" stroke-width="1.8" opacity=".4"/></pattern>
+    <linearGradient id="shadeG" x1=".1" y1=".15" x2=".75" y2="1"><stop offset=".38" stop-color="#000"/><stop offset=".62" stop-color="#fff"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <linearGradient id="shadeG2" x1=".1" y1=".15" x2=".75" y2="1"><stop offset=".7" stop-color="#000"/><stop offset=".92" stop-color="#fff"/></linearGradient>
+    <mask id="shade" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#shadeG)"/></mask>
+    <mask id="shade2" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#shadeG2)"/></mask>
+    <filter id="ink" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="1" seed="9" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 .11  0 0 0 0 .14  0 0 0 0 .15  0 0 0 14 -9" result="speck"/>
+      <feComposite in="speck" in2="d" operator="in" result="sp"/>
+      <feMerge><feMergeNode in="d"/><feMergeNode in="sp"/></feMerge>
+    </filter>
+    <pattern id="dots" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="5.5" cy="5.5" r="2.4" fill="#1d1a17" opacity=".3"/></pattern>
+    <pattern id="dotsW" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="7" cy="7" r="2.6" fill="#ffffff" opacity=".35"/></pattern>
+    <pattern id="gingham" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#f6edd6"/><rect width="14" height="28" fill="#e58a8a" opacity=".55"/><rect width="28" height="14" fill="#e58a8a" opacity=".55"/></pattern>
+    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa79f"/><stop offset=".55" stop-color="#a9cbb6"/><stop offset=".8" stop-color="#f1dfb2"/></linearGradient>
+    <linearGradient id="nightG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16303a"/><stop offset=".7" stop-color="#2b5357"/><stop offset=".85" stop-color="#4f6e5e"/></linearGradient>
+  </defs>
+  <g id="world"></g><g id="fx" class="nohit"></g><g id="marks" class="nohit"></g>
+  <rect class="nohit" x="-2000" y="-2000" width="5600" height="5600" fill="url(#grain)"/>
+</svg>
+<div id="turn"><div class="card"><span class="phone" aria-hidden="true">📱</span><br>Turn sideways to see the whole picture<br><button id="anyway">Read this way</button></div></div>
+<div id="frame"></div><div id="shelf" hidden><h1>Sunny Side Books</h1><div class="covers"></div></div>
+<button id="home" aria-label="Back to the bookshelf">📚</button>
+<button id="letter" hidden aria-label="Letter sound"></button>
+<div id="hunt" hidden>Find the ladybug!</div>
+<div id="choices" hidden></div>
+<div id="words"></div>
+<button id="back" class="navbtn" aria-label="Previous page">◀</button>
+<button id="mute" aria-label="Sound on or off">🔊</button>
+<button id="next" class="navbtn" aria-label="Next page">▶</button>
+
+<script>
+const OUT='#1d1a17';
+/* print palette: the kit's toy-bright colors mapped to the screenprint look of Scott's art */
+const PAL={'#fff':'#f5eddb','#ffb3c1':'#eba891','#ff8fa6':'#d9826f','#e8382f':'#c9432f','#e2412f':'#c9432f','#d6402f':'#b8432f','#f2a03d':'#e08a3c','#f2903d':'#e08a3c',
+ '#ffd23f':'#f0c055','#ffe14d':'#f3cf5f','#6cc04a':'#86a95a','#5ab4e0':'#4f9c9b','#8fd3f4':'#a6cfc4','#4fae46':'#6a9650','#5fa832':'#6a9650','#8fd14f':'#9ab765',
+ '#2f8f4e':'#3f7a55','#7cc242':'#8fae5a','#6ab33a':'#7c9d4d','#a5d86b':'#a9c27a','#b7e08a':'#b3c985','#9b6a3c':'#8c6440','#f0c34f':'#e3bd62','#c8962a':'#b98a3c',
+ '#f5e3c0':'#efe2c4','#ff7eb6':'#e58a8a','#9b7cff':'#8d86c6','#ff9a3d':'#e38a45','#a9dcf0':'#9fcfc6','#bfe6ff':'#b2d8cc','#1d2b53':'#183847','#2f5d3a':'#2f5a45',
+ '#b8492f':'#a8472f','#9c3a24':'#8c3a26','#d9b26a':'#cfae6c','#ff9a8a':'#e9907a','#fffdf4':'#f7f0de','#c99b5f':'#bf9562','#b8b2a7':'#aaa597','#fff3b0':'#f4e3a6','#6cbf6a':'#7aa860'};
+const recolor=str=>str.replace(/#[0-9a-fA-F]{3,6}(?=["';)])/g,m=>PAL[m.toLowerCase()]||m);
+const $=id=>document.getElementById(id);
+const S=(w=6)=>`stroke="${OUT}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+let ac=null;
+function ctx(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
+let muted=false;
+function tone(f0,f1,dur,type='sine',vol=.22,delay=0){ const a=ctx(); if(!a||muted) return; const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(f1,30),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.02); }
+const sfx={pop:()=>tone(700,250,.12),boing:()=>{tone(220,520,.15);tone(520,180,.35,'sine',.18,.15)},
+  chime:()=>[660,880,1320].forEach((f,i)=>tone(f,f,.25,'triangle',.16,i*.09)),page:()=>tone(1400,600,.12,'triangle',.08),
+  fanfare:()=>[523,659,784,1047].forEach((f,i)=>tone(f,f,.22,'square',.08,i*.13))};
+/* soft, short sound effects; the parent does the reading */
+let _nb=null;
+function noise(dur,{type='bandpass',f=1000,f2=null,q=1,vol=.12,delay=0}={}){ const a=ctx(); if(!a||muted) return; const t=a.currentTime+delay;
+  if(!_nb){ _nb=a.createBuffer(1,a.sampleRate*2,a.sampleRate); const d=_nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; }
+  const src=a.createBufferSource(); src.buffer=_nb; const fl=a.createBiquadFilter(); fl.type=type; fl.frequency.setValueAtTime(f,t); if(f2) fl.frequency.exponentialRampToValueAtTime(f2,t+dur); fl.Q.value=q;
+  const g=a.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); src.connect(fl).connect(g).connect(a.destination); src.start(t,Math.random()); src.stop(t+dur+.02); }
+function voice(f0,f1,dur,{type='sawtooth',lp=900,vib=0,vol=.1,delay=0}={}){ const a=ctx(); if(!a||muted) return; const t=a.currentTime+delay;
+  const o=a.createOscillator(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  if(vib){ const l=a.createOscillator(), lg=a.createGain(); l.frequency.value=vib; lg.gain.value=f0*.04; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t+dur); }
+  const fl=a.createBiquadFilter(); fl.type='lowpass'; fl.frequency.value=lp; const g=a.createGain();
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.04); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(fl).connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.02); }
+const SOUND={
+  cow:()=>voice(150,105,1.0,{lp:650,vib:4,vol:.13}),
+  pig:()=>[0,.18].forEach(d=>{voice(230,150,.13,{type:'square',lp:800,vol:.07,delay:d});noise(.12,{type:'lowpass',f:500,vol:.08,delay:d});}),
+  duck:()=>[0,.2].forEach(d=>voice(560,400,.15,{lp:1600,vol:.07,delay:d})),
+  hen:()=>{[0,.1,.2].forEach(d=>voice(720,560,.07,{type:'square',lp:1800,vol:.05,delay:d}));voice(950,620,.25,{type:'square',lp:1800,vol:.05,delay:.34});},
+  chick:()=>[0,.16].forEach(d=>tone(2200,3000,.08,'sine',.1,d)),
+  egg:()=>[0,.18].forEach(d=>tone(2000,2600,.06,'sine',.06,d)),
+  frog:()=>[0,.12].forEach(d=>voice(190,170,.06,{type:'square',lp:700,vol:.09,delay:d})),
+  bunny:()=>tone(900,1300,.1,'triangle',.08),
+  barn:()=>{voice(90,140,.6,{lp:500,vol:.06});[.7,.82].forEach(d=>tone(3000,3600,.08,'sine',.07,d));},
+  hay:()=>{noise(.3,{f:2500,q:.7,vol:.05});[.5,.62].forEach(d=>tone(3000,3600,.08,'sine',.07,d));},
+  tree:()=>{noise(.5,{f:2600,q:.6,vol:.06});[0,.12,.3,.45].forEach(d=>tone(2600,3400,.07,'sine',.07,d+.1));},
+  pine:()=>SOUND.tree(),
+  cloud:()=>{for(let k=0;k<14;k++) noise(.03,{f:3500,q:2,vol:.08,delay:Math.random()*1.1});},
+  flower:()=>[1800,2400,3200].forEach((f,i)=>tone(f,f,.12,'triangle',.05,i*.06)),
+  pond:()=>noise(.5,{type:'highpass',f:2500,f2:600,vol:.1}),
+  rock:()=>voice(120,90,.15,{type:'square',lp:400,vol:.08}),
+  potato:()=>voice(160,120,.15,{type:'square',lp:500,vol:.07}),
+  sun:()=>[1200,1600].forEach((f,i)=>tone(f,f,.15,'triangle',.06,i*.1)),
+  scarecrow:()=>noise(.4,{f:1800,q:.6,vol:.05}),
+  mouse:()=>[0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d)), bunny:()=>tone(900,1300,.1,'triangle',.08), beeBig:()=>buzz(), hive:()=>{buzz();setTimeout(buzz,250);}, butterfly:()=>[1800,2400,3000].forEach((f,i)=>tone(f,f,.1,'triangle',.05,i*.08)),
+  fish:()=>blub(), octopus:()=>noise(.6,{type:'lowpass',f:700,f2:200,vol:.12}), turtle:()=>tone(300,220,.4,'sine',.08),
+  crab:()=>[0,.1,.2,.3].forEach(d=>noise(.03,{type:'highpass',f:3000,vol:.12,delay:d})), seahorse:()=>[1200,1600].forEach((f,i)=>tone(f,f,.15,'triangle',.06,i*.1)),
+  jelly:()=>[2000,2400,2800,3200].forEach((f,i)=>tone(f,f,.15,'sine',.04,i*.06)), whale:()=>voice(140,90,1.4,{type:'sine',lp:600,vib:3,vol:.12}),
+  clam:()=>{tone(400,200,.1,'sine',.1);[1600,2400].forEach((f,i)=>tone(f,f,.2,'triangle',.06,.3+i*.1));}, coral:()=>blub(), kelp:()=>noise(.4,{f:1200,q:.5,vol:.05}),
+};
+sfx.page=()=>noise(.22,{type:'highpass',f:3000,f2:1200,vol:.06});
+sfx.sparkle=()=>[2400,3200].forEach((f,i)=>tone(f,f,.08,'triangle',.04,i*.05));
+
+/*KIT*/
+
+/* ---- extra pieces for the farm books ---- */
+Object.assign(P,{
+  nest:(x,y,s=1)=>`<g class="nohit" transform="translate(${x} ${y}) scale(${s})"><path d="M-90 -10 q90 50 180 0 q-10 -40 -90 -40 q-80 0 -90 40z" fill="#c8962a" ${S(6)}/>
+    <path d="M-70 -20 q40 20 60 0 M-10 -14 q40 20 70 -4" fill="none" stroke="#8f6a1e" stroke-width="5"/></g>`,
+  egg:(x,y,s=1,cls='')=>`<g class="tap" data-react="boing" data-sfx="pop" data-bubble="Peep?" transform="translate(${x} ${y}) scale(${s})"><g class="anim ${cls}">
+    <ellipse cx="0" cy="-42" rx="32" ry="42" fill="#fffdf4" ${S(6)}/><ellipse cx="-10" cy="-58" rx="8" ry="12" fill="#fff" opacity=".9"/></g></g>`,
+  crackedEgg:(x,y)=>`<g class="nohit" transform="translate(${x} ${y})"><path d="M-34 -30 a34 30 0 0 0 68 0 l-10 -10 l-10 10 l-12 -12 l-12 12 l-12 -10 z" fill="#fffdf4" ${S(6)}/></g>`,
+  chick:(x,y,s=1)=>`<g class="tap" data-react="boing" data-sfx="chime" data-bubble="Peep! Peep!" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M-10 0 v-16 M10 0 v-16" stroke="#f2a03d" stroke-width="6"/><circle cx="0" cy="-50" r="36" fill="#ffe14d" ${S(6)}/>
+    <circle cx="-12" cy="-58" r="5" fill="${OUT}"/><circle cx="12" cy="-58" r="5" fill="${OUT}"/><path d="M-8 -46 l8 10 l8 -10 z" fill="#f2a03d" ${S(3)}/>
+    <path d="M-36 -48 q-16 -4 -14 12 M36 -48 q16 -4 14 12" fill="none" ${S(5)}/><path d="M-4 -86 q4 -14 10 -2" fill="none" ${S(4)}/></g></g>`,
+  duck:(x,y)=>`<g class="tap" data-react="boing" data-sfx="boing" data-bubble="Quack!" transform="translate(${x} ${y})"><g class="anim">
+    <ellipse cx="0" cy="-40" rx="70" ry="40" fill="#fff" ${S(6)}/><path d="M-70 -50 q-20 -24 -4 -30 q8 14 20 14" fill="#fff" ${S(5)}/>
+    <circle cx="56" cy="-92" r="32" fill="#fff" ${S(6)}/><path d="M80 -92 q34 -2 34 12 q-14 10 -34 4 z" fill="#f2a03d" ${S(5)}/><circle cx="62" cy="-100" r="5" fill="${OUT}"/>
+    <path d="M-30 -42 q30 20 60 0" fill="none" ${S(4)}/></g></g>`,
+  rock:(x,y)=>`<g class="tap" data-react="shake" data-sfx="pop" data-bubble="Bonk!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-46 0 q-10 -50 30 -62 q50 -10 62 30 q8 32 -14 32 z" fill="#b8b2a7" ${S(6)}/><circle cx="-10" cy="-34" r="6" fill="#9a948a"/></g></g>`,
+  potato:(x,y)=>`<g class="tap" data-react="shake" data-sfx="pop" data-bubble="Potato!" transform="translate(${x} ${y})"><g class="anim">
+    <ellipse cx="0" cy="-30" rx="56" ry="34" fill="#c99b5f" ${S(6)}/><circle cx="-20" cy="-38" r="4" fill="#8a6533"/><circle cx="14" cy="-24" r="4" fill="#8a6533"/><circle cx="26" cy="-42" r="3" fill="#8a6533"/></g></g>`,
+  barnInside:()=>`<rect x="-2000" y="-2000" width="5600" height="2700" fill="#b8492f"/>
+    ${Array.from({length:16},(_,i)=>`<path d="M${i*110-50} -100 V700" stroke="#9c3a24" stroke-width="8"/>`).join('')}
+    <path d="M-2000 700 H3600 V4000 H-2000 Z" fill="#d9b26a"/><path d="M-200 330 H1800" ${S(14)}/>
+    <rect x="1180" y="300" width="190" height="150" fill="#bfe6ff" ${S(8)}/><path d="M1275 300 V450 M1180 375 H1370" ${S(6)}/>`,
+  moon:(x,y)=>`<g class="nohit" transform="translate(${x} ${y})"><circle r="80" fill="#fff3b0" ${S(6)}/><circle cx="34" cy="-26" r="70" fill="#1d2b53"/></g>`,
+  stars:()=>Array.from({length:50},()=>`<circle class="blink nohit" style="animation-delay:${(Math.random()*2).toFixed(2)}s" cx="${(Math.random()*1600)|0}" cy="${(170+Math.random()*480)|0}" r="${(2+Math.random()*4).toFixed(1)}" fill="#fff8e7"/>`).join(''),
+  hiddenBug:(x,y,s=.55)=>`<g class="tap hidden-bug" transform="translate(${x} ${y}) scale(${s})"><circle r="90" fill="transparent"/><g class="anim body">${ladybug()}</g></g>`,
+});
+
+
+/* ---- storybook style: flat screenprint shapes, soft shading, warm palette ---- */
+const L=(w=3,c='#3a4a46')=>`stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+let _seed=7; const sr=()=>{ _seed=(_seed*16807)%2147483647; return (_seed-1)/2147483646; };
+Object.assign(P,{
+  sky:(c)=>c==='night'?`<rect x="-2000" y="-2000" width="5600" height="2800" fill="url(#nightG)"/>`
+     :`<rect x="-2000" y="-2000" width="5600" height="2000" fill="#6fa79f"/><rect x="-2000" y="0" width="5600" height="800" fill="url(#skyG)"/><rect x="-2000" y="380" width="5600" height="300" fill="url(#dotsW)"/>`,
+  hills:(y,night)=>{ const a=night?['#2f4b47','#2a4339']:['#9dbba6','#a9bf74'];
+    return `<path d="M-2000 ${y-40} Q 200 ${y-230} 620 ${y-80} Q 1000 ${y-250} 1420 ${y-90} Q 1700 ${y-190} 3600 ${y-60} V ${y+500} H -2000 Z" fill="${a[0]}" ${L(5,OUT)}/>
+      <path d="M-2000 ${y+20} Q 320 ${y-120} 820 ${y} Q 1250 ${y-150} 3600 ${y+10} V ${y+500} H -2000 Z" fill="${a[1]}" ${L(5,OUT)}/>`; },
+  ground:(y,night)=>{ _seed=11; const a=night?['#36564a','#2f4d40','#24403a']:['#8fae5a','#7f9e4f','#6b8a45'];
+    let t=`<path d="M-2000 ${y} Q 400 ${y-50} 800 ${y} T 3600 ${y} V 4000 H -2000 Z" fill="${a[0]}" ${L(5,OUT)}/><path d="M-2000 ${y+150} Q 600 ${y+90} 1100 ${y+160} T 3600 ${y+140} V 4000 H -2000 Z" fill="${a[1]}"/>`;
+    for(let i=0;i<70;i++){ const gx=-200+sr()*2000, gy=y+20+sr()*330; t+=`<path d="M${gx-8} ${gy} l4 -14 M${gx} ${gy} l0 -18 M${gx+8} ${gy} l-4 -14" ${L(3,a[2])} fill="none"/>`; }
+    if(!night) for(let i=0;i<26;i++){ const fx=-100+sr()*1800, fy=y+40+sr()*300; t+=`<circle cx="${fx}" cy="${fy}" r="${4+sr()*3}" fill="${['#f4ead2','#e9874a','#e7b04f'][i%3]}"/>`; }
+    return `<g class="nohit">${t}</g>`; },
+  sun:(x,y)=>`<g class="tap" data-react="spin" data-say="Hello sun!" transform="translate(${x} ${y})"><g class="anim" style="transform-origin:50% 50%">
+    ${Array.from({length:12},(_,i)=>`<path d="M-11 -78 L0 -122 L11 -78 Z" fill="#e9874a" ${L(4,OUT)} transform="rotate(${i*30})"/>`).join('')}
+    <circle r="68" fill="#f2a24e" ${L(6,OUT)}/><circle r="54" fill="#f6bb6a"/>
+    <path d="M-30 -10 q10 -10 20 0 M10 -10 q10 -10 20 0" fill="none" ${L(5,'#7a3b1e')}/><path d="M-22 14 q22 20 44 0" fill="none" ${L(5,'#7a3b1e')}/>
+    <circle cx="-38" cy="10" r="9" fill="#e9874a" opacity=".6"/><circle cx="38" cy="10" r="9" fill="#e9874a" opacity=".6"/></g></g>`,
+  cloud:(x,y,s=1)=>`<g class="tap" data-react="boing" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M-120 30 a42 42 0 0 1 30 -64 a58 58 0 0 1 104 -18 a48 48 0 0 1 82 30 a36 36 0 0 1 24 52 z" fill="#ddd2b8" ${L(6,OUT)}/>
+    <path d="M-120 20 a42 42 0 0 1 30 -64 a58 58 0 0 1 104 -18 a48 48 0 0 1 82 30 a36 36 0 0 1 24 52 z" fill="#f6edd6"/>
+    <path d="M-60 -20 a30 30 0 0 1 40 -26" fill="none" ${L(4,'#fffaf0')}/></g></g>`,
+  tree:(x,y,s=1,fruit='')=>`<g class="tap" data-react="shake" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M-30 0 q10 -20 14 -60 L-16 -190 L16 -190 L16 -60 q4 40 18 60 q-20 -6 -24 -14 q-6 10 -26 14 z" fill="#8a5e3c" ${L(3)}/>
+    <path d="M-6 -150 v-40 M6 -120 q20 -30 40 -40" fill="none" ${L(4,'#6e4a2f')}/>
+    <g ${L(6,OUT)}><circle cx="-90" cy="-230" r="80" fill="#5f8048"/><circle cx="70" cy="-240" r="88" fill="#5f8048"/><circle cx="-10" cy="-310" r="96" fill="#6f914e"/></g>
+    <g fill="#6f914e"><circle cx="-90" cy="-230" r="77"/><circle cx="70" cy="-240" r="85"/><circle cx="-10" cy="-310" r="93"/></g><path d="M-160 -200 q80 50 220 30 q70 -10 100 -50 v60 h-320z" fill="url(#dots)" opacity=".6"/>
+    <circle cx="-100" cy="-250" r="62" fill="#7a9c54"/><circle cx="60" cy="-262" r="66" fill="#7a9c54"/><circle cx="-20" cy="-326" r="70" fill="#86a85c"/>
+    <path d="M-60 -350 a50 50 0 0 1 60 -30 M60 -300 a40 40 0 0 1 40 10" fill="none" ${L(5,'#a3bf72')}/>
+    ${fruit?[[-80,-240],[30,-300],[80,-230],[-30,-260]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="13" fill="${fruit}"/>`).join(''):''}</g></g>`,
+  pine:(x,y,s=1)=>`<g class="tap" data-react="shake" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <rect x="-14" y="-50" width="28" height="50" fill="#7a5233"/>
+    <path d="M0 -360 L-80 -230 H-40 L-110 -120 H-60 L-130 -40 H130 L60 -120 H110 L40 -230 H80 Z" fill="#3f6b55" ${L(6,OUT)}/>
+    <path d="M0 -360 L-80 -230 H-40 L-110 -120 H-60 L-130 -40 H0 Z" fill="#4f7d60"/></g></g>`,
+  flower:(x,y,c='#e58a8a',s=1)=>`<g class="tap" data-react="boing" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M0 0 V-66" ${L(5,'#5f7f48')}/><path d="M0 -26 q-26 -2 -32 -22 q24 -4 32 16" fill="#7f9e4f"/>
+    ${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-98" rx="15" ry="21" fill="${c}" transform="rotate(${a} 0 -78)"/>`).join('')}
+    <circle cx="0" cy="-78" r="12" fill="#f2a24e"/><circle cx="-3" cy="-81" r="4" fill="#f6d08a"/></g></g>`,
+  fence:(x0,x1,y)=>{ let t=`<path d="M${x0} ${y-72} H${x1} M${x0} ${y-34} H${x1}" ${L(14,'#8d8a78')}/><path d="M${x0} ${y-72} H${x1} M${x0} ${y-34} H${x1}" stroke="#f4ead2" stroke-width="9"/>`;
+    for(let x=x0;x<=x1;x+=100) t+=`<path d="M${x-13} ${y} V${y-104} l13 -16 l13 16 V${y} Z" fill="#f4ead2" ${L(3,'#8d8a78')}/><path d="M${x+6} ${y-100} V${y}" stroke="#ddd2b8" stroke-width="6"/>`;
+    return `<g class="nohit">${t}</g>`; },
+  barn:(x,y)=>{ let planks=''; for(let px=-140;px<160;px+=28) planks+=`<path d="M${px} -196 V0" stroke="#a83b28" stroke-width="3"/>`;
+    const door=(dx)=>`<rect x="${dx}" y="-150" width="70" height="150" fill="#b8402b" stroke="#f4ead2" stroke-width="9"/><path d="M${dx} -150 L${dx+70} 0 M${dx+70} -150 L${dx} 0" stroke="#f4ead2" stroke-width="7"/>`;
+    return `<g class="tap" data-react="boing" data-say="Barn!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-160 0 V-200 H160 V0 Z" fill="#c4462f" ${L(6,OUT)}/>${planks}<path d="M-160 -100 H160 V0 H-160Z" fill="url(#dots)" opacity=".5"/>
+    <path d="M-182 -196 L-118 -300 L0 -344 L118 -300 L182 -196 Z" fill="#4b5552" ${L(6,OUT)}/><path d="M-182 -196 L-118 -300 L0 -344 L118 -300 L182 -196" fill="none" stroke="#f4ead2" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M-160 -200 V0 M160 -200 V0" stroke="#f4ead2" stroke-width="8"/>
+    <rect x="-36" y="-282" width="72" height="62" fill="#b8402b" stroke="#f4ead2" stroke-width="7"/><path d="M-36 -282 L36 -220 M36 -282 L-36 -220" stroke="#f4ead2" stroke-width="5"/>
+    ${door(-70)}${door(0)}<rect x="-26" y="-372" width="52" height="34" fill="#c4462f" stroke="#f4ead2" stroke-width="5"/><path d="M-34 -372 L0 -396 L34 -372 Z" fill="#4b5552"/></g></g>`; },
+  hay:(x,y)=>`<g class="tap" data-react="boing" transform="translate(${x} ${y})"><g class="anim">
+    <rect x="-82" y="-92" width="164" height="92" rx="16" fill="#e2b860" ${L(6,OUT)}/><rect x="-82" y="-92" width="164" height="30" rx="14" fill="#ecca7c"/>
+    ${[-56,-28,0,28,56].map(d=>`<path d="M${d} -84 v76" stroke="#c99a3e" stroke-width="3"/>`).join('')}<path d="M-46 -92 v92 M46 -92 v92" stroke="#8a5e3c" stroke-width="6"/></g></g>`,
+  pond:(x,y)=>`<g class="tap" data-react="boing" data-say="Splash!" transform="translate(${x} ${y})"><g class="anim">
+    <ellipse rx="250" ry="78" fill="#8cc0b5" ${L(6,OUT)}/><ellipse cy="6" rx="232" ry="64" fill="#5d9c9a"/>
+    <path d="M-120 -8 h60 M40 22 h80 M-30 30 h40" ${L(4,'#9fd0c6')}/>
+    <path d="M-150 0 a38 16 0 1 0 60 0 l-30 4 z" fill="#7fa35a"/><path d="M70 18 a42 17 0 1 0 70 0 l-34 4 z" fill="#7fa35a"/><circle cx="96" cy="12" r="9" fill="#e9a6a0"/>
+    ${[[-250,0],[-226,10],[236,-4],[256,8]].map(([a,b])=>`<path d="M${a} ${b} V${b-110}" ${L(4,'#6b8a45')}/><rect x="${a-6}" y="${b-110}" width="12" height="34" rx="6" fill="#8a5e3c"/>`).join('')}</g></g>`,
+  /* characters */
+  hen:(x,y)=>`<g class="tap" data-react="boing" data-say="Bawk bawk!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-12 0 v-26 M12 0 v-26 M-20 0 h16 M4 0 h16" ${L(5,'#d9802f')}/>
+    <path d="M-48 -66 q-44 -6 -50 -48 q22 -2 32 12 q-10 -32 8 -50 q18 14 18 38 q8 -22 30 -26 q6 34 -14 66 z" fill="#efe5cc" ${L(6,OUT)}/>
+    <path d="M-62 -60 q0 -50 60 -54 q50 -2 68 26 q16 30 -4 58 q-26 26 -66 22 q-58 -6 -58 -52 z" fill="#f7f0de" ${L(6,OUT)}/>
+    <path d="M-50 -38 q34 26 92 6 q-36 22 -92 -6 z" fill="#e2d6ba"/>
+    <path d="M-22 -74 q30 -10 46 10 q-20 24 -46 -10 z" fill="#ebe0c6" ${L(4.5,OUT)}/>
+    <circle cx="48" cy="-112" r="30" fill="#f7f0de" ${L(6,OUT)}/>
+    <path d="M30 -136 q4 -18 14 -6 q6 -16 14 -2 q8 -12 12 6 z" fill="#d0452f" ${L(4.5,OUT)}/>
+    <path d="M74 -114 l22 6 l-22 8 z" fill="#e9874a" ${L(4.5,OUT)}/><path d="M72 -98 q6 16 -4 18 q-8 -4 -2 -16" fill="#d0452f"/>
+    <circle cx="56" cy="-118" r="5" fill="${OUT}"/><circle cx="57.5" cy="-120" r="1.8" fill="#fff"/><circle cx="46" cy="-104" r="6" fill="#e9a6a0" opacity=".7"/></g></g>`,
+  chick:(x,y,s=1)=>`<g class="tap" data-react="boing" data-sfx="chime" data-bubble="Peep! Peep!" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M-10 0 v-14 M10 0 v-14" ${L(5,'#d9802f')}/><circle cy="-48" r="36" fill="#f5d35f" ${L(6,OUT)}/>
+    <path d="M-30 -30 q30 22 60 0 q-30 12 -60 0z" fill="#e5b94a"/><path d="M-30 -52 q-18 4 -16 20 q12 -2 18 -12" fill="#efc350" ${L(4.5,OUT)}/>
+    <path d="M-4 -84 q2 -16 10 -6 q4 -10 10 0" fill="none" ${L(4.5,OUT)}/>
+    <circle cx="-11" cy="-56" r="4.5" fill="${OUT}"/><circle cx="13" cy="-56" r="4.5" fill="${OUT}"/><circle cx="-10" cy="-58" r="1.5" fill="#fff"/><circle cx="14" cy="-58" r="1.5" fill="#fff"/>
+    <path d="M-7 -46 l7 9 l7 -9 z" fill="#e9874a" ${L(4,OUT)}/><circle cx="-22" cy="-42" r="5" fill="#e9a6a0" opacity=".7"/><circle cx="24" cy="-42" r="5" fill="#e9a6a0" opacity=".7"/></g></g>`,
+  cow:(x,y)=>`<g class="tap" data-react="boing" data-say="Moooo!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-84 0 v-56 M-48 0 v-56 M36 0 v-56 M70 0 v-56" ${L(18,OUT)}/><path d="M-84 0 v-56 M-48 0 v-56 M36 0 v-56 M70 0 v-56" ${L(11,'#f7f0de')}/>
+    <path d="M-92 -4 h16 M-56 -4 h16 M28 -4 h16 M62 -4 h16" ${L(9,'#4a3b30')}/>
+    <path d="M-112 -110 q-30 10 -26 56" fill="none" ${L(6,OUT)}/><path d="M-142 -56 q4 14 10 0 z" fill="#4a3b30" ${L(4.5,OUT)}/>
+    <rect x="-116" y="-160" width="210" height="112" rx="48" fill="#f7f0de" ${L(6,OUT)}/>
+    <path d="M-80 -158 q34 26 4 62 q-34 -18 -30 -62 z M20 -126 q34 -10 34 28 q-34 10 -34 -28 z M-30 -66 q20 -10 30 18 h-36 z" fill="#3b3a36"/>
+    <path d="M-104 -62 q90 22 190 0" fill="none" ${L(6,'#e2d6ba')}/><ellipse cx="-10" cy="-50" rx="20" ry="10" fill="#eaa28c" ${L(4.5,OUT)}/>
+    <path d="M78 -196 q-14 -22 2 -30 M150 -196 q14 -22 -2 -30" fill="none" ${L(7,'#efe5cc')}/>
+    <ellipse cx="62" cy="-176" rx="22" ry="12" fill="#3b3a36" transform="rotate(-25 62 -176)"/><ellipse cx="168" cy="-176" rx="22" ry="12" fill="#3b3a36" transform="rotate(25 168 -176)"/>
+    <ellipse cx="114" cy="-150" rx="48" ry="54" fill="#f7f0de" ${L(6,OUT)}/><path d="M86 -196 q28 18 54 0 q-10 30 -28 30 q-18 0 -26 -30z" fill="#3b3a36"/>
+    <ellipse cx="120" cy="-114" rx="40" ry="26" fill="#eaa28c" ${L(6,OUT)}/><circle cx="106" cy="-114" r="5" fill="${OUT}"/><circle cx="134" cy="-114" r="5" fill="${OUT}"/>
+    <circle cx="98" cy="-160" r="6" fill="${OUT}"/><circle cx="130" cy="-160" r="6" fill="${OUT}"/><circle cx="100" cy="-162" r="2" fill="#fff"/><circle cx="132" cy="-162" r="2" fill="#fff"/></g></g>`,
+  pig:(x,y)=>`<g class="tap" data-react="boing" data-say="Oink oink!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-44 0 v-30 M-14 0 v-30 M26 0 v-30 M52 0 v-30" ${L(16,OUT)}/><path d="M-44 0 v-30 M-14 0 v-30 M26 0 v-30 M52 0 v-30" ${L(9,'#eaa28c')}/>
+    <path d="M-84 -72 q-26 -6 -20 -28 q14 2 8 14 q-4 8 6 10" fill="none" ${L(6,OUT)}/>
+    <ellipse cx="0" cy="-72" rx="84" ry="58" fill="#eaa28c" ${L(6,OUT)}/><path d="M-70 -44 q70 40 140 0 q-70 22 -140 0z" fill="#d98a78"/>
+    <path d="M44 -136 l-4 -30 l28 18 z M90 -134 l14 -28 l10 32 z" fill="#d98a78" ${L(4.5,OUT)}/>
+    <circle cx="76" cy="-100" r="44" fill="#eaa28c" ${L(6,OUT)}/><ellipse cx="104" cy="-90" rx="20" ry="16" fill="#f0b7a3" ${L(6,OUT)}/>
+    <circle cx="98" cy="-90" r="3.5" fill="${OUT}"/><circle cx="110" cy="-90" r="3.5" fill="${OUT}"/><circle cx="72" cy="-112" r="5.5" fill="${OUT}"/><circle cx="73.5" cy="-114" r="2" fill="#fff"/>
+    <circle cx="62" cy="-88" r="7" fill="#d9826f" opacity=".7"/></g></g>`,
+  duck:(x,y)=>`<g class="tap" data-react="boing" data-bubble="Quack!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-14 0 v-14 M14 0 v-14 M-24 0 h18 M6 0 h18" ${L(5,'#e9874a')}/>
+    <path d="M-80 -54 q-14 -34 -2 -40 q14 14 30 14 q30 -20 84 -6 q40 12 36 42 q-6 34 -70 36 q-70 2 -78 -46z" fill="#f7f0de" ${L(6,OUT)}/>
+    <path d="M-50 -30 q50 26 104 4 q-50 14 -104 -4z" fill="#e2d6ba"/><path d="M-30 -62 q34 -14 56 6 q-24 22 -56 -6z" fill="#ebe0c6" ${L(4.5,OUT)}/>
+    <circle cx="58" cy="-96" r="30" fill="#f7f0de" ${L(6,OUT)}/><path d="M84 -98 q32 -6 36 8 q-12 14 -36 6 z" fill="#e9874a" ${L(4.5,OUT)}/>
+    <circle cx="64" cy="-104" r="5" fill="${OUT}"/><circle cx="65.5" cy="-106" r="1.8" fill="#fff"/><circle cx="54" cy="-88" r="6" fill="#e9a6a0" opacity=".6"/></g></g>`,
+  frog:(x,y)=>`<g class="tap" data-react="boing" data-say="Ribbit!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-62 -4 q-14 -30 18 -30 M62 -4 q14 -30 -18 -30" fill="#7fa35a" ${L(6,OUT)}/>
+    <ellipse cy="-34" rx="62" ry="38" fill="#8fb35a" ${L(6,OUT)}/><ellipse cy="-24" rx="40" ry="20" fill="#c3d58f"/>
+    <circle cx="-28" cy="-70" r="20" fill="#8fb35a" ${L(6,OUT)}/><circle cx="28" cy="-70" r="20" fill="#8fb35a" ${L(6,OUT)}/>
+    <circle cx="-28" cy="-72" r="10" fill="#f7f0de"/><circle cx="28" cy="-72" r="10" fill="#f7f0de"/><circle cx="-26" cy="-72" r="5" fill="${OUT}"/><circle cx="30" cy="-72" r="5" fill="${OUT}"/>
+    <path d="M-26 -40 q26 16 52 0" fill="none" ${L(6,OUT)}/><circle cx="-40" cy="-46" r="6" fill="#e9a6a0" opacity=".6"/><circle cx="40" cy="-46" r="6" fill="#e9a6a0" opacity=".6"/></g></g>`,
+  egg:(x,y,s=1,cls='')=>`<g class="tap" data-react="boing" data-sfx="pop" data-bubble="Peep?" transform="translate(${x} ${y}) scale(${s})"><g class="anim ${cls}">
+    <ellipse cx="0" cy="-42" rx="32" ry="42" fill="#f4ead2" ${L(6,OUT)}/><path d="M-26 -24 q26 22 52 0 q-26 14 -52 0z" fill="#e2d6ba"/>
+    <circle cx="-8" cy="-52" r="3" fill="#c9b58e"/><circle cx="10" cy="-34" r="2.5" fill="#c9b58e"/><circle cx="12" cy="-60" r="2" fill="#c9b58e"/><ellipse cx="-12" cy="-62" rx="6" ry="10" fill="#fffaf0"/></g></g>`,
+  nest:(x,y,s=1)=>`<g class="nohit" transform="translate(${x} ${y}) scale(${s})"><path d="M-96 -16 q96 56 192 0 q-8 -42 -96 -42 q-88 0 -96 42z" fill="#b98a3c" ${L(6,OUT)}/>
+    <path d="M-80 -22 q40 22 70 4 M-20 -10 q40 18 84 -10 M-60 -40 q30 10 50 0 M10 -42 q30 12 60 -2" fill="none" ${L(4,'#e2b860')}/></g>`,
+  crackedEgg:(x,y)=>`<g class="nohit" transform="translate(${x} ${y})"><path d="M-34 -30 a34 30 0 0 0 68 0 l-10 -10 l-10 10 l-12 -12 l-12 12 l-12 -10 z" fill="#f4ead2" ${L(6,OUT)}/></g>`,
+  rock:(x,y)=>`<g class="tap" data-react="shake" data-sfx="pop" data-bubble="Bonk!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-50 0 q-12 -54 30 -66 q52 -10 64 32 q8 34 -14 34 z" fill="#a9a596" ${L(6,OUT)}/><path d="M-40 -8 q40 6 70 -10 q-4 18 -70 10z" fill="#918d7f"/><circle cx="-12" cy="-40" r="5" fill="#918d7f"/></g></g>`,
+  potato:(x,y)=>`<g class="tap" data-react="shake" data-sfx="pop" data-bubble="Potato!" transform="translate(${x} ${y})"><g class="anim">
+    <ellipse cx="0" cy="-32" rx="58" ry="34" fill="#c4935e" ${L(6,OUT)}/><path d="M-44 -18 q44 18 88 0 q-44 12 -88 0z" fill="#a97c4c"/>
+    <circle cx="-20" cy="-40" r="4" fill="#8a6533"/><circle cx="14" cy="-26" r="4" fill="#8a6533"/><circle cx="26" cy="-44" r="3" fill="#8a6533"/></g></g>`,
+  barnInside:()=>{ let t=`<rect x="-2000" y="-2000" width="5600" height="2720" fill="#b8402b"/>`;
+    for(let i=0;i<40;i++) t+=`<path d="M${i*60-600} -100 V720" stroke="#a3381f" stroke-width="5"/>`;
+    t+=`<path d="M-2000 330 H3600" ${L(26,'#6e2f1f')}/><path d="M300 -100 V720 M1300 -100 V720" ${L(30,'#6e2f1f')}/>
+      <rect x="1120" y="380" width="220" height="170" fill="#a9cbb6" stroke="#f4ead2" stroke-width="12"/><path d="M1230 380 V550 M1120 465 H1340" stroke="#f4ead2" stroke-width="8"/>
+      <path d="M1120 550 L900 1000 H1700 L1340 550 Z" fill="#f6e3a8" opacity=".25"/>
+      <path d="M520 330 l-40 400 M600 330 l-40 400" ${L(9,'#8a5e3c')}/>${[400,480,560,640].map(v=>`<path d="M${520-(v-330)/10} ${v} h80" ${L(8,'#8a5e3c')}/>`).join('')}
+      <path d="M-2000 720 H3600 V4000 H-2000 Z" fill="#e2c48a"/>`; _seed=5;
+    for(let i=0;i<60;i++){ const sx=-200+sr()*2000, sy=740+sr()*300; t+=`<path d="M${sx} ${sy} l${20+sr()*20} ${-4+sr()*8}" ${L(3,'#c99a3e')}/>`; }
+    return t; },
+  moon:(x,y)=>`<g class="nohit" transform="translate(${x} ${y})"><circle r="150" fill="#f4e3a6" opacity=".08"/><path d="M14 -79 A80 80 0 1 0 79 14 A72 72 0 1 1 14 -79 Z" fill="#f4e3a6"/></g>`,
+});
+
+
+/* ---- more critters: the bee book and the sea book ---- */
+function beeSmall(){ return `<g class="wingL"><ellipse cx="-14" cy="-40" rx="16" ry="24" fill="#e9f4f2" ${L(4.5,OUT)} transform="rotate(-20 -14 -40)"/></g>
+  <g class="wingR"><ellipse cx="14" cy="-42" rx="16" ry="24" fill="#e9f4f2" ${L(4.5,OUT)} transform="rotate(20 14 -42)"/></g>
+  <ellipse cx="0" cy="0" rx="42" ry="30" fill="#f2c94c" ${L(6,OUT)}/><path d="M-14 -28 q8 28 0 56 M8 -29 q8 29 0 58" ${L(11,OUT)} fill="none"/>
+  <path d="M-42 0 l-14 4 l14 6" fill="${OUT}"/><circle cx="30" cy="-6" r="5" fill="${OUT}"/><circle cx="31.5" cy="-8" r="1.8" fill="#fff"/><path d="M24 8 q8 6 14 -2" fill="none" ${L(3.5,OUT)}/>
+  <path d="M30 -26 q4 -22 16 -24 M38 -22 q10 -16 22 -12" fill="none" ${L(3.5,OUT)}/>`; }
+function squid(){ return `<path d="M-30 20 q-6 40 -20 56 M-14 22 q-2 44 -8 60 M2 22 q4 44 8 60 M18 20 q8 40 20 56" fill="none" ${L(6,OUT)}/>
+  <path d="M-30 20 q-6 40 -20 56 M-14 22 q-2 44 -8 60 M2 22 q4 44 8 60 M18 20 q8 40 20 56" fill="none" ${L(3,'#e7a7b6')}/>
+  <path d="M-34 24 q-6 -60 30 -96 q38 36 30 96 z" fill="#e7a7b6" ${L(6,OUT)}/><path d="M-40 -30 l-18 -24 l26 6 M32 -30 l18 -24 l-26 6" fill="#e7a7b6" ${L(5,OUT)}/>
+  <circle cx="-12" cy="0" r="8" fill="#fff" ${L(3,OUT)}/><circle cx="12" cy="0" r="8" fill="#fff" ${L(3,OUT)}/><circle cx="-11" cy="1" r="4" fill="${OUT}"/><circle cx="13" cy="1" r="4" fill="${OUT}"/>
+  <path d="M-6 14 q6 5 12 0" fill="none" ${L(3,OUT)}/>`; }
+function starfish(){ const pts=Array.from({length:10},(_,i)=>{const a=-Math.PI/2+i*Math.PI/5, r=i%2?20:52; return `${(Math.cos(a)*r).toFixed(1)},${(Math.sin(a)*r).toFixed(1)}`}).join(' ');
+  return `<g style="transform-box:fill-box;transform-origin:50% 50%"><polygon points="${pts}" fill="#ef9a4f" ${L(6,OUT)} stroke-linejoin="round"/>
+  ${[[0,-30],[26,-8],[16,24],[-16,24],[-26,-8]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="3.5" fill="#f9d18f"/>`).join('')}
+  <circle cx="-7" cy="-4" r="4" fill="${OUT}"/><circle cx="7" cy="-4" r="4" fill="${OUT}"/><path d="M-6 6 q6 5 12 0" fill="none" ${L(3,OUT)}/></g>`; }
+const FINDS={
+  ladybug:{draw:()=>ladybug(),anim:'fly',ms:2300,icon:'🐞',snd:()=>sfx.chime()},
+  bee:{draw:()=>beeSmall(),anim:'fly',ms:2300,icon:'🐝',snd:()=>buzz()},
+  caterpillar:{draw:()=>`<g transform="translate(-10 20)">${caterpillar()}</g>`,anim:'wiggle',ms:1500,icon:'🐛',snd:()=>[0,.1,.2,.3].forEach(d=>tone(700,1100,.06,'triangle',.07,d))},
+  snail:{draw:()=>`<g transform="translate(-30 10)">${snail()}</g>`,anim:'hide',ms:1700,icon:'🐌',snd:()=>tone(500,300,.3,'sine',.08)},
+  squid:{draw:()=>squid(),anim:'squirt',ms:1600,icon:'🦑',snd:()=>noise(.4,{type:'lowpass',f:900,f2:300,vol:.12})},
+  starfish:{draw:()=>starfish(),anim:'spinC',ms:1100,icon:'⭐',snd:()=>[1500,2000,2600].forEach((f,i)=>tone(f,f,.12,'triangle',.06,i*.07))},
+};
+const finds=page=>page.find||(page.bug?[['ladybug',...page.bug]]:[]);
+function buzz(){ voice(220,240,.5,{type:'sawtooth',lp:1400,vib:28,vol:.06}); }
+function blub(){ [0,.12,.26].forEach((d,i)=>tone(300+i*80,700+i*120,.09,'sine',.09,d)); }
+Object.assign(P,{
+  beeBig:(x,y)=>`<g class="tap" data-react="boing" data-say="Bzzz!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <g class="flapW"><ellipse cx="-24" cy="-118" rx="30" ry="44" fill="#e9f4f2" ${L(6,OUT)} transform="rotate(-18 -24 -118)"/><ellipse cx="20" cy="-122" rx="30" ry="44" fill="#e9f4f2" ${L(6,OUT)} transform="rotate(18 20 -122)"/></g>
+    <ellipse cx="0" cy="-60" rx="80" ry="56" fill="#f2c94c" ${L(6,OUT)}/><path d="M-28 -112 q14 52 0 104 M14 -114 q14 54 0 108" fill="none" ${L(20,OUT)}/>
+    <path d="M-60 -24 q60 30 120 0 q-60 18 -120 0z" fill="#c7a63e"/>
+    <path d="M-80 -60 l-26 8 l26 12" fill="${OUT}"/><circle cx="54" cy="-72" r="9" fill="${OUT}"/><circle cx="57" cy="-75" r="3" fill="#fff"/>
+    <path d="M42 -44 q14 12 28 -2" fill="none" ${L(5,OUT)}/><circle cx="34" cy="-50" r="8" fill="#e9a6a0" opacity=".7"/>
+    <path d="M52 -108 q6 -40 30 -44 M66 -100 q20 -30 42 -24" fill="none" ${L(5,OUT)}/><circle cx="82" cy="-152" r="7" fill="${OUT}"/><circle cx="108" cy="-124" r="7" fill="${OUT}"/></g></g></g>`,
+  hive:(x,y)=>`<g class="tap" data-react="shake" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-12 0 V-40 M12 0 V-40" ${L(10,OUT)}/><path d="M-12 0 V-40 M12 0 V-40" ${L(5,'#8a5e3c')}/>
+    ${[0,1,2,3,4].map(i=>`<rect x="${-110+i*14}" y="${-80-i*40}" width="${220-i*28}" height="46" rx="23" fill="${i%2?'#e2b860':'#ecca7c'}" ${L(6,OUT)}/>`).join('')}
+    <path d="M-26 -40 a26 30 0 0 1 52 0 z" fill="#3b2a1a" ${L(5,OUT)}/></g></g>`,
+  butterfly:(x,y)=>`<g class="tap" data-react="boing" data-say="Flutter!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <g class="flutterW l"><path d="M-6 -60 q-80 -80 -100 -20 q-10 40 100 30 z" fill="#ef9a4f" ${L(6,OUT)}/><path d="M-6 -50 q-70 30 -60 70 q30 10 60 -60z" fill="#e58a8a" ${L(6,OUT)}/><circle cx="-60" cy="-56" r="10" fill="#f6edd6"/></g>
+    <g class="flutterW r"><path d="M6 -60 q80 -80 100 -20 q10 40 -100 30 z" fill="#ef9a4f" ${L(6,OUT)}/><path d="M6 -50 q70 30 60 70 q-30 10 -60 -60z" fill="#e58a8a" ${L(6,OUT)}/><circle cx="60" cy="-56" r="10" fill="#f6edd6"/></g>
+    <ellipse cx="0" cy="-50" rx="10" ry="40" fill="${OUT}"/><circle cx="0" cy="-96" r="14" fill="${OUT}"/><path d="M-4 -106 q-10 -24 -24 -26 M4 -106 q10 -24 24 -26" fill="none" ${L(4,OUT)}/></g></g></g>`,
+  mouse:(x,y)=>`<g class="tap" data-react="boing" data-say="Squeak!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-40 -20 q-50 0 -60 -40" fill="none" ${L(5,OUT)}/><ellipse cx="0" cy="-30" rx="44" ry="30" fill="#a9a596" ${L(6,OUT)}/>
+    <circle cx="36" cy="-56" r="26" fill="#a9a596" ${L(6,OUT)}/><circle cx="24" cy="-84" r="16" fill="#e9a6a0" ${L(5,OUT)}/><circle cx="52" cy="-82" r="14" fill="#e9a6a0" ${L(5,OUT)}/>
+    <circle cx="44" cy="-58" r="4.5" fill="${OUT}"/><circle cx="60" cy="-48" r="5" fill="#e58a8a" ${L(3,OUT)}/><path d="M-20 -2 v-6 M20 -2 v-6" ${L(5,OUT)}/></g></g>`,
+  /* sea folk */
+  fish:(x,y)=>`<g class="tap" data-react="boing" data-say="Blub blub!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <path d="M-80 -70 l-46 -40 q-8 40 0 76 z" fill="#e9874a" ${L(6,OUT)}/>
+    <ellipse cx="0" cy="-70" rx="88" ry="60" fill="#f2a24e" ${L(6,OUT)}/><path d="M-50 -122 q20 22 0 104 M-10 -128 q20 30 0 116" fill="none" ${L(14,'#f6edd6')}/>
+    <path d="M-50 -122 q20 22 0 104 M-10 -128 q20 30 0 116" fill="none" ${L(3,OUT)}/>
+    <path d="M-10 -128 q30 -40 60 -10" fill="#e9874a" ${L(6,OUT)}/><path d="M-60 -30 q60 40 120 6 q-60 20 -120 -6z" fill="#d36d5a"/>
+    <circle cx="44" cy="-84" r="20" fill="#fff" ${L(5,OUT)}/><circle cx="48" cy="-84" r="10" fill="${OUT}"/><circle cx="51" cy="-88" r="3.5" fill="#fff"/>
+    <path d="M60 -52 q10 8 20 0" fill="none" ${L(5,OUT)}/><circle cx="30" cy="-56" r="8" fill="#e58a8a" opacity=".8"/></g></g></g>`,
+  octopus:(x,y)=>`<g class="tap" data-react="boing" data-say="Hello!" transform="translate(${x} ${y})"><g class="anim">
+    ${[-70,-40,-12,16,44,72].map((a,i)=>`<path d="M${a*.7} -60 q${a*.5} 30 ${a} 56 q${i%2?14:-14} 10 ${i%2?24:-24} -6" fill="none" ${L(26,OUT)}/><path d="M${a*.7} -60 q${a*.5} 30 ${a} 56 q${i%2?14:-14} 10 ${i%2?24:-24} -6" fill="none" ${L(18,'#c58b9e')}/>`).join('')}
+    <ellipse cx="0" cy="-110" rx="78" ry="82" fill="#c58b9e" ${L(6,OUT)}/><path d="M-50 -70 q50 30 100 0 q-50 18 -100 0z" fill="#a8708a"/>
+    <circle cx="-26" cy="-112" r="14" fill="#fff" ${L(4.5,OUT)}/><circle cx="26" cy="-112" r="14" fill="#fff" ${L(4.5,OUT)}/><circle cx="-24" cy="-110" r="7" fill="${OUT}"/><circle cx="28" cy="-110" r="7" fill="${OUT}"/>
+    <path d="M-14 -84 q14 12 28 0" fill="none" ${L(5,OUT)}/><circle cx="-48" cy="-90" r="8" fill="#e58a8a" opacity=".8"/><circle cx="48" cy="-90" r="8" fill="#e58a8a" opacity=".8"/>
+    <circle cx="-30" cy="-160" r="8" fill="#d7a3b4"/><circle cx="20" cy="-172" r="6" fill="#d7a3b4"/></g></g>`,
+  turtle:(x,y)=>`<g class="tap" data-react="boing" data-say="Slow and steady!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <path d="M-70 -40 q-40 10 -50 40 q40 -4 60 -22 M60 -40 q30 20 40 46 q-36 -2 -54 -26 M-50 -100 q-50 -30 -70 -10 q30 20 66 20" fill="#8fb35a" ${L(6,OUT)}/>
+    <circle cx="104" cy="-74" r="32" fill="#8fb35a" ${L(6,OUT)}/><circle cx="114" cy="-82" r="6" fill="${OUT}"/><circle cx="116" cy="-84" r="2" fill="#fff"/><path d="M112 -62 q10 6 18 -4" fill="none" ${L(4,OUT)}/>
+    <path d="M-90 -40 q0 -90 90 -90 q90 0 90 90 z" fill="#5f8048" ${L(6,OUT)}/>
+    <path d="M-40 -40 l10 -40 l40 -16 l40 16 l10 40 M-30 -80 l-40 6 M50 -80 l36 10 M10 -96 v-30" fill="none" ${L(4,'#3f5f36')}/>
+    <path d="M-90 -40 h180" ${L(8,OUT)}/><path d="M-80 -40 h160 v10 h-160z" fill="#c3d58f"/></g></g></g>`,
+  crab:(x,y)=>`<g class="tap" data-react="scuttle" data-say="Click click!" transform="translate(${x} ${y})"><g class="anim">
+    ${[-1,1].map(d=>`<path d="M${d*40} -30 l${d*34} 22 l${d*10} 20 M${d*30} -24 l${d*40} 6 l${d*14} 22 M${d*20} -20 l${d*30} 18 l${d*2} 22" fill="none" ${L(7,OUT)}/>`).join('')}
+    ${[-1,1].map(d=>`<path d="M${d*50} -70 q${d*30} -30 ${d*50} -60" fill="none" ${L(8,OUT)}/><path d="M${d*100} -150 q${d*40} -10 ${d*30} 30 q${d*-10} 20 ${d*-30} 0 l${d*16} -10 z" fill="#d0452f" ${L(6,OUT)}/>`).join('')}
+    <ellipse cx="0" cy="-50" rx="70" ry="42" fill="#d0452f" ${L(6,OUT)}/><path d="M-50 -24 q50 24 100 0 q-50 12 -100 0z" fill="#d36d5a"/>
+    <path d="M-18 -88 v-30 M18 -88 v-30" ${L(5,OUT)}/><circle cx="-18" cy="-122" r="11" fill="#fff" ${L(4,OUT)}/><circle cx="18" cy="-122" r="11" fill="#fff" ${L(4,OUT)}/>
+    <circle cx="-17" cy="-121" r="5" fill="${OUT}"/><circle cx="19" cy="-121" r="5" fill="${OUT}"/><path d="M-14 -50 q14 12 28 0" fill="none" ${L(5,OUT)}/></g></g>`,
+  seahorse:(x,y)=>`<g class="tap" data-react="boing" data-say="Peekaboo!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <path d="M40 -150 q40 -10 46 24 q-30 10 -46 -6z" fill="#ef9a4f" ${L(5,OUT)}/>
+    <path d="M-6 -214 C44 -196 56 -140 24 -100 C-6 -62 12 -20 50 -20 C82 -20 82 -62 54 -62 C40 -62 40 -44 52 -44" fill="none" ${L(52,OUT)}/>
+    <path d="M-6 -214 C44 -196 56 -140 24 -100 C-6 -62 12 -20 50 -20 C82 -20 82 -62 54 -62 C40 -62 40 -44 52 -44" fill="none" ${L(40,'#f2c94c')}/>
+    <path d="M-2 -180 q-16 40 0 70 M10 -150 h-22 M4 -124 h-22" fill="none" ${L(4,'#c7a63e')}/>
+    <path d="M-50 -222 L-104 -214" ${L(22,OUT)}/><path d="M-50 -222 L-104 -214" ${L(11,'#f2c94c')}/>
+    <ellipse cx="-20" cy="-226" rx="40" ry="30" fill="#f2c94c" ${L(6,OUT)} transform="rotate(-15 -20 -226)"/>
+    <path d="M-28 -254 l4 -20 l12 14 l8 -18 l8 22" fill="#ef9a4f" ${L(4,OUT)}/>
+    <circle cx="-16" cy="-230" r="11" fill="#fff" ${L(4,OUT)}/><circle cx="-18" cy="-230" r="5.5" fill="${OUT}"/><circle cx="-4" cy="-210" r="7" fill="#e58a8a" opacity=".8"/></g></g></g>`,
+  jelly:(x,y)=>`<g class="tap" data-react="boing" data-say="Glow!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <circle cx="0" cy="-130" r="110" fill="#f3b6c8" opacity=".18" class="glow"/>
+    ${[-40,-16,8,32].map((a,i)=>`<path d="M${a} -100 q${i%2?16:-16} 30 0 60 q${i%2?-16:16} 30 0 60" fill="none" ${L(6,'#f3b6c8')}/>`).join('')}
+    <path d="M-60 -100 q0 -80 60 -80 q60 0 60 80 q-15 12 -30 0 q-15 12 -30 0 q-15 12 -30 0 q-15 12 -30 0z" fill="#f3b6c8" ${L(6,OUT)}/>
+    <circle cx="-18" cy="-128" r="6" fill="${OUT}"/><circle cx="18" cy="-128" r="6" fill="${OUT}"/><path d="M-10 -112 q10 8 20 0" fill="none" ${L(4,OUT)}/>
+    <path d="M-36 -150 q10 -14 26 -14" fill="none" ${L(5,'#fff')}/></g></g></g>`,
+  whale:(x,y)=>`<g class="tap" data-react="boing" data-say="Whoosh!" transform="translate(${x} ${y})"><g class="hover"><g class="anim">
+    <path d="M-200 -120 q-60 -50 -70 -90 q40 10 60 40 q10 -50 40 -70 q4 50 -10 100" fill="#5d8fb0" ${L(6,OUT)}/>
+    <path d="M-200 -110 q0 -110 200 -110 q170 0 200 90 q10 60 -60 80 q-120 30 -280 10 q-60 -10 -60 -70z" fill="#5d8fb0" ${L(6,OUT)}/>
+    <path d="M-160 -60 q150 40 330 0 q-20 40 -100 50 q-120 10 -230 -10z" fill="#d7e3e0" ${L(5,OUT)}/>
+    ${[0,1,2,3,4].map(i=>`<path d="M${-100+i*50} -40 q0 20 6 32" fill="none" ${L(3,'#9fb9c4')}/>`).join('')}
+    <circle cx="130" cy="-130" r="10" fill="${OUT}"/><circle cx="133" cy="-134" r="3.5" fill="#fff"/><path d="M150 -90 q20 8 40 -6" fill="none" ${L(5,OUT)}/>
+    <circle cx="110" cy="-100" r="12" fill="#e58a8a" opacity=".7"/><path d="M0 -150 q-20 50 40 60 q-30 -50 -40 -60z" fill="#4b7a98"/></g></g></g>`,
+  clam:(x,y)=>`<g class="tap" data-react="clamOpen" data-say="A pearl!" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M-70 0 q0 -36 70 -36 q70 0 70 36 z" fill="#e7b6a8" ${L(6,OUT)}/><circle cx="0" cy="-36" r="16" fill="#fbf6ee" ${L(4,OUT)}/><circle cx="-5" cy="-41" r="5" fill="#fff"/>
+    <g class="lid"><path d="M-70 -2 q0 -80 70 -80 q70 0 70 80 z" fill="#efc7b8" ${L(6,OUT)}/>${[-40,-14,14,40].map(a=>`<path d="M0 -4 L${a} -70" ${L(3.5,'#c58b8b')}/>`).join('')}</g></g></g>`,
+  /* sea scenery */
+  coral:(x,y,c='#e58a8a',s=1)=>`<g class="tap" data-react="boing" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M-10 0 q-6 -60 -40 -90 q-20 -20 -10 -50 M-10 -60 q30 -30 20 -90 M20 0 q10 -50 50 -70 q20 -20 10 -60 M40 -60 q-20 -40 0 -70" fill="none" ${L(30,OUT)}/>
+    <path d="M-10 0 q-6 -60 -40 -90 q-20 -20 -10 -50 M-10 -60 q30 -30 20 -90 M20 0 q10 -50 50 -70 q20 -20 10 -60 M40 -60 q-20 -40 0 -70" fill="none" ${L(20,c)}/></g></g>`,
+  kelp:(x,y,h=420,s=1)=>`<g class="tap" data-react="shake" transform="translate(${x} ${y}) scale(${s})"><g class="wave" style="animation-delay:-${(Math.random()*3).toFixed(1)}s"><g class="anim">
+    <path d="M0 0 q-30 -${h*.25} 0 -${h*.5} q30 -${h*.25} 0 -${h}" fill="none" ${L(30,OUT)}/><path d="M0 0 q-30 -${h*.25} 0 -${h*.5} q30 -${h*.25} 0 -${h}" fill="none" ${L(22,'#6a9650')}/>
+    ${[.2,.4,.6,.8].map((f,i)=>`<path d="M0 -${h*f} q${i%2?40:-40} -20 ${i%2?60:-60} -60 q${i%2?-30:30} 10 ${i%2?-60:60} 60z" fill="#7fa35a" ${L(5,OUT)}/>`).join('')}</g></g></g>`,
+  anemone:(x,y,c='#c58b9e',s=1)=>`<g class="tap" data-react="boing" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    ${[-50,-30,-10,10,30,50].map((a,i)=>`<path d="M${a*.8} -50 q${i%2?10:-10} -30 ${a*.4} -60" fill="none" ${L(16,OUT)}/><path d="M${a*.8} -50 q${i%2?10:-10} -30 ${a*.4} -60" fill="none" ${L(9,c)}/>`).join('')}
+    <path d="M-70 0 q0 -70 70 -70 q70 0 70 70z" fill="${c}" ${L(6,OUT)}/><path d="M-50 -10 q50 20 100 0 q-50 10 -100 0z" fill="url(#dots)"/></g></g>`,
+  rockS:(x,y,s=1)=>`<g class="nohit" transform="translate(${x} ${y}) scale(${s})"><path d="M-120 0 q-10 -80 60 -100 q50 -20 110 10 q50 30 40 90z" fill="#7c8f98" ${L(6,OUT)}/><path d="M-100 -10 q80 20 190 -6 q-90 20 -190 6z" fill="#3d7f86"/></g>`,
+});
+
+/* ---- tag every kit piece so taps know what was touched; add sway, breathing and ground shadows ---- */
+const INKED=[];
+const SWAY=['tree','pine','flower'], BREATHE=['cow','pig','hen','duck','chick','frog','crab','octopus','clam'], SHADOW={crab:80,octopus:80,clam:70,hive:110,cow:110,pig:85,hen:55,duck:70,chick:40,frog:60,barn:180,hay:85,rock:50,potato:55,egg:36,scarecrow:70,bunny:45,tree:120,pine:100};
+for(const name of Object.keys(P)){
+  const orig=P[name]; if(typeof orig!=='function'||['sky','ground','hills','fence','stars','barnInside','leaf','button'].includes(name)) continue;
+  P[name]=(...args)=>{
+    const [x,y]=args; let inner=orig(...args);
+    if(SWAY.includes(name)) inner=`<g class="sway" style="animation-duration:${(3+Math.random()*2).toFixed(1)}s;animation-delay:-${(Math.random()*3).toFixed(1)}s">${inner}</g>`;
+    if(BREATHE.includes(name)) inner=`<g class="breathe" style="animation-delay:-${(Math.random()*3).toFixed(1)}s">${inner}</g>`;
+    if(name==='cloud') inner=`<g class="drift" style="animation-delay:-${(Math.random()*10).toFixed(1)}s">${inner}</g>`;
+    const sh=SHADOW[name]?`<ellipse class="nohit" cx="${x}" cy="${y+4}" rx="${SHADOW[name]}" ry="${(SHADOW[name]*.16).toFixed(0)}" fill="#2a1d16" opacity=".14"/>`:'';
+    const ink=INKED.includes(name)?' filter="url(#ink)"':'';
+    /* crosshatch shading: a copy of the drawing filled with hatching, faded in toward the lower right */
+    if(ink){ const h=inner.replace(/class="tap[^"]*"/g,'class="nohit"').replace(/ stroke="[^"]*"| stroke-width="[^"]*"/g,'');
+      inner=inner.replace(/<\/g><\/g>(?![\s\S]*<\/g><\/g>)/, m=>`<g class="nohit" mask="url(#shade)">${h.replace(/fill="(?!none)[^"]*"/g,'fill="url(#hatch)"').replace(/^[\s\S]*?<g class="anim[^"]*">/,'').replace(/<\/g><\/g>\s*$/,'')}</g><g class="nohit" mask="url(#shade2)">${h.replace(/fill="(?!none)[^"]*"/g,'fill="url(#hatch2)"').replace(/^[\s\S]*?<g class="anim[^"]*">/,'').replace(/<\/g><\/g>\s*$/,'')}</g>`+m); }
+    return `<g class="actor" data-who="${name}" data-ax="${x}" data-ay="${y}">${sh}<g${ink}>${inner}</g></g>`;
+  };
+}
+/* sky with a soft glow toward the horizon */
+
+const _sun=P.sun; P.sun=(x,y)=>`<circle class="nohit" cx="${x}" cy="${y}" r="150" fill="#f6e3a8" opacity=".35"/>`+_sun(x,y);
+
+/* ---- little effects, each removes itself ---- */
+function addFx(html,ms){ const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.innerHTML=recolor(html); fx.appendChild(g); setTimeout(()=>g.remove(),ms); }
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const tweet=()=>[0,.12,.3].forEach(d=>tone(2600,3400,.07,'sine',.12,d));
+const REACT={
+  tree:(x,y)=>{ let s=''; for(let k=0;k<3;k++){ const bx=x+rnd(-90,90), by=y-rnd(230,300);
+      s+=`<g transform="translate(${bx} ${by})"><g class="fxfly" style="--dx:${rnd(250,500)|0}px;--dy:${-rnd(350,520)|0}px;animation-delay:${k*.15}s">
+      <ellipse rx="16" ry="11" fill="#5ab4e0" ${S(4)}/><circle cx="14" cy="-8" r="8" fill="#5ab4e0" ${S(4)}/><path d="M22 -8 l8 3 l-8 3z" fill="#f2a03d"/>
+      <path class="flap" d="M-6 -4 q-10 -22 -24 -16 q8 10 24 16" fill="#8fd3f4" ${S(3)}/></g></g>`; }
+    for(let k=0;k<4;k++) s+=`<g transform="translate(${x+rnd(-120,120)} ${y-rnd(180,260)})"><path class="fxfloat" style="--dx:${rnd(-80,80)|0}px;--dy:${rnd(180,260)|0}px;--r:${rnd(-200,200)|0}deg" d="M0 0 q12 -14 24 0 q-12 14 -24 0z" fill="#4fae46" ${S(3)}/></g>`;
+    addFx(s,2800); },
+  pine:(x,y)=>REACT.tree(x,y-40),
+  cloud:(x,y)=>{ let s=''; for(let k=0;k<14;k++) s+=`<path class="fxdrop" style="animation-delay:${rnd(0,.9).toFixed(2)}s" d="M${x+rnd(-80,80)} ${y+20} q-6 14 0 20 q6 -6 0 -20z" fill="#5ab4e0"/>`;
+    addFx(s,2000); },
+  flower:(x,y)=>{ let s=''; const c=['#ff7eb6','#ffd23f','#9b7cff','#ff9a3d'];
+    for(let k=0;k<5;k++) s+=`<g transform="translate(${x} ${y-90})"><ellipse class="fxfloat" style="--dx:${rnd(-120,120)|0}px;--dy:${rnd(-140,-40)|0}px;--r:${rnd(-300,300)|0}deg" rx="10" ry="15" fill="${c[k%4]}" ${S(3)}/></g>`;
+    addFx(s,2700); },
+  pond:(x,y)=>{ let s=`<ellipse class="fxring" cx="${x-40}" cy="${y}" rx="60" ry="18" fill="none" stroke="#fff" stroke-width="6"/>`+
+      `<g transform="translate(${x+20} ${y})"><g class="fxjump"><ellipse rx="34" ry="16" fill="#f2a03d" ${S(4)}/><path d="M30 0 l22 -14 v28z" fill="#f2a03d" ${S(4)}/><circle cx="-18" cy="-4" r="4" fill="${OUT}"/></g></g>`;
+    addFx(s,1500); },
+  barn:(x,y)=>{ addFx(`<g transform="translate(${x} ${y})"><rect x="-70" y="-150" width="140" height="150" fill="#3b2418"/>
+      <g class="fxpeek"><circle cx="0" cy="-30" r="34" fill="#a7a3a0" ${S(5)}/><circle cx="-24" cy="-62" r="16" fill="#a7a3a0" ${S(4)}/><circle cx="24" cy="-62" r="16" fill="#a7a3a0" ${S(4)}/>
+        <circle cx="-10" cy="-36" r="5" fill="${OUT}"/><circle cx="10" cy="-36" r="5" fill="${OUT}"/><circle cx="0" cy="-22" r="5" fill="#ff8fa6"/></g>
+      <g class="doorL"><rect x="-70" y="-150" width="70" height="150" fill="#b8402b" stroke="#f4ead2" stroke-width="9"/><path d="M-70 -150 L0 0 M0 -150 L-70 0" stroke="#f4ead2" stroke-width="7"/></g>
+      <g class="doorR"><rect x="0" y="-150" width="70" height="150" fill="#b8402b" stroke="#f4ead2" stroke-width="9"/><path d="M70 -150 L0 0 M0 -150 L70 0" stroke="#f4ead2" stroke-width="7"/></g></g>`,2700);
+    setTimeout(()=>bubble(x+60,y-200,'Squeak!'),600); },
+  hay:(x,y)=>{ addFx(`<g transform="translate(${x+20} ${y-80})"><g class="fxpeek"><circle r="26" fill="#a7a3a0" ${S(4)}/><circle cx="-16" cy="-22" r="11" fill="#a7a3a0" ${S(4)}/><circle cx="16" cy="-22" r="11" fill="#a7a3a0" ${S(4)}/>
+      <circle cx="-8" cy="-4" r="4" fill="${OUT}"/><circle cx="8" cy="-4" r="4" fill="${OUT}"/></g></g><rect x="${x-80}" y="${y-90}" width="160" height="90" rx="20" fill="#f0c34f" ${S(6)}/>`,2500);
+    setTimeout(()=>bubble(x+40,y-150,'Squeak!'),500); },
+  hen:(x,y)=>{ let s=''; for(let k=0;k<3;k++) s+=`<g transform="translate(${x} ${y-80})"><path class="fxfloat" style="--dx:${rnd(-100,100)|0}px;--dy:${rnd(-120,-40)|0}px;--r:${rnd(-180,180)|0}deg" d="M0 0 q10 -20 4 -36 q-10 16 -4 36z" fill="#fff" ${S(3)}/></g>`; addFx(s,2700); },
+  pig:(x,y)=>{ let s=''; for(let k=0;k<6;k++) s+=`<circle class="fxsplat" style="--dx:${rnd(-120,120)|0}px;--dy:${rnd(-90,10)|0}px" cx="${x}" cy="${y-30}" r="${rnd(8,16)|0}" fill="#7a5133"/>`; addFx(s,1000); },
+  duck:(x,y)=>{ let s=''; for(let k=0;k<7;k++) s+=`<circle class="fxsplat" style="--dx:${rnd(-110,110)|0}px;--dy:${rnd(-120,-20)|0}px" cx="${x}" cy="${y-30}" r="${rnd(6,12)|0}" fill="#8fd3f4" stroke="#fff" stroke-width="3"/>`; addFx(s,1000); },
+
+};
+function sparkle(x,y){ addFx(`<g transform="translate(${x} ${y})"><path class="fxspark" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7Z" fill="#ffd23f" ${S(4)}/></g>`,800); }
+function toWorld(e){ const st=$('stage'); const pt=st.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; const m=fx.getScreenCTM(); return m?pt.matrixTransform(m.inverse()):{x:800,y:500}; }
+
+/* ---- scene backdrops ---- */
+const SCENE={
+  yard:()=>P.sky()+P.sun(1380,320)+P.cloud(430,330,1)+P.cloud(930,230,.6)+P.hills(650)+P.ground(720)+P.tree(1500,760,.8)+P.barn(300,730)+P.fence(560,1240,750)
+     +P.flower(1460,970,'#e58a8a',.9)+P.flower(1540,990,'#f0c055',.8),
+  barn:()=>P.barnInside()+P.hay(1250,870)+P.hay(1420,880)+P.hay(1335,786),
+  pond:()=>P.sky()+P.sun(230,320)+P.cloud(1100,300,.8)+P.hills(640)+P.ground(710)+P.pond(800,850)+P.pine(1430,740,.95)+P.pine(1560,770,.75)
+     +P.flower(130,970,'#f0c055',.9)+P.flower(220,995,'#e58a8a',.75),
+  meadow:()=>P.sky()+P.hills(640)+P.cloud(700,320,.95)+P.sun(1420,320)+P.ground(710)+P.tree(1180,830,1.05,'#e9874a')
+     +P.flower(250,900,'#e58a8a')+P.flower(380,940,'#f0c055',.9)+P.flower(520,910,'#f4ead2')+P.flower(320,985,'#e9874a',.8)+P.flower(160,950,'#8d86c6',.85),
+  night:()=>P.sky('night')+P.stars()+P.moon(1300,330)+P.hills(660,true)+P.ground(720,true)
+     +`<g transform="translate(330 730)"><path d="M-160 0 V-200 H160 V0 Z" fill="#6b2f24"/><path d="M-182 -196 L-118 -300 L0 -344 L118 -300 L182 -196 Z" fill="#2a3533"/>
+       <rect x="-36" y="-282" width="72" height="62" fill="#f2c35a"/><rect x="-36" y="-282" width="72" height="62" fill="#fff3c0" opacity=".4" class="blink"/><rect x="-70" y="-150" width="140" height="150" fill="#57261d"/></g>`
+     +Array.from({length:14},(_,i)=>`<circle class="blink nohit" style="animation-delay:${(i*.37%2).toFixed(2)}s" cx="${(i*151)%1600}" cy="${760+(i*67)%180}" r="5" fill="#f6e08a"/>`).join(''),
+};
+
+/* ---- painted backgrounds: a picture fills the scene; hotspots on it are shooting-gallery targets ---- */
+/* the painting covers whatever part of the world is on screen; hotspot coordinates are in the picture's own pixels */
+let PX, PY, PK, VIEW={x0:0,y0:170,x1:1600,y1:1170};
+/* actors are placed as if on a 16:10 tablet (painting scale CK, offset COX/COY); on other screens they move and scale with the painting so they stay on the same painted spot */
+const CK=1.225, COX=-92, COY=170, toPic=(x,y)=>[(x-COX)/CK,(y-COY)/CK];
+function paintMap(d,focus){ const vw=VIEW.x1-VIEW.x0, vh=VIEW.y1-VIEW.y0; PK=Math.max(vw/d.w, vh/d.h);
+  let ox=VIEW.x0+(vw-d.w*PK)/2; const oy=VIEW.y0+(vh-d.h*PK)*.6;
+  if(focus!=null){ ox=VIEW.x0+vw/2-focus*PK; ox=Math.min(VIEW.x0,Math.max(VIEW.x1-d.w*PK,ox)); }
+  PX=px=>ox+px*PK; PY=py=>oy+py*PK; }
+const pts=a=>a.map(([x,y])=>`${PX(x).toFixed(0)},${PY(y).toFixed(0)}`).join(' ');
+function painted(d,focus){
+  paintMap(d,focus);
+  let s=`<rect x="-3000" y="-3000" width="7600" height="3600" fill="${d.top||'#3f8f86'}"/><rect x="-3000" y="600" width="7600" height="4000" fill="${d.bottom||'#7d9a4f'}"/>
+    <image id="paint" href="${d.src}" x="${PX(0)}" y="${PY(0)}" width="${d.w*PK}" height="${d.h*PK}" preserveAspectRatio="none"/>`;
+  (d.hot||[]).forEach((h,i)=>{
+    const shape=h.poly?`<polygon class="hot" points="${pts(h.poly)}"/>`:`<circle class="hot" cx="${PX(h.c[0])}" cy="${PY(h.c[1])}" r="${h.r*PK}"/>`;
+    const c=h.c?[PX(h.c[0]),PY(h.c[1])]:center(h.poly);
+    s+=`<g class="tap actor" data-hot="${i}" data-who="${h.who}" data-ax="${c[0]|0}" data-ay="${c[1]|0}">${shape}</g>`;
+  });
+  return s;
+}
+function center(poly){ const xs=poly.map(p=>PX(p[0])), ys=poly.map(p=>PY(p[1])); return [(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2]; }
+function bounds(poly){ const xs=poly.map(p=>PX(p[0])), ys=poly.map(p=>PY(p[1])); return {x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)}; }
+function tween(ms,fn,done){ const t0=performance.now(); const step=t=>{ const k=Math.min(1,(t-t0)/ms); fn(k); if(k<1) requestAnimationFrame(step); else if(done) done(); }; requestAnimationFrame(step); }
+let uid=0;
+/* critters that pop out of things */
+const CRIT={
+  mouse:(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})"><circle cx="0" cy="-30" r="34" fill="#a7a3a0" ${S(5)}/><circle cx="-24" cy="-62" r="16" fill="#a7a3a0" ${S(4)}/><circle cx="24" cy="-62" r="16" fill="#a7a3a0" ${S(4)}/>
+    <circle cx="-10" cy="-36" r="5" fill="${OUT}"/><circle cx="10" cy="-36" r="5" fill="${OUT}"/><circle cx="0" cy="-22" r="5" fill="#d9826f"/></g>`,
+  chick:(x,y,s=1)=>P.chick(x,y,s), pig:(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s}) translate(${-x} ${-y})">${P.pig(x,y)}</g>`,
+  bunny:(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s}) translate(${-x} ${-y})">${P.bunny(x,y)}</g>`,
+  bird:(c='#4f9c9b')=>`<ellipse rx="16" ry="11" fill="${c}" ${S(4)}/><circle cx="14" cy="-8" r="8" fill="${c}" ${S(4)}/><path d="M22 -8 l8 3 l-8 3z" fill="#e08a3c"/><path class="flap" d="M-6 -4 q-10 -22 -24 -16 q8 10 24 16" fill="#a6cfc4" ${S(3)}/>`,
+  butterfly:(c='#e58a8a')=>`<g class="flap"><path d="M0 0 q-26 -30 -30 -6 q4 16 30 6 M0 0 q26 -30 30 -6 q-4 16 -30 6" fill="${c}" ${S(3)}/></g><path d="M0 -8 v16" ${S(4)}/>`,
+  hopper:()=>`<path d="M-20 0 q10 -16 34 -10 l8 6 q-20 10 -42 4z" fill="#86a95a" ${S(3)}/><path d="M0 -6 l-12 -18 l-10 22" fill="none" ${S(3)}/><circle cx="18" cy="-8" r="3" fill="${OUT}"/>`,
+};
+/* pop something up from behind an edge at (x,y) */
+function popUp(x,y,html,ms=2500){ const id='pc'+(uid++);
+  addFx(`<clipPath id="${id}"><rect x="${x-300}" y="${y-500}" width="600" height="500"/></clipPath><g clip-path="url(#${id})"><g class="fxpeek">${html}</g></g>`,ms); }
+function flyOut(x,y,n=3,what='bird'){ let s=''; for(let k=0;k<n;k++) s+=`<g transform="translate(${x+rnd(-60,60)} ${y+rnd(-30,30)})"><g class="fxfly" style="--dx:${(rnd(250,500)*(Math.random()<.5?-1:1))|0}px;--dy:${-rnd(300,500)|0}px;animation-delay:${k*.15}s">${CRIT[what]()}</g></g>`; addFx(s,2900); }
+function flutter(x,y,n=2){ let s=''; const cs=['#e58a8a','#f0c055','#8d86c6'];
+  for(let k=0;k<n;k++) s+=`<g transform="translate(${x+rnd(-40,40)} ${y-rnd(20,60)})"><g class="fxacross" style="--dx:${(rnd(300,600)*(k%2?-1:1))|0}px;--dy:${-rnd(150,300)|0}px;animation-delay:${k*.2}s">${CRIT.butterfly(cs[k%3])}</g></g>`; addFx(s,3600); }
+/* the barn doors in the painting swing open on their hinges */
+function barnDoors(h,inside,say){
+  const L=h.doorL, R=h.doorR, id='d'+(uid++), bL=bounds(L), bR=bounds(R);
+  const cx=(bL.x0+bR.x1)/2, by=Math.max(bL.y1,bR.y1), dh=Math.max(bL.y1-bL.y0,bR.y1-bR.y0);
+  addFx(`<clipPath id="${id}o"><polygon points="${pts(L)}"/><polygon points="${pts(R)}"/></clipPath>
+    <clipPath id="${id}l"><polygon points="${pts(L)}"/></clipPath><clipPath id="${id}r"><polygon points="${pts(R)}"/></clipPath>
+    <polygon points="${pts(L)}" fill="#24170f"/><polygon points="${pts(R)}" fill="#24170f"/>
+    <g clip-path="url(#${id}o)"><g class="fxpeek">${inside(cx,by,dh/180)}</g></g>
+    <g id="${id}L"><g clip-path="url(#${id}l)"><use href="#paint"/></g><polygon points="${pts(L)}" fill="none" ${S(4)}/></g>
+    <g id="${id}R"><g clip-path="url(#${id}r)"><use href="#paint"/></g><polygon points="${pts(R)}" fill="none" ${S(4)}/></g>`,2900);
+  const gl=document.getElementById(id+'L'), gr=document.getElementById(id+'R');
+  const swing=k=>{ const o=k<.2?1-k/.2*.9:(k>.8?.1+(k-.8)/.2*.9:.1);
+    gl.setAttribute('transform',`translate(${bL.x0} 0) scale(${o} 1) translate(${-bL.x0} 0)`); gr.setAttribute('transform',`translate(${bR.x1} 0) scale(${o} 1) translate(${-bR.x1} 0)`); };
+  tween(2700,swing); SOUND.barn&&voiceCreak(); if(say) setTimeout(()=>bubble(cx+60,by-dh-40,say),650);
+}
+function voiceCreak(){ voice(90,140,.6,{lp:500,vol:.06}); }
+/* each target hides a few surprises and takes turns */
+const GALLERY={
+  sun:[ (x,y,h)=>{ const r=h.r*PK; addFx(`<g transform="translate(${x} ${y})"><g class="fxshades"><path d="M${-r*.75} ${-r*.12} h${r*.62} v${r*.2} q0 ${r*.28} ${-r*.31} ${r*.28} q${-r*.31} 0 ${-r*.31} ${-r*.28}z M${r*.13} ${-r*.12} h${r*.62} v${r*.2} q0 ${r*.28} ${-r*.31} ${r*.28} q${-r*.31} 0 ${-r*.31} ${-r*.28}z M${-r*.13} ${-r*.08} h${r*.26}" fill="${OUT}" ${S(6)}/></g></g>`,2700); setTimeout(()=>bubble(x+r*.6,y+r*.3,'Cool!'),500); SOUND.sun(); },
+        (x,y,h)=>{ const r=h.r*PK; addFx(`<circle class="fxglow" cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#f4e3a6" stroke-width="18"/><circle class="fxglow" style="animation-delay:.3s" cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#f0c055" stroke-width="12"/>`,2000); bubble(x+r*.6,y+r*.3,'Hello!'); SOUND.sun(); },
+        (x,y,h)=>{ for(let k=0;k<8;k++) setTimeout(()=>sparkle(x+rnd(-h.r,h.r)*PK,y+rnd(-h.r,h.r)*PK),k*90); SOUND.flower(); } ],
+  cloud:[ (x,y,h)=>{ let s=''; const w=h.r*PK*.8; for(let k=0;k<20;k++) s+=`<path class="fxdrop" style="animation-delay:${rnd(0,1.2).toFixed(2)}s" d="M${x+rnd(-w,w)} ${y+rnd(0,h.r*PK*.4)} q-6 14 0 20 q6 -6 0 -20z" fill="#4f9c9b"/>`; addFx(s,2300); SOUND.cloud(); },
+          (x,y,h)=>{ const r=h.r*PK; addFx(`<g transform="translate(${x} ${y+r*.5})"><g class="fxbow">${['#c9432f','#e08a3c','#f0c055','#86a95a','#4f9c9b','#8d86c6'].map((c,i)=>`<path d="M${-r*1.1+i*14} 0 a${r*1.1-i*14} ${r*.9-i*14} 0 0 1 ${2*(r*1.1-i*14)} 0" fill="none" stroke="${c}" stroke-width="15"/>`).join('')}</g></g>`,3100); SOUND.flower(); },
+          (x,y)=>{ flyOut(x,y,2); SOUND.tree(); } ],
+  barn:[ (x,y,h)=>{ barnDoors(h,(cx,by,s)=>CRIT.mouse(cx,by,s*1.4),'Squeak!'); setTimeout(()=>[0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d)),700); },
+         (x,y,h)=>{ barnDoors(h,(cx,by,s)=>P.chick(cx,by,s*1.6),'Peep!'); setTimeout(()=>SOUND.chick(),700); },
+         (x,y,h)=>{ barnDoors(h,(cx,by,s)=>CRIT.pig(cx-60*s,by,s*1.1),'Oink!'); setTimeout(()=>SOUND.pig(),700); } ],
+  fence:[ (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+60,b.x1-60), py=b.y0+(b.y1-b.y0)*.45; popUp(px,py,CRIT.bunny(px,py+40,.8)); setTimeout(()=>bubble(px+30,py-140,'Hop!'),500); SOUND.bunny(); },
+          (x,y,h)=>{ const b=bounds(h.poly); flyOut(rnd(b.x0,b.x1),b.y0+40,1); [0,.12,.3].forEach(d=>tone(2600,3400,.07,'sine',.08,d)); },
+          (x,y,h)=>{ flutter(x,y,2); } ],
+  grass:[ (x,y)=>{ addFx(`<g transform="translate(${x-40} ${y+60})"><g class="fxjump">${CRIT.hopper()}</g></g>`,1300); tone(2400,2800,.05,'square',.03); tone(2400,2800,.05,'square',.03,.1); },
+          (x,y)=>{ flutter(x,y,2); },
+          (x,y,h)=>{ const b=bounds(h.poly), px=(b.x0+b.x1)/2, py=b.y0+(b.y1-b.y0)*.55; popUp(px,py,CRIT.bunny(px,py+40,.7)); SOUND.bunny(); } ],
+  tree:[ (x,y)=>{ flyOut(x,y-60,3); SOUND.tree(); }, (x,y)=>{ REACT.tree(x,y+260); SOUND.tree(); }, (x,y)=>{ flutter(x,y,3); } ],
+  pond:[ (x,y)=>{ REACT.pond(x,y); SOUND.pond(); }, (x,y)=>{ addFx(`<g transform="translate(${x-60} ${y})"><g class="fxjump">${P.frog(0,0)}</g></g>`,1300); SOUND.frog(); }, (x,y)=>{ addFx(`<ellipse class="fxring" cx="${x}" cy="${y}" rx="80" ry="22" fill="none" stroke="#f5eddb" stroke-width="6"/><ellipse class="fxring" style="animation-delay:.25s" cx="${x}" cy="${y}" rx="80" ry="22" fill="none" stroke="#f5eddb" stroke-width="5"/>`,1800); SOUND.pond(); } ],
+  flowers:[ (x,y)=>{ flutter(x,y,3); }, (x,y)=>{ REACT.flower(x,y+90); SOUND.flower(); }, (x,y)=>{ for(let k=0;k<6;k++) setTimeout(()=>sparkle(x+rnd(-90,90),y+rnd(-60,40)),k*100); SOUND.flower(); } ],
+  moon:[ (x,y)=>{ addFx(`<g transform="translate(${x+300} ${y-120})"><g class="fxstar"><path d="M0 0 L120 -60" stroke="#f4e3a6" stroke-width="6" stroke-linecap="round" opacity=".7"/><path d="M0 -14 L4 -4 L14 0 L4 4 L0 14 L-4 4 L-14 0 L-4 -4Z" fill="#f4e3a6"/></g></g>`,1400); [0,.1,.2].forEach((d,i)=>tone(1600+i*400,1600+i*400,.2,'triangle',.04,d)); },
+          (x,y,h)=>{ for(let k=0;k<6;k++) setTimeout(()=>sparkle(x+rnd(-260,260),y+rnd(-120,200)),k*120); SOUND.flower(); },
+          (x,y)=>{ bubble(x+80,y+60,'Hoo hoo!'); voice(420,380,.3,{type:'sine',lp:1200,vol:.07}); voice(420,380,.4,{type:'sine',lp:1200,vol:.07,delay:.4}); } ],
+  window:[ (x,y,h)=>{ const r=(h.r||40)*PK; addFx(`<circle class="fxhold" cx="${x}" cy="${y}" r="${r}" fill="#183847" opacity=".85"/>`,1400); tone(1200,1200,.05,'square',.03); setTimeout(()=>tone(1500,1500,.05,'square',.03),1300); } ],
+  hay:[ (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+80,b.x1-80), py=b.y0+(b.y1-b.y0)*.35; popUp(px,py,CRIT.mouse(px,py+50,1)); setTimeout(()=>bubble(px+30,py-110,'Squeak!'),500); [0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d+.5)); },
+         (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+80,b.x1-80), py=b.y0+(b.y1-b.y0)*.35; popUp(px,py,P.chick(px,py+60,1)); setTimeout(()=>bubble(px+30,py-110,'Peep!'),500); SOUND.chick(); },
+         (x,y)=>{ let s=''; for(let k=0;k<12;k++) s+=`<g transform="translate(${x+rnd(-80,80)} ${y+rnd(-40,40)})"><path class="fxfloat" style="--dx:${rnd(-160,160)|0}px;--dy:${rnd(-160,40)|0}px;--r:${rnd(-300,300)|0}deg" d="M0 0 l28 -6" stroke="#e3bd62" stroke-width="5" stroke-linecap="round"/></g>`; addFx(s,2700); noise(.4,{f:2500,q:.7,vol:.05}); } ],
+  beam:[ (x,y,h)=>{ for(let k=0;k<10;k++) setTimeout(()=>sparkle(x+rnd(-120,120),y+rnd(-120,160)),k*110); SOUND.flower(); }, (x,y)=>{ flyOut(x,y,1); SOUND.tree(); } ],
+  hen:[ (x,y)=>{ REACT.hen(x,y+80); SOUND.hen(); bubble(x+60,y-80,'Bawk!'); } ],
+  nest:[ (x,y)=>{ popUp(x,y,P.egg(x,y+30,1)); SOUND.egg(); setTimeout(()=>bubble(x+40,y-100,'Peep?'),500); } ],
+};
+const shots={};
+CRIT.beeMini=()=>`<g transform="scale(.5)">${beeSmall()}</g>`;
+function bubblesFx(x,y,n=8){ let t=''; for(let k=0;k<n;k++) t+=`<circle class="fxfloat" style="--dx:${rnd(-60,60)|0}px;--dy:${-rnd(160,320)|0}px;--r:0deg;animation-delay:${(k*.08).toFixed(2)}s" cx="${x+rnd(-30,30)}" cy="${y}" r="${rnd(6,16)|0}" fill="none" stroke="#e6f6f4" stroke-width="4"/>`; addFx(t,3000); }
+Object.assign(REACT,{
+  hive:(x,y)=>flyOut(x,y-120,4,'beeMini'),
+  fish:(x,y)=>bubblesFx(x+90,y-90,6),
+  whale:(x,y)=>{ let t=''; for(let k=0;k<10;k++) t+=`<circle class="fxfloat" style="--dx:${rnd(-120,120)|0}px;--dy:${-rnd(120,260)|0}px;--r:0deg;animation-delay:${(k*.05).toFixed(2)}s" cx="${x+40}" cy="${y-220}" r="${rnd(8,18)|0}" fill="#e6f6f4" opacity=".9"/>`; addFx(t,2800); },
+  octopus:(x,y)=>addFx(`<g transform="translate(${x-60} ${y-90})"><g class="fxink">${[[-40,0,60],[30,-20,70],[10,40,55],[-20,-40,50],[60,30,45]].map(([a,b,r])=>`<circle cx="${a}" cy="${b}" r="${r}" fill="#2b2338"/>`).join('')}</g></g>`,2500),
+  jelly:(x,y)=>addFx(`<circle class="fxglow" cx="${x}" cy="${y-130}" r="120" fill="none" stroke="#f3b6c8" stroke-width="16"/>`,1700),
+  coral:(x,y)=>bubblesFx(x,y-150,7),
+  clam:(x,y)=>{ for(let k=0;k<5;k++) setTimeout(()=>sparkle(x+rnd(-50,50),y-rnd(40,120)),k*120); },
+  butterfly:(x,y)=>flutter(x,y-80,2),
+});
+function gallery(g){ const page=BOOK.pages[cur], d=BOOK.art[page.scene], i=+g.dataset.hot, h=d.hot[i], list=GALLERY[h.who]; if(!list) return;
+  const key=cur+':'+i, n=shots[key]=(shots[key]||0); shots[key]++; list[n%list.length](+g.dataset.ax,+g.dataset.ay,h); }
+
+
+const sea=(deep)=>{ const top=deep?'#0f2a3d':'#5fb3c4', mid=deep?'#143a52':'#2f8ba0', bot=deep?'#1b4a5e':'#1f6b80';
+  let t=`<rect x="-2000" y="-2000" width="5600" height="4000" fill="${top}"/><rect x="-2000" y="200" width="5600" height="800" fill="${mid}" opacity=".7"/><rect x="-2000" y="560" width="5600" height="600" fill="${bot}" opacity=".7"/>`;
+  if(!deep) t+=[100,420,800,1180,1500].map((x,i)=>`<path class="drift nohit" style="animation-delay:-${i*2}s" d="M${x} -100 l120 0 l${-120+i*30} 900 l-60 0 z" fill="#ffffff" opacity=".1"/>`).join('')
+     +`<rect class="nohit" x="-2000" y="150" width="5600" height="420" fill="url(#dotsW)" opacity=".7"/>`;
+  _seed=21; for(let i=0;i<16;i++){ const bx=sr()*1600, by=650+sr()*350, r=5+sr()*9; t+=`<circle class="rise nohit" style="animation-delay:-${(sr()*6).toFixed(1)}s" cx="${bx}" cy="${by}" r="${r}" fill="none" stroke="#e6f6f4" stroke-width="3" opacity=".8"/>`; }
+  return t; };
+const sand=(y,deep)=>{ _seed=31; let t=`<path d="M-2000 ${y} Q 300 ${y-50} 800 ${y} T 3600 ${y} V 4000 H -2000 Z" fill="${deep?'#6e6a55':'#e8d3a0'}" ${L(5,OUT)}/>
+  <path d="M-2000 ${y+140} Q 600 ${y+90} 1100 ${y+150} T 3600 ${y+130} V 4000 H -2000 Z" fill="${deep?'#5e5a48':'#dcc28a'}"/><path d="M-2000 ${y+40} H3600 V ${y+400} H-2000Z" fill="url(#dots)" opacity=".35"/>`;
+  for(let i=0;i<22;i++){ const sx=-100+sr()*1800, sy=y+30+sr()*300; t+=`<path d="M${sx} ${sy} q10 -8 20 0" fill="none" ${L(3,deep?'#4a4738':'#c5a86e')}/>`; }
+  return `<g class="nohit">${t}</g>`; };
+Object.assign(SCENE,{
+  garden:()=>P.sky()+P.sun(1380,320)+P.cloud(500,320,.9)+P.hills(650)+P.ground(720)
+     +`<g class="nohit">${[780,860,940].map(y=>`<path d="M-2000 ${y} H3600" ${L(30,'#8a5e3c')}/><path d="M-2000 ${y} H3600" ${L(3,'#6e4a2f')}/>`).join('')}</g>`
+     +P.scarecrow(1420,830)+P.cabbage(160,790,.8)+P.cabbage(360,790,.8)+P.carrot(560,790)+P.carrot(660,790)+P.cabbage(240,870,.85)+P.carrot(820,870)+P.flower(1560,980,'#f0c055',.8),
+  reef:()=>sea()+sand(740)+P.rockS(180,760,1.1)+P.coral(120,760,'#e58a8a')+P.coral(330,770,'#ef9a4f',.8)+P.coral(1300,760,'#c58b9e',1.1)+P.coral(1480,770,'#e58a8a',.85)+P.kelp(1560,760,380,.9),
+  kelp:()=>sea()+sand(760)+[60,220,380,1180,1340,1500].map((x,i)=>P.kelp(x,770+(i%2)*20,420+(i%3)*90,1)).join('')+P.rockS(1420,790,.8),
+  sand:()=>sea()+sand(700)+P.rockS(1350,740,1.2)+P.rockS(200,760,.8)+P.coral(1500,740,'#ef9a4f',.8)+P.kelp(80,740,300,.8),
+  deep:()=>sea(true)+sand(760,true)+P.rockS(1300,780,1.2)+P.kelp(1500,780,360,.9)+P.kelp(120,790,300,.8)
+     +Array.from({length:30},(_,i)=>`<circle class="blink nohit" style="animation-delay:${(i*.29%2).toFixed(2)}s" cx="${(i*197)%1600}" cy="${200+(i*83)%520}" r="${2+(i%3)}" fill="#bfe8e0"/>`).join(''),
+});
+
+
+/* ---- lift-the-flap: a flap covers a hiding animal; tap to lift it, tap again to close ---- */
+const FLAP={
+  door:{axis:'x',icon:'🚪',front:(w,h)=>`<rect width="${w}" height="${h}" fill="#b8402b" stroke="#f4ead2" stroke-width="12"/><rect width="${w}" height="${h}" fill="none" ${L(6,OUT)}/>
+      <path d="M8 8 L${w-8} ${h-8} M${w-8} 8 L8 ${h-8}" stroke="#f4ead2" stroke-width="10"/><circle cx="${w-24}" cy="${h/2}" r="9" fill="#e2b860" ${L(4,OUT)}/>`,
+    back:(w,h)=>`<rect width="${w}" height="${h}" fill="#7e2f22" ${L(6,OUT)}/><path d="M0 ${h*.33} H${w} M0 ${h*.66} H${w}" ${L(4,'#5e2318')}/>`},
+  bush:{axis:'y',icon:'🌳',front:(w,h)=>`<path d="M0 ${h} V${h*.45} q0 -${h*.45} ${w*.22} -${h*.4} q${w*.08} -${h*.12} ${w*.28} -${h*.05} q${w*.2} -${h*.1} ${w*.3} ${h*.05} q${w*.22} 0 ${w*.2} ${h*.4} V${h} Z" fill="#5f8048" ${L(6,OUT)}/>
+      <path d="M${w*.15} ${h*.5} q${w*.1} -${h*.12} ${w*.2} 0 M${w*.5} ${h*.35} q${w*.1} -${h*.12} ${w*.2} 0 M${w*.3} ${h*.75} q${w*.1} -${h*.12} ${w*.2} 0 M${w*.65} ${h*.68} q${w*.1} -${h*.12} ${w*.2} 0" fill="none" ${L(5,'#86a85c')}/>
+      <circle cx="${w*.3}" cy="${h*.45}" r="9" fill="#e58a8a" ${L(3,OUT)}/><circle cx="${w*.72}" cy="${h*.55}" r="9" fill="#f0c055" ${L(3,OUT)}/><rect y="${h*.6}" width="${w}" height="${h*.4}" fill="url(#dots)" opacity=".5"/>`,
+    back:(w,h)=>`<path d="M0 ${h} V${h*.45} q0 -${h*.45} ${w*.5} -${h*.45} q${w*.5} 0 ${w*.5} ${h*.45} V${h} Z" fill="#3f6b36" ${L(6,OUT)}/>`},
+  blanket:{axis:'y',icon:'🛏️',front:(w,h)=>`<path d="M0 0 H${w} V${h-20} q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 Z" fill="url(#gingham)" ${L(6,OUT)}/>
+      <path d="M0 18 H${w}" ${L(5,'#c4462f')}/>`,
+    back:(w,h)=>`<path d="M0 0 H${w} V${h-20} q-${w/2} 30 -${w} 0 Z" fill="#f6edd6" ${L(6,OUT)}/>`},
+  box:{axis:'y',icon:'📦',front:(w,h)=>`<rect width="${w}" height="${h}" rx="6" fill="#c99a5e" ${L(6,OUT)}/><rect x="${w/2-18}" width="36" height="${h}" fill="#e3c38f" ${L(3,OUT)}/>
+      <path d="M12 ${h*.6} h${w*.25} M${w*.65} ${h*.75} h${w*.25}" ${L(4,'#9a7444')}/><text x="${w*.25}" y="${h*.45}" font-family="Bangers,sans-serif" font-size="${h*.22}" fill="#7a5530">?</text>`,
+    back:(w,h)=>`<rect width="${w}" height="${h}" rx="6" fill="#9a7444" ${L(6,OUT)}/>`},
+  hay:{axis:'y',icon:'🌾',front:(w,h)=>`<rect width="${w}" height="${h}" rx="18" fill="#e2b860" ${L(6,OUT)}/><rect width="${w}" height="${h*.3}" rx="16" fill="#ecca7c"/>
+      ${[.2,.4,.6,.8].map(f=>`<path d="M${w*f} 10 v${h-20}" stroke="#c99a3e" stroke-width="4"/>`).join('')}<path d="M${w*.3} 0 v${h} M${w*.7} 0 v${h}" ${L(7,'#8a5e3c')}/>`,
+    back:(w,h)=>`<rect width="${w}" height="${h}" rx="18" fill="#c99a3e" ${L(6,OUT)}/>`},
+  reeds:{axis:'y',icon:'🌿',front:(w,h)=>Array.from({length:9},(_,i)=>{ const x=w*(i+.5)/9; return `<path d="M${x} ${h} q${i%2?14:-14} -${h*.5} ${i%2?-6:6} -${h*(.75+(i%3)*.08)}" fill="none" ${L(16,OUT)}/><path d="M${x} ${h} q${i%2?14:-14} -${h*.5} ${i%2?-6:6} -${h*(.75+(i%3)*.08)}" fill="none" ${L(9,'#7f9e4f')}/>`+(i%3===1?`<rect x="${x-8}" y="${h*.12}" width="16" height="44" rx="8" fill="#8a5e3c" ${L(4,OUT)}/>`:''); }).join(''),
+    back:(w,h)=>`<rect y="${h*.3}" width="${w}" height="${h*.7}" rx="20" fill="#5f8048" ${L(6,OUT)}/>`},
+};
+let flapState={};
+function flapPiece(f,i,x,y,k){ const T=FLAP[f.type], w=f.w*k, h=f.h*k, x0=x-w/2, y0=y-h;
+  return `<g class="tap flapG" data-f="${i}" data-axis="${T.axis}" data-hx="${x0}" data-hy="${y0}"><g class="fl"><g class="ff" transform="translate(${x0} ${y0})"><rect width="${w}" height="${h}" fill="transparent"/>${T.front(w,h)}</g><g class="fb" transform="translate(${x0} ${y0})" style="display:none">${T.back(w,h)}</g></g></g>`; }
+function flipFlap(g){ const i=+g.dataset.f, open=!flapState[i]; flapState[i]=open; const fl=g.querySelector('.fl'), ff=g.querySelector('.ff'), fb=g.querySelector('.fb');
+  const ax=g.dataset.axis, hx=+g.dataset.hx, hy=+g.dataset.hy, from=open?1:-.5, to=open?-.5:1;
+  tween(420,k=>{ const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2, v=from+(to-from)*e; ff.style.display=v>0?'':'none'; fb.style.display=v>0?'none':'';
+    fl.setAttribute('transform', ax==='x'?`translate(${hx} 0) scale(${v.toFixed(3)} 1) translate(${-hx} 0)`:`translate(0 ${hy}) scale(1 ${v.toFixed(3)}) translate(0 ${-hy})`); });
+  noise(.18,{f:1800,q:.8,vol:.07}); world.querySelectorAll(`[data-flap="${i}"]`).forEach(n=>n.style.pointerEvents=open?'':'none');
+  if(open){ const f=BOOK.pages[cur].flaps[i], who=[].concat(f.hide||[])[0]?.who; const hid=world.querySelector(`[data-flap="${i}"]`);
+    const m=g.getBBox(); setTimeout(()=>{ burst(m.x+m.width/2, m.y-40, f.peek||'PEEKABOO!','#f6c84c','#d0452f',56); if(who&&SOUND[who]) SOUND[who]();
+      if(hid){ const t=hid.querySelector('.tap'); const an=t&&t.querySelector('.anim'); animate(an,'boing',900); if(f.say) setTimeout(()=>bubble(m.x+m.width*.6,m.y+m.height*.3,f.say),500); } },380);
+    const sp=$('hunt').querySelector(`[data-fl="${i}"]`); if(sp) sp.classList.add('got');
+    if(Object.values(flapState).filter(Boolean).length===BOOK.pages[cur].flaps.length && BOOK.pages[cur].flaps.length>1) setTimeout(()=>sfx.fanfare(),1200); }
+}
+
+/* ---- the book (generated content goes here; the engine above never changes) ---- */
+const LIB = /*BOOKS*/; let BOOK = LIB[0];
+
+/* ---- engine ---- */
+const world=$('world'), fx=$('fx'), marks=$('marks');
+let cur=BOOK.start, history=[];
+const SCENEBG={night:'#2f4d40',barn:'#e2c48a',reef:'#2c6f7e',kelp:'#24585c',sand:'#d8c08c',deep:'#10293a',garden:'#8fae5a'};
+
+const SHADES=['#e2d6ba','#e5b94a','#d98a78','#a97c4c','#918d7f','#c7a63e','#d36d5a','#6a8f4a','#d3a94e','#c58b9e','#3d7f86'];
+const halftone=str=>str.replace(/<(path|ellipse|circle)([^>]*?)fill="(#[0-9a-f]{6})"([^>]*?)\/>/g,(m,tag,a,c,b)=>SHADES.includes(c)&&!/stroke=/.test(a+b)?m+`<${tag}${a}fill="url(#dots)"${b}/>`:m);
+const HEIGHT={hen:150,chick:95,cow:220,pig:150,duck:130,frog:100,egg:90,beeBig:180,butterfly:150,fish:140,octopus:200,turtle:140,crab:160,seahorse:260,jelly:200,whale:230,clam:90,carrot:90,flower:130,potato:70,rock:70};
+const BIG=1.35, NOBIG=['hive','shell','coral','kelp','rockS','wreck','cabbage','carrot','scarecrow','leafBig'];
+function art(page){
+  const pd=BOOK.art&&BOOK.art[page.scene], acts=page.actors||[];
+  /* on narrow screens, center the crop on where the characters are */
+  const focus=pd&&acts.length?acts.reduce((t,a)=>t+toPic(a.x,a.y)[0],0)/acts.length:null;
+  let s=pd?painted(pd,focus):SCENE[page.scene]();
+  const at=(x,y)=>{ if(!pd) return [x,y,1]; const [px,py]=toPic(x,y); return [PX(px),PY(py),PK/CK]; };
+  for(const a of acts){
+    const fn=P[a.who]; if(!fn) continue; const [x,y,k]=at(a.x,a.y), sc=(a.s||1)*k*(pd||NOBIG.includes(a.who)?1:BIG);
+    const piece = a.who==='egg' ? P.egg(x,y,1,a.wobble?'wobbleEgg':'') : fn(x,y,...(a.args||[]));
+    const n=acts.filter(b=>b.who===a.who).length, hgt=((HEIGHT[a.who]||150)*sc)|0;
+    s += `<g data-i="${acts.indexOf(a)}" data-n="${n}" data-h="${hgt}"${a.hide?` data-hide="${a.found||'FOUND YOU!'}"`:''}>`+(sc!==1 ? `<g transform="translate(${x} ${y}) scale(${sc}) translate(${-x} ${-y})">${piece}</g>` : piece)+`</g>`;
+  }
+  (page.flaps||[]).forEach((f,i)=>{ const [x,y,k]=at(f.x,f.y);
+    for(const hd of [].concat(f.hide||[])){ const fn=P[hd.who]; if(!fn) continue; const hx=x+(hd.dx||0)*k, hy=y+(hd.dy||0)*k, sc=(hd.s||1)*k*BIG, pc=fn(hx,hy,...(hd.args||[]));
+      s+=`<g data-flap="${i}" style="pointer-events:none">`+(sc!==1?`<g transform="translate(${hx} ${hy}) scale(${sc}) translate(${-hx} ${-hy})">${pc}</g>`:pc)+`</g>`; }
+    s+=flapPiece(f,i,x,y,k); });
+  for(const f of page.front||[]){ const fn=P[f.who]; if(!fn) continue; const [x,y,k]=at(f.x,f.y);
+    const pc=fn(x,y,...(f.args||[])); s+=`<g style="pointer-events:none">`+((f.s||1)*k!==1?`<g transform="translate(${x} ${y}) scale(${(f.s||1)*k}) translate(${-x} ${-y})">${pc}</g>`:pc)+`</g>`; }
+  for(const [kind,fx_,fy] of finds(page)){ const [x,y,k]=at(fx_,fy); s+=P.find(kind,x,y,k); }
+  return halftone(recolor(s));
+}
+
+function focusView(o){ const d=BOOK.art&&BOOK.art[o.scene]; if(d&&o.focus){ paintMap(d); const [fx_,fy,fw]=o.focus, w=fw*PK, h=w/1.6; return `${(PX(fx_)-w/2)|0} ${(PY(fy)-h/2)|0} ${w|0} ${h|0}`; } return o.view||'0 0 1600 1000'; }
+function thumb(o){ const s=art({scene:o.scene,actors:o.actors}); return s.replace(/id="paint"/g,'id="paintT"').replace(/#paint"/g,'#paintT"').replace(/class="tap actor"/g,'class="actor"'); }
+function show(id){
+  const page=BOOK.pages[id]; cur=id; counted={}; found=new Set(); flapState={}; $('shelf').hidden=true; $('home').hidden=false;
+  marks.innerHTML=''; if(page.letter){ $('letter').hidden=false; $('letter').textContent=page.letter[0]; } else $('letter').hidden=true;
+  const pd=BOOK.art&&BOOK.art[page.scene]; document.body.classList.toggle('painted',!!pd);
+  document.body.style.background=pd?(pd.bottom||'#7d9a4f'):(SCENEBG[page.scene]||'#8fae5a');
+  $('words').innerHTML=page.text||''; $('words').hidden=!page.text;
+  layout(); world.innerHTML=art(page); fx.innerHTML='';
+  huntLabel(page);
+  const ch=$('choices');
+  if(page.choice){
+    ch.innerHTML=page.choice.options.map((o,i)=>`<button class="choice" data-go="${o.go}" aria-label="${o.label}">
+      <svg viewBox="${focusView(o)}" preserveAspectRatio="xMidYMid slice">${thumb(o)}</svg><span>${o.label}</span></button>`).join('');
+    ch.hidden=false; $('next').hidden=true;
+  } else { ch.hidden=true; ch.innerHTML=''; $('next').hidden=!page.next && !page.end; }
+  $('next').textContent=page.end?'↺':'▶';
+  $('back').hidden=history.length===0;
+}
+
+/* comic sound-effect burst */
+function burst(x,y,text,fill='#f6c84c',ink='#d0452f',size=54){ const w=Math.max(160,text.length*size*.62+60), h=size*2.1; let pts=[];
+  for(let i=0;i<24;i++){ const a=i/24*Math.PI*2, r=i%2?0.8:1.1; pts.push(`${(Math.cos(a)*w/2*r).toFixed(0)},${(Math.sin(a)*h/2*r).toFixed(0)}`); }
+  addFx(`<g transform="translate(${x} ${y}) rotate(${rnd(-7,7)|0})"><g class="pop"><polygon points="${pts.join(' ')}" fill="${fill}" ${S(6)}/>
+    <text class="bubble" y="${size*.36}" text-anchor="middle" font-size="${size}" fill="${ink}" stroke="${OUT}" stroke-width="2.5" paint-order="stroke">${text}</text></g></g>`,1500); }
+const SFXWORD={barn:['CREAK!',-400],cloud:['PITTER-PAT!',60],pond:['SPLASH!',-110],tree:['RUSTLE!',-420],pine:['RUSTLE!',-380],flower:['POP!',-150],hay:['SQUEAK!',-150],
+  sun:['HELLO!',150],hive:['BZZZ!',-300],coral:['BLUB!',-220],kelp:['SWISH!',-360],clam:['SNAP!',-120],cabbage:['CRUNCH!',-140],carrot:['CRUNCH!',-120]};
+/* counting: tap each animal of a kind and it gets a number */
+const PLURAL={pig:'PIGS',hen:'HENS',chick:'CHICKS',duck:'DUCKS',cow:'COWS',fish:'FISH',crab:'CRABS',jelly:'JELLYFISH',beeBig:'BEES',butterfly:'BUTTERFLIES',frog:'FROGS',clam:'CLAMS',
+  ladybug:'LADYBUGS',bee:'BEES',caterpillar:'CATERPILLARS',snail:'SNAILS',squid:'SQUID',starfish:'STARFISH',carrot:'CARROTS',flower:'FLOWERS'};
+let counted={}, found=new Set();
+function badge(x,y,n){ const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','nohit');
+  g.innerHTML=`<g transform="translate(${x} ${y})"><g class="popin"><circle r="40" fill="#fff6d8" ${S(6)}/><text class="bubble" y="17" text-anchor="middle" font-size="52" fill="#d0452f">${n}</text></g></g>`; marks.appendChild(g); }
+function countTap(kind,key,x,y,total){ if(total<2) return; const c=counted[kind]=counted[kind]||new Set(); if(c.has(key)) return; c.add(key); badge(x,y,c.size);
+  tone(500+c.size*120,500+c.size*120,.15,'triangle',.07); if(c.size===total) setTimeout(()=>{ burst(x,y-130,`${total} ${PLURAL[kind]||kind.toUpperCase()}!`); sfx.fanfare(); },450); }
+P.find=(kind,x,y,k=1)=>`<g class="tap find" data-kind="${kind}" transform="translate(${x} ${y}) scale(${k})"><circle r="95" fill="transparent"/><g class="anim body">${FINDS[kind].draw()}</g></g>`;
+function huntLabel(page){ const f=finds(page), h=(page.actors||[]).filter(a=>a.hide); $('hunt').hidden=!(f.length||h.length);
+  const fl=page.flaps||[]; if(fl.length) $('hunt').hidden=false;
+  $('hunt').innerHTML=(fl.length?'Lift '+fl.map((x,i)=>`<span data-fl="${i}">${FLAP[x.type].icon}</span>`).join(' ')+' ':'')+(f.length||h.length?'Find ':'')+h.map(a=>`<span data-h="1">${a.icon||'👀'}</span>`).join(' ')+' '+f.map((it,i)=>`<span data-i="${i}">${FINDS[it[0]].icon}</span>`).join(' '); }
+function animate(node,cls,ms=1200){ if(!node) return; node.classList.remove(cls); void node.getBBox(); node.classList.add(cls); setTimeout(()=>node.classList.remove(cls),ms); }
+function bubble(x,y,text){
+  text=text.toUpperCase(); const w=Math.max(150,text.length*27+50);
+  addFx(`<g transform="translate(${x} ${y})"><g class="say"><path d="M0 0 l20 -40 h${w-20} a20 20 0 0 0 20 -20 v-60 a20 20 0 0 0 -20 -20 h-${w} a20 20 0 0 0 -20 20 v60 a20 20 0 0 0 20 20 z" fill="#ffffff" ${S(6)}/>
+    <text class="bubble" x="${w/2}" y="-80" text-anchor="middle" font-size="50" fill="${OUT}">${text}</text></g></g>`,1700);
+}
+
+$('stage').addEventListener('pointerdown',e=>{
+  ctx(); const g=e.target.closest('.tap'); if(!g){ const w=toWorld(e); sparkle(w.x,w.y); return; }
+  if(g.dataset.hot!=null){ gallery(g); return; }
+  if(g.classList.contains('flapG')){ flipFlap(g); return; }
+  if(g.classList.contains('find')){ const kind=g.dataset.kind, F=FINDS[kind], i=[...world.querySelectorAll('.find')].indexOf(g), list=finds(BOOK.pages[cur]);
+    animate(g.querySelector('.body'),F.anim,F.ms); F.snd();
+    if(!found.has(i)){ found.add(i); const sp=$('hunt').querySelector(`[data-i="${i}"]`); if(sp) sp.classList.add('got');
+      const m=g.transform.baseVal.consolidate().matrix; countTap(kind,i,m.e+60,m.f-70,list.filter(it=>it[0]===kind).length);
+      if(found.size===list.length) setTimeout(()=>{ burst(800,420,'YOU FOUND THEM!','#8fd3c4','#1d1a17',60); sfx.fanfare(); },900); }
+    return; }
+  const a=g.querySelector('.anim'); const actor=g.closest('.actor'); const who=actor&&actor.dataset.who, ax=actor?+actor.dataset.ax:800, ay=actor?+actor.dataset.ay:600;
+  const hid=g.closest('[data-hide]'); if(hid && !hid.dataset.done){ hid.dataset.done=1; animate(a,'peekUp',2300); if(SOUND[who]) SOUND[who]();
+    burst(ax,ay-(+hid.dataset.h||180)-120,hid.dataset.hide,'#8fd3c4','#1d1a17',58); const sp=$('hunt').querySelector('[data-h="1"]'); if(sp) sp.classList.add('got'); setTimeout(()=>sfx.fanfare(),300); return; }
+  animate(a,g.dataset.react||'boing',1100);
+  if(SOUND[who]) SOUND[who](); else if(g.dataset.sfx) sfx[g.dataset.sfx]();
+  if(REACT[who]) REACT[who](ax,ay);
+  if(SFXWORD[who]) burst(ax+(who==='sun'?-200:0), ay+SFXWORD[who][1], SFXWORD[who][0]);
+  else if(g.dataset.bubble||g.dataset.say) bubble(ax+30, ay-(+g.closest('[data-h]')?.dataset.h||150), g.dataset.bubble||g.dataset.say.replace(/!.*$/,'!'));
+  const holder=g.closest('[data-i]'); if(holder){ const kin=+holder.dataset.n; countTap(who,+holder.dataset.i,ax,ay-(+holder.dataset.h||180)-40,kin); }
+});
+/* lift the scene so the ground and characters always sit above the words strip, whatever the screen shape */
+function layout(){
+  const st=$('stage'), m=st.getScreenCTM(); const w=$('words');
+  let T=170;
+  if(m && !w.hidden){ const top=w.getBoundingClientRect().top; T=Math.round(965-(top-10-m.f)/m.d); }
+  T=Math.max(170,Math.min(460,T));
+  world.setAttribute('transform',`translate(0 ${-T})`); fx.setAttribute('transform',`translate(0 ${-T})`); marks.setAttribute('transform',`translate(0 ${-T})`);
+  if(m){ VIEW={x0:(0-m.e)/m.a, x1:(innerWidth-m.e)/m.a, y0:(0-m.f)/m.d+T, y1:(innerHeight-m.f)/m.d+T}; }
+}
+let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ const pd=BOOK.art&&BOOK.art[BOOK.pages[cur].scene]; if(pd) show(cur); else layout(); },150); });
+$('next').onclick=()=>{ ctx(); const p=BOOK.pages[cur]; sfx.page();
+  if(p.end){ history=[]; if(LIB.length>1) shelf(); else show(BOOK.start); return; } history.push(cur); show(p.next); if(BOOK.pages[cur].sound) sfx[BOOK.pages[cur].sound](); };
+$('back').onclick=()=>{ ctx(); sfx.page(); if(history.length) show(history.pop()); };
+$('choices').addEventListener('click',e=>{ const b=e.target.closest('.choice'); if(!b) return; ctx(); sfx.chime(); history.push(cur); show(b.dataset.go); });
+document.addEventListener('contextmenu',e=>e.preventDefault());
+$('anyway').onclick=()=>document.body.classList.add('anyway');
+$('mute').onclick=()=>{ muted=!muted; $('mute').textContent=muted?'🔇':'🔊'; };
+if(/debug/.test(location.search+location.hash)) document.body.classList.add('debug');
+function shelf(){ $('shelf').hidden=false; ['hunt','choices','letter'].forEach(i=>$(i).hidden=true); $('words').hidden=true; $('next').hidden=true; $('back').hidden=true; $('home').hidden=true;
+  const keep=BOOK; $('shelf').querySelector('.covers').innerHTML=LIB.map((b,i)=>{ BOOK=b; const c=b.pages[b.start];
+    const svg=art({scene:c.scene,actors:c.actors}).replace(/class="tap[^"]*"/g,'class="nohit"');
+    return `<button data-b="${i}" aria-label="${b.title}"><svg viewBox="${b.coverView||'100 250 1400 965'}" preserveAspectRatio="xMidYMid slice">${svg}</svg><span>${b.title}</span></button>`; }).join(''); BOOK=keep; }
+$('shelf').addEventListener('click',e=>{ const b=e.target.closest('[data-b]'); if(!b) return; ctx(); sfx.chime(); BOOK=LIB[+b.dataset.b]; history=[]; show(BOOK.start); });
+$('home').onclick=()=>{ ctx(); sfx.page(); shelf(); };
+$('letter').onclick=()=>{ ctx(); const L_=BOOK.pages[cur].letter; if(!L_) return; burst(800,330,`${L_[1]}  ${L_[2]}`,'#fff6d8','#d0452f',62); tone(660,880,.12,'triangle',.07); };
+if(LIB.length>1) shelf(); else show(BOOK.start);
+</script>

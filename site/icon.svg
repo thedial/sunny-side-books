@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"></stop><stop offset="1" stop-color="#fff" stop-opacity=".45"></stop></linearGradient>
+    <pattern id="grain" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="4" r="1.1" fill="#2a1d16" opacity=".06"></circle><circle cx="10" cy="11" r=".9" fill="#2a1d16" opacity=".05"></circle><circle cx="11" cy="3" r=".7" fill="#fff" opacity=".12"></circle></pattern>
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0 V9" stroke="#1f2a2e" stroke-width="2.2" opacity=".55"></path></pattern>
+    <pattern id="hatch2" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><path d="M0 0 V9" stroke="#1f2a2e" stroke-width="1.8" opacity=".4"></path></pattern>
+    <linearGradient id="shadeG" x1=".1" y1=".15" x2=".75" y2="1"><stop offset=".38" stop-color="#000"></stop><stop offset=".62" stop-color="#fff"></stop><stop offset="1" stop-color="#fff"></stop></linearGradient>
+    <linearGradient id="shadeG2" x1=".1" y1=".15" x2=".75" y2="1"><stop offset=".7" stop-color="#000"></stop><stop offset=".92" stop-color="#fff"></stop></linearGradient>
+    <mask id="shade" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#shadeG)"></rect></mask>
+    <mask id="shade2" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#shadeG2)"></rect></mask>
+    <filter id="ink" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G" result="d"></feDisplacementMap>
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="1" seed="9" result="g"></feTurbulence>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 .11  0 0 0 0 .14  0 0 0 0 .15  0 0 0 14 -9" result="speck"></feColorMatrix>
+      <feComposite in="speck" in2="d" operator="in" result="sp"></feComposite>
+      <feMerge><feMergeNode in="d"></feMergeNode><feMergeNode in="sp"></feMergeNode></feMerge>
+    </filter>
+    <pattern id="dots" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="5.5" cy="5.5" r="2.4" fill="#1d1a17" opacity=".3"></circle></pattern>
+    <pattern id="dotsW" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="7" cy="7" r="2.6" fill="#ffffff" opacity=".35"></circle></pattern>
+    <pattern id="gingham" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#f6edd6"></rect><rect width="14" height="28" fill="#e58a8a" opacity=".55"></rect><rect width="28" height="14" fill="#e58a8a" opacity=".55"></rect></pattern>
+    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa79f"></stop><stop offset=".55" stop-color="#a9cbb6"></stop><stop offset=".8" stop-color="#f1dfb2"></stop></linearGradient>
+    <linearGradient id="nightG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16303a"></stop><stop offset=".7" stop-color="#2b5357"></stop><stop offset=".85" stop-color="#4f6e5e"></stop></linearGradient>
+  </defs>
+<rect width="512" height="512" rx="0" fill="#8fc3b8"/><circle cx="256" cy="270" r="200" fill="#f6c84c" stroke="#1d1a17" stroke-width="14"/>
+<g transform="translate(250 400) scale(1.75)"><g class="actor" data-who="beeBig" data-ax="0" data-ay="0"><g><g class="tap" data-react="boing" data-say="Bzzz!" transform="translate(0 0)"><g class="hover"><g class="anim">
+    <g class="flapW"><ellipse cx="-24" cy="-118" rx="30" ry="44" fill="#e9f4f2" stroke="#1d1a17" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" transform="rotate(-18 -24 -118)"/><ellipse cx="20" cy="-122" rx="30" ry="44" fill="#e9f4f2" stroke="#1d1a17" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" transform="rotate(18 20 -122)"/></g>
+    <ellipse cx="0" cy="-60" rx="80" ry="56" fill="#f2c94c" stroke="#1d1a17" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M-28 -112 q14 52 0 104 M14 -114 q14 54 0 108" fill="none" stroke="#1d1a17" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M-60 -24 q60 30 120 0 q-60 18 -120 0z" fill="#c7a63e"/><path d="M-60 -24 q60 30 120 0 q-60 18 -120 0z" fill="url(#dots)"/>
+    <path d="M-80 -60 l-26 8 l26 12" fill="#1d1a17"/><circle cx="54" cy="-72" r="9" fill="#1d1a17"/><circle cx="57" cy="-75" r="3" fill="#f5eddb"/>
+    <path d="M42 -44 q14 12 28 -2" fill="none" stroke="#1d1a17" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="34" cy="-50" r="8" fill="#e9a6a0" opacity=".7"/>
+    <path d="M52 -108 q6 -40 30 -44 M66 -100 q20 -30 42 -24" fill="none" stroke="#1d1a17" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="82" cy="-152" r="7" fill="#1d1a17"/><circle cx="108" cy="-124" r="7" fill="#1d1a17"/></g></g></g></g></g></g></svg>

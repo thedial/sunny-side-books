@@ -1,0 +1,360 @@
+{
+ "id": "2026-10-21-peekaboo-farm",
+ "series": "Sunny Side Farm",
+ "title": "Peekaboo, Farm!",
+ "made": "2026-10-21",
+ "status": "draft",
+ "start": "cover",
+ "coverView": "80 330 1300 900",
+ "pages": {
+  "cover": {
+   "scene": "yard",
+   "text": "<b>Peekaboo, Farm!</b><br>A lift-the-flap Sunny Side Farm story",
+   "actors": [
+    {
+     "who": "chick",
+     "x": 620,
+     "y": 960,
+     "s": 1.2
+    }
+   ],
+   "flaps": [
+    {
+     "type": "bush",
+     "x": 1000,
+     "y": 980,
+     "w": 300,
+     "h": 210,
+     "hide": {
+      "who": "bunny",
+      "s": 0.9
+     },
+     "say": "Hop hop!"
+    }
+   ],
+   "next": "p1"
+  },
+  "p1": {
+   "scene": "yard",
+   "text": "Someone is hiding behind the barn door. Who is it? Lift the flap!",
+   "actors": [
+    {
+     "who": "hen",
+     "x": 720,
+     "y": 960
+    }
+   ],
+   "flaps": [
+    {
+     "type": "door",
+     "x": 300,
+     "y": 730,
+     "w": 140,
+     "h": 150,
+     "hide": {
+      "who": "cow",
+      "s": 0.4,
+      "dx": -20
+     },
+     "say": "Moo! Peekaboo!"
+    }
+   ],
+   "find": [
+    [
+     "ladybug",
+     1250,
+     620
+    ]
+   ],
+   "letter": [
+    "Cc",
+    "/k/",
+    "cow"
+   ],
+   "next": "p2"
+  },
+  "p2": {
+   "scene": "yard",
+   "text": "Something is wiggling in the bushes. Who could it be?",
+   "flaps": [
+    {
+     "type": "bush",
+     "x": 640,
+     "y": 980,
+     "w": 290,
+     "h": 200,
+     "hide": {
+      "who": "bunny",
+      "s": 0.95
+     },
+     "say": "Hop hop!"
+    },
+    {
+     "type": "bush",
+     "x": 1120,
+     "y": 975,
+     "w": 290,
+     "h": 200,
+     "hide": {
+      "who": "duck",
+      "s": 0.8
+     },
+     "say": "Quack!"
+    }
+   ],
+   "find": [
+    [
+     "bee",
+     300,
+     520
+    ]
+   ],
+   "letter": [
+    "Bb",
+    "/b/",
+    "bunny"
+   ],
+   "next": "p3"
+  },
+  "p3": {
+   "scene": "barn",
+   "text": "<b>Shhh!</b> Someone is sleeping under the blanket. Lift it gently! And what's behind the hay?",
+   "flaps": [
+    {
+     "type": "blanket",
+     "x": 620,
+     "y": 965,
+     "w": 400,
+     "h": 170,
+     "hide": {
+      "who": "pig",
+      "s": 0.8,
+      "dy": 10
+     },
+     "peek": "PEEKABOO!",
+     "say": "Oink... zzz"
+    },
+    {
+     "type": "hay",
+     "x": 1120,
+     "y": 960,
+     "w": 200,
+     "h": 120,
+     "hide": {
+      "who": "mouse",
+      "s": 0.9
+     },
+     "say": "Squeak!"
+    }
+   ],
+   "find": [
+    [
+     "caterpillar",
+     300,
+     900
+    ]
+   ],
+   "letter": [
+    "Pp",
+    "/p/",
+    "pig"
+   ],
+   "next": "p4"
+  },
+  "p4": {
+   "scene": "pond",
+   "text": "Who is hiding in the tall reeds by the pond? Lift them and see!",
+   "flaps": [
+    {
+     "type": "reeds",
+     "x": 420,
+     "y": 920,
+     "w": 280,
+     "h": 250,
+     "hide": {
+      "who": "frog",
+      "s": 0.9
+     },
+     "say": "Ribbit!"
+    },
+    {
+     "type": "reeds",
+     "x": 1180,
+     "y": 900,
+     "w": 280,
+     "h": 250,
+     "hide": {
+      "who": "duck",
+      "s": 0.8
+     },
+     "say": "Quack!"
+    }
+   ],
+   "find": [
+    [
+     "snail",
+     820,
+     960
+    ]
+   ],
+   "letter": [
+    "Ff",
+    "/f/",
+    "frog"
+   ],
+   "next": "p5"
+  },
+  "p5": {
+   "scene": "garden",
+   "text": "There's a big box in the garden. What's inside? <b>Peep, peep, peep!</b>",
+   "flaps": [
+    {
+     "type": "box",
+     "x": 800,
+     "y": 975,
+     "w": 380,
+     "h": 230,
+     "hide": [
+      {
+       "who": "chick",
+       "s": 0.8,
+       "dx": -100
+      },
+      {
+       "who": "chick",
+       "s": 0.8
+      },
+      {
+       "who": "chick",
+       "s": 0.8,
+       "dx": 100
+      }
+     ],
+     "say": "Peep! Peep!"
+    }
+   ],
+   "find": [
+    [
+     "caterpillar",
+     1250,
+     720
+    ]
+   ],
+   "letter": [
+    "Ch ch",
+    "/ch/",
+    "chick"
+   ],
+   "next": "p6"
+  },
+  "p6": {
+   "scene": "meadow",
+   "text": "The chicks are looking for someone. One, two, three chicks! Who is behind the bush?",
+   "actors": [
+    {
+     "who": "chick",
+     "x": 200,
+     "y": 950,
+     "s": 0.8
+    },
+    {
+     "who": "chick",
+     "x": 350,
+     "y": 970,
+     "s": 0.8
+    },
+    {
+     "who": "chick",
+     "x": 500,
+     "y": 950,
+     "s": 0.8
+    }
+   ],
+   "flaps": [
+    {
+     "type": "bush",
+     "x": 1000,
+     "y": 970,
+     "w": 320,
+     "h": 230,
+     "hide": {
+      "who": "hen",
+      "s": 0.85
+     },
+     "say": "Bawk! Here I am!"
+    }
+   ],
+   "find": [
+    [
+     "bee",
+     1380,
+     460
+    ],
+    [
+     "ladybug",
+     700,
+     600
+    ]
+   ],
+   "letter": [
+    "Hh",
+    "/h/",
+    "hen"
+   ],
+   "next": "n1"
+  },
+  "n1": {
+   "scene": "night",
+   "text": "It's bedtime. Who is snuggled under the blanket? Lift it and say goodnight!",
+   "flaps": [
+    {
+     "type": "blanket",
+     "x": 820,
+     "y": 930,
+     "w": 460,
+     "h": 170,
+     "hide": [
+      {
+       "who": "hen",
+       "s": 0.75,
+       "dx": -60
+      },
+      {
+       "who": "chick",
+       "s": 0.8,
+       "dx": 110
+      }
+     ],
+     "peek": "GOODNIGHT!",
+     "say": "Goodnight!"
+    }
+   ],
+   "next": "end"
+  },
+  "end": {
+   "scene": "night",
+   "text": "<b>The End.</b> Peekaboo, farm! See you tomorrow.",
+   "actors": [
+    {
+     "who": "nest",
+     "x": 800,
+     "y": 900,
+     "s": 1.3
+    },
+    {
+     "who": "hen",
+     "x": 760,
+     "y": 880,
+     "s": 0.9
+    },
+    {
+     "who": "chick",
+     "x": 900,
+     "y": 880,
+     "s": 0.7
+    }
+   ],
+   "end": true
+  }
+ }
+}
