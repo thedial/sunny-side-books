@@ -478,6 +478,215 @@ def check_budgets(books, book_files, page, site_index, r):
     r.note(f'budget: {len(files)} art files ({total / KB:.0f} KB)')
 
 
+# ---------------------------------------------------------------- 3. gentle rules
+
+def css_blocks(css):
+    """(prelude, body) for each top-level block; @media blocks come back whole."""
+    css = re.sub(r'/\*.*?\*/', lambda m: ' ' * len(m.group(0)), css, flags=re.S)
+    out, depth, start, body_start = [], 0, 0, 0
+    for j, ch in enumerate(css):
+        if ch == '{':
+            if depth == 0:
+                body_start = j + 1
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                out.append((css[start:body_start - 1].strip(), css[body_start:j]))
+                start = j + 1
+    return out
+
+
+def css_rules(css):
+    """(selector, declarations, media) for every style rule, including those inside @media."""
+    for pre, body in css_blocks(css):
+        if pre.startswith('@keyframes'):
+            continue
+        if pre.startswith('@media'):
+            for sel, decl in css_blocks(body):
+                yield sel, decl, pre
+        else:
+            yield pre, body, ''
+
+
+def keyframes(css):
+    return {pre.split()[1]: body for pre, body in css_blocks(css) if pre.startswith('@keyframes')}
+
+
+def seconds(tok):
+    m = re.fullmatch(r'(\d*\.?\d+)(ms|s)', tok)
+    return None if not m else float(m.group(1)) / (1000 if m.group(2) == 'ms' else 1)
+
+
+NOT_A_NAME = re.compile(r'[\d.]+|infinite|alternate(-reverse)?|normal|reverse|linear|ease(-in|-out|-in-out)?|forwards|backwards'
+                        r'|both|none|var\(.*\)|steps\(.*\)|cubic-bezier\(.*\)')
+
+
+def parse_animation(value):
+    """animation shorthand -> dicts with name, duration (s, None if unreadable), iterations, alternate."""
+    out = []
+    for part in re.split(r',(?![^(]*\))', value):
+        toks = part.split()
+        times = [seconds(x) for x in toks if seconds(x) is not None]
+        name = next((x for x in toks if seconds(x) is None and not NOT_A_NAME.fullmatch(x)), None)
+        count = next((float(x) for x in toks if re.fullmatch(r'\d*\.?\d+', x)), 1.0)
+        out.append({'name': name, 'duration': times[0] if times else None,
+                    'iterations': float('inf') if 'infinite' in toks else count,
+                    'alternate': any(x.startswith('alternate') for x in toks), 'raw': part.strip()})
+    return out
+
+
+def opacity_swings(frames):
+    """How many times opacity (or visibility) changes direction in one pass of the keyframes."""
+    pts = []
+    for sel, decl in css_blocks(frames):
+        o = re.search(r'opacity:\s*([\d.]+)', decl)
+        v = re.search(r'visibility:\s*(\w+)', decl)
+        if not (o or v):
+            continue
+        val = float(o.group(1)) if o else (1.0 if v.group(1) == 'visible' else 0.0)
+        for s in sel.split(','):
+            s = s.strip()
+            pts.append((0.0 if s == 'from' else 100.0 if s == 'to' else float(s.rstrip('%')), val))
+    if not pts:
+        return 0
+    pts.sort()
+    if pts[0][0] > 0:
+        pts.insert(0, (0.0, 1.0))
+    if pts[-1][0] < 100:
+        pts.append((100.0, 1.0))
+    swings, last_dir = 0, 0
+    for (_, a), (_, b) in zip(pts, pts[1:]):
+        if abs(b - a) >= 0.2:
+            d = 1 if b > a else -1
+            if d != last_dir:
+                swings += 1; last_dir = d
+    return swings
+
+
+def check_gentle(eng, r):
+    """Speed floor: one pass of any animation, after pace() speeds one-shot animations up for the oldest age.
+    Flashing: an animation that repeats and swings opacity or visibility, in flashes a second.
+    Every endless animation is switched off for prefers-reduced-motion."""
+    ages = eng.ages()
+    paces = [ages[a]['pace'] for a in sorted(ages)]
+    fastest = min(paces)
+    frames = keyframes(eng.css)
+    reduced = set()
+    for sel, decl, media in css_rules(eng.css):
+        if 'prefers-reduced-motion' in media and re.search(r'animation:\s*none', decl):
+            reduced |= {s.strip() for s in sel.split(',')}
+    flashiest, quickest = 0.0, (99.0, '')
+    for sel, decl, media in css_rules(eng.css):
+        m = re.search(r'(?:^|;)\s*animation:\s*([^;]+)', decl)
+        if not m or 'prefers-reduced-motion' in media:
+            continue
+        for a in parse_animation(m.group(1)):
+            if a['name'] in (None, 'none'):
+                continue
+            if a['duration'] is None:
+                if 'var(' not in a['raw']:
+                    r.warn(f'gentle: cannot read the duration of "{a["raw"]}" on {sel}')
+                continue
+            paced = a['iterations'] != float('inf')
+            d = a['duration'] * (fastest if paced else 1)
+            if a['name'] not in FAST_OK:
+                if d < ANIM_FLOOR_S - 1e-9:
+                    r.fail(f'gentle: {sel} runs {a["name"]} in {d:.2f} s' + (f' at age 5 (pace {fastest})' if paced else '')
+                           + f', faster than the {ANIM_FLOOR_S} s floor')
+                if d < quickest[0]:
+                    quickest = (d, a['name'])
+            swings = opacity_swings(frames.get(a['name'], ''))
+            if swings and a['iterations'] > 1:
+                hz = swings / 2 / d
+                flashiest = max(flashiest, hz)
+                if hz > FLASH_MAX_HZ:
+                    r.fail(f'gentle: {sel} flashes ({a["name"]}) {hz:.1f} times a second, over {FLASH_MAX_HZ}')
+            if a['iterations'] == float('inf') and sel not in reduced:
+                r.fail(f'gentle: {sel} animates forever ({a["name"]}) but is not switched off under prefers-reduced-motion')
+            if a['name'] not in frames:
+                r.warn(f'gentle: {sel} uses @keyframes {a["name"]}, which is not defined')
+    for m in re.finditer(r'animation-duration:\$\{\((\d*\.?\d+)\+Math\.random\(\)\*', eng.js):
+        if float(m.group(1)) < ANIM_FLOOR_S:
+            r.fail(f'gentle: engine line {eng.js_line(m.start())} sets an animation as short as {m.group(1)} s')
+    for m in re.finditer(r'\btween\((\d+)', eng.js_code):
+        if int(m.group(1)) / 1000 < ANIM_FLOOR_S:
+            r.fail(f'gentle: engine line {eng.js_line(m.start())} tweens for {m.group(1)} ms, faster than the floor')
+    if re.search(r'\bsetInterval\(', eng.js_code + eng.kit):
+        r.warn('gentle: the engine uses setInterval; check by eye that nothing blinks')
+    r.note(f'gentle: quickest animation after pacing {quickest[0]:.2f} s ({quickest[1]}), floor {ANIM_FLOOR_S} s; '
+           f'most flashes a second {flashiest:.2f}, cap {FLASH_MAX_HZ}')
+    check_gain(eng, r)
+    check_burst_pace(eng, paces, r)
+
+
+def literal(text):
+    text = text.strip()
+    return float(text) if re.fullmatch(r'\d*\.?\d+', text) else None
+
+
+def check_gain(eng, r):
+    """Peak gain of each synthesized voice, read from the code: tone()'s fifth argument, every vol: option and the
+    defaults. Every voice must reach the speakers through soundBus(), whose gain comes from tables.json.
+    The toddler bots measure the summed loudness of each tap."""
+    code = eng.js_code
+    peak = 0.0
+    for m in re.finditer(r'function (tone|voice|noise)\(([^)]*)\)', code):
+        d = re.search(r'vol=(\d*\.?\d+)', m.group(2))
+        if d:
+            v = float(d.group(1)); peak = max(peak, v)
+            if v > VOICE_GAIN_CAP:
+                r.fail(f'gentle: {m.group(1)}() defaults to gain {v}, over the {VOICE_GAIN_CAP} cap for one voice')
+    for m in re.finditer(r'(?<![\w.])tone\(', code):
+        if code[max(0, m.start() - 9):m.start()] == 'function ':
+            continue
+        args = call_args(code, m.end() - 1)
+        if len(args) >= 5:
+            v = literal(args[4][1])
+            if v is None:
+                r.warn(f'gentle: engine line {eng.js_line(m.start())}: cannot read the tone\'s gain "{args[4][1].strip()}"')
+                continue
+            peak = max(peak, v)
+            if v > VOICE_GAIN_CAP:
+                r.fail(f'gentle: engine line {eng.js_line(m.start())}: a tone at gain {v}, over the {VOICE_GAIN_CAP} cap')
+    for m in re.finditer(r'\bvol:\s*([^,}]+)', code):
+        v = literal(m.group(1))
+        if v is None:
+            r.warn(f'gentle: engine line {eng.js_line(m.start())}: cannot read the gain "{m.group(1).strip()}"'); continue
+        peak = max(peak, v)
+        if v > VOICE_GAIN_CAP:
+            r.fail(f'gentle: engine line {eng.js_line(m.start())}: a voice at gain {v}, over the {VOICE_GAIN_CAP} cap')
+    direct = len(re.findall(r'\.destination\b', code))
+    if direct != 1 or not re.search(r'function soundBus\(', code):
+        r.fail(f'gentle: every sound must reach the speakers through soundBus(), one gain node ({direct} places connect to the speakers)')
+    master = eng.tables.get('sound', {}).get('masterGain')
+    if master is None or master > MASTER_GAIN_CAP:
+        r.fail(f'gentle: tables.json sound.masterGain is {master}; it must be set and at most {MASTER_GAIN_CAP}')
+    r.note(f'gentle: loudest single voice gain {peak}, cap {VOICE_GAIN_CAP}; master gain {master}, cap {MASTER_GAIN_CAP}')
+
+
+def check_burst_pace(eng, paces, r):
+    """A burst stays up burstMs x the age's pace; at every age that must be long enough to see and long enough
+    for its pop animation to finish."""
+    ages = eng.ages()
+    if paces[0] != 1 or any(b > a for a, b in zip(paces, paces[1:])) or paces[-1] < 0.5:
+        r.fail(f'gentle: the age pace table {paces} must start at 1, never rise with age, and stay at or above 0.5')
+    burst_ms = eng.tables.get('burstMs', 0)
+    pop = next((parse_animation(re.search(r'animation:\s*([^;]+)', d).group(1))[0] for s, d, _ in css_rules(eng.css)
+                if s == '.pop' and 'animation:' in d), None)
+    for age, row in sorted(ages.items()):
+        shown = burst_ms * row['pace']
+        if shown < BURST_CALM_MIN_MS:
+            r.fail(f'gentle: at age {age} a burst stays up {shown:.0f} ms, under {BURST_CALM_MIN_MS} ms')
+        if pop and pop['duration'] * 1000 > burst_ms:
+            r.fail(f'gentle: at age {age} the burst is removed before its pop animation ends')
+    r.note('gentle: bursts stay up ' + ', '.join(f'{burst_ms * ages[a]["pace"]:.0f} ms at {a}' for a in sorted(ages))
+           + f' (floor {BURST_CALM_MIN_MS} ms)')
+    body = re.search(r'function burst\(.*?\n\S', eng.js_code, re.S)
+    if not body or 'BURST_MS' not in body.group(0):
+        r.fail('gentle: burst() must keep its burst up for BURST_MS (tables.json burstMs)')
+
+
 # ---------------------------------------------------------------- run
 
 def run_all(books, book_files=(), page=None, site_index=None, lint=False):
@@ -485,6 +694,7 @@ def run_all(books, book_files=(), page=None, site_index=None, lint=False):
     r = Report()
     check_books(books, eng, r)
     check_budgets(books, book_files, page, site_index, r)
+    check_gentle(eng, r)
     return r
 
 

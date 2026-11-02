@@ -26,6 +26,7 @@ tail = ('<script>if("serviceWorker" in navigator) addEventListener("load",()=>na
         'try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock("landscape").catch(()=>{})}catch(e){}</script></body></html>')
 site_index = head + page + tail
 
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('check', os.path.join(here, 'check.py'))
 check = importlib.util.module_from_spec(spec); spec.loader.exec_module(check)
 report = check.run_all(books, files, page=page, site_index=site_index if site else None)

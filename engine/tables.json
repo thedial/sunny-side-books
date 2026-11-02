@@ -8,6 +8,7 @@
  "auto": {"quickMs": 5000, "slowMs": 25000},
  "tap": {"minCss": 64, "findHitR": 95, "decoyR": 60},
  "burstMs": 1500,
+ "sound": {"masterGain": 1},
  "perches": {
   "meadow": [
    {"x": 250, "y": 822, "on": "pink flower", "open": true, "fit": ["ladybug", "bee"]},
