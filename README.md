@@ -12,6 +12,9 @@ What a page can do:
 - **Choose the path:** pages where the child picks where to look next
 - **Surprises:** every character and most scenery react to a tap
 
+## Age dial
+One setting per tablet, for the grown-up: age 2, 3, 4 or 5, plus auto. Hold the small gear on the shelf for about a second (a toddler's tap does nothing; Home and Mute need the same hold) and pick the big sun. The age changes only the mechanics: how big the hidden critters are and where they sit (in plain view at 2, half behind a leaf or pebble at 4 and 5), how many look-alike decoys sit near them, how soon a hint comes, whether letter tiles show (from 3), and how long the bursts run. The story, the words, the art and the surprises never change. With auto on, the finds move one step easier or harder than the set age from what happened on the last page: all found quickly with no hint steps up, a hint or a long wait steps down. The tablet stores only the age, the auto switch and that one step (`localStorage`), nothing else.
+
 ## Build
 
 ```

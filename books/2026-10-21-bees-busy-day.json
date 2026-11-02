@@ -41,14 +41,10 @@
    ],
    "find": [
     [
-     "ladybug",
-     300,
-     600
+     "ladybug"
     ],
     [
-     "caterpillar",
-     1380,
-     890
+     "caterpillar"
     ]
    ],
    "letter": [
