@@ -767,6 +767,88 @@ def check_statechart(eng, r):
            f'{len(chart["rules"])} rules, each checked by the toddler bots')
 
 
+# ---------------------------------------------------------------- 8. comment lint
+
+STOP = set('''a an the and or but if of to in on at by for with from into onto as is are be been was were it its this that
+these those so then than when while do does did not no yes we you she he they them her his our their one two all any each
+every some only just also here there what which who how why up down out off over under after before again still yet can
+will would should could may might must has have had get gets got set sets make makes use uses used new old'''.split())
+LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs',
+          'engine/check.py', 'engine/build.py')
+
+
+def words_of(text):
+    """Lower-case words, camelCase and snake_case split apart, a plural s dropped."""
+    text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+    return [w[:-1] if len(w) > 3 and w.endswith('s') and not w.endswith('ss') else w
+            for w in re.findall(r'[a-z]+', text.lower()) if len(w) > 2]
+
+
+def restates(comment, code):
+    if comment.strip().startswith('-') or re.fullmatch(r'\s*[A-Z]+\s*', comment):
+        return False            # a section heading or a build placeholder like /*BOOKS*/
+    said = [w for w in words_of(comment) if w not in STOP]
+    if len(said) < 2 or len(said) > 10:
+        return False
+    there = set(words_of(code))
+    return sum(w in there for w in said) / len(said) >= 0.75
+
+
+def comment_sites(path, src):
+    """(line, comment, the code it sits on or above) for every line comment."""
+    lines = src.split('\n')
+    def code_at(line_no, offset_in_line, text_line):
+        before = text_line[:offset_in_line].strip()
+        if before:
+            return before
+        for nxt in lines[line_no:]:
+            if nxt.strip() and not nxt.strip().startswith(('//', '#', '/*')):
+                return nxt
+        return ''
+    if path.endswith('.py'):
+        for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+            if tok.type == tokenize.COMMENT:
+                (ln, col) = tok.start
+                yield ln, tok.string[1:], code_at(ln, col, lines[ln - 1])
+        return
+    js = src
+    if path.endswith('.html'):
+        m = re.search(r'<script>(.*?)</script>', src, re.S)
+        js = m.group(1) if m else ''
+        base = src.count('\n', 0, m.start(1)) if m else 0
+    else:
+        base = 0
+    _, comments = scan_js(js)
+    for off, text in comments:
+        if '\n' in text.strip():
+            continue
+        ln = base + js.count('\n', 0, off) + 1
+        col = off - (js.rfind('\n', 0, off) + 1)
+        yield ln, text, code_at(ln, col, lines[ln - 1])
+
+
+LINT_KNOWS = [('show the next page', 'showNextPage(page)', True),
+              ('a toddler taps at nothing in particular this often', 'wild: 0.25,', False)]
+
+
+def check_comments(r):
+    """A comment that only says what the next line does is flagged: rename or reshape the code instead."""
+    read = 0
+    for comment, code, flagged in LINT_KNOWS:
+        if restates(comment, code) != flagged:
+            r.fail(f'comment lint: it no longer tells "{comment}" from its code correctly')
+    for rel in LINTED:
+        path = os.path.join(ROOT, rel)
+        if not os.path.exists(path):
+            continue
+        src = open(path, encoding='utf-8').read()
+        for ln, text, code in comment_sites(rel, src):
+            read += 1
+            if restates(text, code):
+                r.lint.append(f'{rel}:{ln}: "{text.strip()}" only restates the code')
+    r.note(f'comment lint: {read} comments read, {len(r.lint)} only restate their code')
+
+
 # ---------------------------------------------------------------- run
 
 def run_all(books, book_files=(), page=None, site_index=None, lint=False):
@@ -777,6 +859,7 @@ def run_all(books, book_files=(), page=None, site_index=None, lint=False):
     check_gentle(eng, r)
     check_determinism(eng, r)
     check_statechart(eng, r)
+    check_comments(r)
     return r
 
 
@@ -789,6 +872,9 @@ def print_report(r, lint=False, out=sys.stdout):
         print('warning: ' + w, file=out)
     for p in r.problems:
         print(p, file=out)
+    if lint:
+        for c in r.lint:
+            print('lint: ' + c, file=out)
 
 
 def main(argv):

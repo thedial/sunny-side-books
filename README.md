@@ -24,7 +24,7 @@ python3 -I engine/build.py shelf.html books/*.json       # one self-contained pa
 Host `site/` anywhere static (it runs on Cloudflare Pages).
 
 ## Checks
-The build runs `engine/check.py` first and writes nothing if a check fails: the book rules, the size budgets, the gentle rules (speed, flashing, loudness, burst length), seeded layouts and the page statechart (`engine/page-states.json`).
+The build runs `engine/check.py` first and writes nothing if a check fails: the book rules, the size budgets, the gentle rules (speed, flashing, loudness, burst length), seeded layouts and the page statechart (`engine/page-states.json`); a comment lint flags comments that only restate the next line (`python -I engine/check.py --lint books/*.json` lists them; it never stops the build).
 
 The toddler bots play every page in the real engine, in the Chrome already on the machine (headless and muted):
 ```
