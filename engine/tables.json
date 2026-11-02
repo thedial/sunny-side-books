@@ -5,7 +5,13 @@
   "4": {"findScale": 0.7, "decoys": 2, "hintMs": 14000, "holdMs": 800, "pace": 0.73, "letterTiles": true},
   "5": {"findScale": 0.55, "decoys": 4, "hintMs": 20000, "holdMs": 800, "pace": 0.6, "letterTiles": true}
  },
- "auto": {"quickMs": 5000, "slowMs": 25000},
+ "auto": {
+  "about": "per critter on the page, by the age being played: up when every critter is found within upMs each and no hint came, down when one is still hidden after downMs each; a hint never steps down. Scott, 2026-11-02, from the toddler bots",
+  "2": {"upMs": 4000, "downMs": 15000},
+  "3": {"upMs": 3000, "downMs": 12000},
+  "4": {"upMs": 3000, "downMs": 12000},
+  "5": {"upMs": 2500, "downMs": 9000}
+ },
  "hintShowMs": 2600,
  "bots": {
   "about": "the toddler bots fail a page whose median time per critter or give-up rate is over its age's band; set 2026-11-02 from the bots' own numbers with about 25% headroom, the way the size budgets were",

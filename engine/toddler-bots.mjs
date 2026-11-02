@@ -180,6 +180,7 @@ function botSetup() {
     const gauss = () => { let u = 0, v = 0; while (!u) u = R(); while (!v) v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
     const res = { n, times: [], all: false, tAll: null, hinted: false, hintAt: null, taps: 0, decoyTaps: 0, misses: 0, wild: 0 };
     let t = 0, boost = 0;
+    const lead = __clock.now() - shownAt;
     __watchFrom();
     const stage = $('stage').getBoundingClientRect();
     const finds_ = [...world.querySelectorAll('.find')], decoys = [...world.querySelectorAll('.decoy')];
@@ -218,6 +219,12 @@ function botSetup() {
     }
     res.all = found.size === n; res.tAll = res.all ? res.times[res.times.length - 1] : null;
     for (let s = 0; s < 4000; s += opts.stepMs) { __clock.advance(opts.stepMs); __watch(); }
+    // the auto step the engine took for this page, against the age's row in tables.auto
+    const row = TABLES.auto[AGE()], last = res.all ? lead + res.tAll : Infinity;
+    const want = res.all && !res.hinted && last <= row.upMs * n ? 1 : last >= row.downMs * n ? -1 : 0;
+    res.graded = graded;
+    if (graded === -1 && want !== -1 && res.hinted) broke('hint-never-steps-down', `auto stepped down after a hint, with every critter found in ${last} ms (down only after ${row.downMs * n})`);
+    else if (graded !== want) broke('auto-on-time', `auto stepped ${graded} where the table says ${want}: last critter at ${last} ms, ${n} critter(s), up within ${row.upMs} ms each, down after ${row.downMs} ms each${res.hinted ? ', a hint came' : ''}`);
     return res;
   };
 }
@@ -258,7 +265,7 @@ async function main() {
   await page.evaluate(`(${botSetup.toString()})()`);
   const books = await page.evaluate(`LIB.map((b,i)=>({i,id:b.id,title:b.title,pages:Object.keys(b.pages).map(p=>({id:p,finds:finds(b.pages[p]).length}))}))`);
   const tables = await page.evaluate('TABLES');
-  const minTap = tables.tap.minCss, { quickMs, slowMs } = tables.auto;
+  const minTap = tables.tap.minCss;
 
   phase('loaded');
   // ---- measured tap sizes on each tablet, every page at every age; then a resize without re-showing the page
@@ -334,12 +341,12 @@ async function main() {
         p50: pct(tAll, 0.5), p90: pct(tAll, 0.9), perFindP50: pct(tAll.map(x => x / p.finds), 0.5),
         hintRate: runs.filter(r => r.hinted).length / runs.length,
         gaveUp: runs.filter(r => !r.all).length / runs.length,
-        autoUp: runs.filter(r => r.all && r.tAll <= quickMs && !r.hinted).length / runs.length,
-        autoDown: runs.filter(r => r.hinted || !r.all || r.tAll > slowMs).length / runs.length,
+        autoUp: runs.filter(r => r.graded === 1).length / runs.length,
+        autoDown: runs.filter(r => r.graded === -1).length / runs.length,
         decoyTaps: runs.reduce((s, r) => s + r.decoyTaps, 0) / runs.length,
         missRate: runs.reduce((s, r) => s + r.misses, 0) / Math.max(1, runs.reduce((s, r) => s + r.taps, 0)),
         taps: runs.reduce((s, r) => s + r.taps, 0) / runs.length,
-        times: tAll, hintAt: runs.map(r => r.hintAt),
+        times: tAll, hintAt: runs.map(r => r.hintAt), grades: runs.map(r => r.graded),
       };
       rows.push(row);
     }
@@ -359,9 +366,9 @@ async function main() {
   for (const e of errors) failures.push('engine error: ' + e);
 
   const report = { generated: new Date().toISOString(), page: PAGE, playedOn: PLAY_ON, runsPerPage: RUNS, model: TODDLERS,
-    hint: { halfHiddenSeen: HALF_HIDDEN_SEEN, boost: HINT_BOOST }, auto: tables.auto, rows, minTargetCss: minSize, replays, turns,
+    hint: { halfHiddenSeen: HALF_HIDDEN_SEEN, boost: HINT_BOOST }, autoTable: tables.auto, rows, minTargetCss: minSize, replays, turns,
     loudest: loud, voices, failures, warnings };
-  await finish(report, rows, { quickMs, slowMs, minTap, bots: tables.bots });
+  await finish(report, rows, { minTap, bots: tables.bots });
   await browser.close();
   console.log(`toddler bots: ${rows.length} page-age rows, ${rows.length * RUNS} runs, ${((Date.now() - t0) / 1000).toFixed(0)} s`);
   process.exit(report.failures.length ? 1 : 0);
@@ -384,33 +391,29 @@ function bands(report, rows, bots) {
   }
 }
 
-// What the auto rule does to a child playing right at her age, and thresholds per critter that would make it step up
-// on her quickest fifth of pages and down on her slowest fifth.
-function autoSuggestions(rows, { quickMs, slowMs }) {
+// What the auto rule (tables.auto, as the engine applied it) does to a child playing right at her age, and the per-critter
+// times that would step up on her quickest fifth of pages and down on her slowest fifth, to retune the table from.
+function autoReport(rows) {
   const out = {};
   for (const age of [2, 3, 4, 5]) {
-    const runs = rows.filter(r => r.age === age).flatMap(r => r.times.map((t, i) => ({ t, finds: r.finds, hinted: r.hintAt[i] != null })));
+    const runs = rows.filter(r => r.age === age).flatMap(r => r.times.map((t, i) => ({ t, finds: r.finds, hinted: r.hintAt[i] != null, graded: r.grades[i] })));
     if (!runs.length) continue;
-    const rate = (up, down) => ({ up: runs.filter(up).length / runs.length, down: runs.filter(down).length / runs.length });
+    const rate = m => ({ up: m.filter(r => r.graded === 1).length / m.length, down: m.filter(r => r.graded === -1).length / m.length });
     const perFind = runs.map(r => r.t / r.finds);
-    const q = Math.round(pct(perFind, 0.2) / 500) * 500, s = Math.round(pct(perFind, 0.8) / 1000) * 1000;
     out[age] = {
-      now: rate(r => r.t <= quickMs && !r.hinted, r => r.hinted || r.t > slowMs),
-      nowByFinds: Object.fromEntries([1, 2, 3].map(n => { const m = runs.filter(r => r.finds === n);
-        return [n, m.length ? { up: m.filter(r => r.t <= quickMs && !r.hinted).length / m.length, down: m.filter(r => r.hinted || r.t > slowMs).length / m.length } : null]; })),
+      rate: rate(runs),
+      byFinds: Object.fromEntries([1, 2, 3].map(n => { const m = runs.filter(r => r.finds === n); return [n, m.length ? rate(m) : null]; })),
       hintRate: runs.filter(r => r.hinted).length / runs.length,
       perFindMs: { p20: pct(perFind, 0.2), p50: pct(perFind, 0.5), p80: pct(perFind, 0.8) },
-      suggest: { quickMsPerFind: q, slowMsPerFind: s },
-      withSuggestion: rate(r => r.t <= q * r.finds && !r.hinted, r => r.hinted || r.t > s * r.finds),
-      withSuggestionNoHintStep: rate(r => r.t <= q * r.finds && !r.hinted, r => r.t > s * r.finds),
+      fifths: { upMs: Math.round(pct(perFind, 0.2) / 500) * 500, downMs: Math.round(pct(perFind, 0.8) / 1000) * 1000 },
     };
   }
   return out;
 }
 
-async function finish(report, rows, { quickMs, slowMs, minTap, bots }) {
+async function finish(report, rows, { minTap, bots }) {
   bands(report, rows, bots);
-  report.autoSuggestions = autoSuggestions(rows, { quickMs, slowMs });
+  report.auto = autoReport(rows);
   mkdirSync(dirname(resolve(REPORT)), { recursive: true });
   writeFileSync(REPORT, JSON.stringify(report, null, 1));
   console.log('age  book/page                            finds  p50 s  p90 s  hint  auto+  auto-  decoy taps');
@@ -418,14 +421,12 @@ async function finish(report, rows, { quickMs, slowMs, minTap, bots }) {
   console.log(`smallest targets (CSS px): ${Object.entries(report.minTargetCss).map(([k, v]) => `${k} ${v.toFixed(0)}`).join(', ')}; floor ${minTap}`);
   console.log(`loudest moment: summed gain ${report.loudest.peak.toFixed(3)} over ${report.voices} voices`);
   const pc = x => (x * 100).toFixed(0).padStart(3) + '%';
-  console.log(`auto now (${sec(quickMs)} s up, ${sec(slowMs)} s down, a hint steps down), a child playing at her age:`);
-  for (const [age, a] of Object.entries(report.autoSuggestions)) {
-    const by = Object.entries(a.nowByFinds).filter(([, v]) => v).map(([n, v]) => `${n} find${n > 1 ? 's' : ''} ${pc(v.up).trim()} up/${pc(v.down).trim()} down`).join(', ');
-    console.log(`  age ${age}: up ${pc(a.now.up)}, down ${pc(a.now.down)} (hint in ${pc(a.hintRate).trim()} of runs); ${by}`);
+  console.log('auto, as the engine stepped (tables.auto, per critter; a hint never steps down), a child playing at her age:');
+  for (const [age, a] of Object.entries(report.auto)) {
+    const row = report.autoTable[age], by = Object.entries(a.byFinds).filter(([, v]) => v).map(([n, v]) => `${n} find${n > 1 ? 's' : ''} ${pc(v.up).trim()} up/${pc(v.down).trim()} down`).join(', ');
+    console.log(`  age ${age} (up under ${sec(row.upMs)} s, down over ${sec(row.downMs)} s a critter): up ${pc(a.rate.up)}, down ${pc(a.rate.down)} (hint in ${pc(a.hintRate).trim()} of runs); ${by}`);
   }
-  console.log('suggested, per critter on the page (up on her quickest fifth, down on her slowest fifth):');
-  for (const [age, a] of Object.entries(report.autoSuggestions))
-    console.log(`  age ${age}: up under ${sec(a.suggest.quickMsPerFind)} s, down over ${sec(a.suggest.slowMsPerFind)} s a critter -> up ${pc(a.withSuggestion.up)}, down ${pc(a.withSuggestion.down)}; if a hint did not step down: down ${pc(a.withSuggestionNoHintStep.down)}`);
+  console.log('her quickest and slowest fifth, per critter: ' + Object.entries(report.auto).map(([age, a]) => `age ${age} ${sec(a.fifths.upMs)} s / ${sec(a.fifths.downMs)} s`).join(', '));
   for (const w of report.warnings) console.log('warning: ' + w);
   for (const f of report.failures) console.log(f);
 }

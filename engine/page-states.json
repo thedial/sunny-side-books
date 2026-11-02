@@ -1,5 +1,5 @@
 {
- "about": "The states a page passes through. Four parts run side by side: the page itself, the hunt (idle or hint), each flap, and the bursts. engine/toddler-bots.mjs watches the real engine while the bots play and fails on any rule below that it sees broken; check.py makes sure every rule here has a check there and no check is left without a rule.",
+ "about": "The states a page passes through. Five parts run side by side: the page itself, the hunt (idle or hint), each flap, the auto step, and the bursts. engine/toddler-bots.mjs watches the real engine while the bots play and fails on any rule below that it sees broken; check.py makes sure every rule here has a check there and no check is left without a rule.",
  "parts": {
   "page": {
    "states": {"showing": "one page is up and takes taps", "turning": "the moment between two pages: Next, Back, a choice, Home"},
@@ -26,6 +26,16 @@
     ["open", "tap the flap", "shut"]
    ]
   },
+  "auto": {
+   "states": {"ungraded": "this page has not moved the age yet", "up": "auto stepped one age harder", "down": "auto stepped one age easier"},
+   "start": "ungraded",
+   "moves": [
+    ["ungraded", "every critter found within the age's upMs each (tables.auto) and no hint came", "up"],
+    ["ungraded", "a critter still hidden after the age's downMs each", "down"],
+    ["up", "the next page is shown", "ungraded"],
+    ["down", "the next page is shown", "ungraded"]
+   ]
+  },
   "burst": {
    "states": {"calm": "no burst on the screen", "burst": "a starburst word is up (FOUND YOU!, PEEKABOO!, 3 PIGS!)"},
    "start": "calm",
@@ -41,6 +51,8 @@
   "burst-ends": "a burst is gone within burstMs x the age's pace",
   "flap-toggles": "each tap on a flap moves it to the other state",
   "turn-resets": "a turn lands on a new page that is idle, with every flap shut, no burst and no counting badges",
+  "auto-on-time": "auto steps up, steps down or stays exactly as the age's row in tables.auto says for that page",
+  "hint-never-steps-down": "a hint alone never steps the age down; only a critter still hidden after downMs each does",
   "turn-leaves-nothing": "nothing the last page started (a burst, a fanfare, a peekaboo, a hint) shows up or sounds on the new page"
  }
 }

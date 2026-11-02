@@ -275,6 +275,8 @@ def check_finds(book, eng, r):
     for pid, p in book['pages'].items():
         where = f'{book["id"]}/{pid}'
         fl = finds_of(p)
+        if 'decoys' in p and not (type(p['decoys']) is int and p['decoys'] >= 0):
+            r.fail(f'{where}: "decoys" is the most look-alikes per critter on the page, a whole number 0 or more, not {p["decoys"]!r}')
         fixed = [f for f in fl if len(f) >= 3]
         free = [f for f in fl if len(f) < 3]
         for f in fixed:

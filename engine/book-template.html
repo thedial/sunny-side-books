@@ -782,16 +782,16 @@ const store={get:k=>{ try{ return localStorage.getItem(k); }catch(e){ return nul
 let AGESET=Math.min(5,Math.max(2,+store.get('ssb.age')||2)), AUTO=store.get('ssb.auto')!=='0', OFFSET=Math.max(-1,Math.min(1,+store.get('ssb.autoOffset')||0));
 const AGE=()=>Math.min(5,Math.max(2,AGESET+(AUTO?OFFSET:0))), AGEROW=()=>TABLES.ages[AGE()];
 const FINDK=()=>AGEROW().findScale, DECOYS=()=>AGEROW().decoys, HINTMS=()=>AGEROW().hintMs, HOLDMS=()=>AGEROW().holdMs, PACE=()=>AGEROW().pace;
-/* auto moves one step per page: all found within quickMs and no hint steps up; a hint, or slowMs with a critter unfound, steps down */
-const {quickMs:AUTO_QUICK_MS, slowMs:AUTO_SLOW_MS}=TABLES.auto;
-let hintT=0, slowT=0, hinted=false, shownAt=0, graded=false;
-function grade(d){ if(!AUTO||graded) return; graded=true; OFFSET=Math.max(-1,Math.min(1,OFFSET+d)); store.set('ssb.autoOffset',OFFSET); }
+/* auto moves one step per page, timed per critter by the age's row in tables.auto: every critter found within upMs each and no hint
+   steps up; a critter still hidden after downMs each steps down. A hint never steps down (Scott, 2026-11-02). */
+let hintT=0, slowT=0, hinted=false, shownAt=0, graded=0, autoRow=null;
+function grade(d){ if(graded) return; graded=d; if(!AUTO) return; OFFSET=Math.max(-1,Math.min(1,OFFSET+d)); store.set('ssb.autoOffset',OFFSET); }
 function restartIdleHint(){ clearTimeout(hintT); if(finds(BOOK.pages[cur]).length) hintT=setTimeout(hint,HINTMS()); }
-function hint(){ const left=[...world.querySelectorAll('.find')].filter((g,i)=>!found.has(i)); if(!left.length) return; hinted=true; grade(-1);
+function hint(){ const left=[...world.querySelectorAll('.find')].filter((g,i)=>!found.has(i)); if(!left.length) return; hinted=true;
   $('hunt').querySelectorAll('span[data-i]:not(.got)').forEach(s=>{ s.classList.add('hint'); setTimeout(()=>s.classList.remove('hint'),TABLES.hintShowMs); });
   left.forEach(g=>animate(g.querySelector('.body'),'nudge',700)); restartIdleHint(); }
-function pageTimers(page){ clearTimeout(hintT); clearTimeout(slowT); shownAt=performance.now(); hinted=false; graded=false;
-  if(finds(page).length){ slowT=setTimeout(()=>grade(-1),AUTO_SLOW_MS); restartIdleHint(); } }
+function pageTimers(page){ clearTimeout(hintT); clearTimeout(slowT); shownAt=performance.now(); hinted=false; graded=0; autoRow=TABLES.auto[AGE()];
+  const n=finds(page).length; if(n){ slowT=setTimeout(()=>grade(-1),autoRow.downMs*n); restartIdleHint(); } }
 
 /* perches and actor-top perches live in tables.json (fields: open, cover, for, fit; see BOOK-FORMAT "Age and finds") */
 const PERCH=TABLES.perches, ONTOP=TABLES.onTop;
@@ -800,11 +800,12 @@ function perches(page){ const list=(PERCH[page.scene]||[]).map(p=>({...p}));
     for(const o of on) list.push({x:a.x+o.dx*sc,y:a.y+o.dy*sc,open:o.open!==false,fit:o.fit,on:a.who}); }
   for(const p of page.perches||[]) list.push({...p,open:p.open!==false,cover:typeof p.cover==='object'?p.cover:null});   // a number means "that piece in front already hides it"
   return list; }
-/* which perch a critter gets: age 2 open spots only; 4 and 5 tucked-away spots first; a spot made for that critter wins; never one already taken or on top of another find */
-function pickPerch(pool,kind,age,avoid,rand){
+/* which perch a critter gets: age 2 open spots only; 4 and 5 tucked-away spots first, except the one critter a page of two or more keeps in view;
+   a spot made for that critter wins; never one already taken or on top of another find */
+function pickPerch(pool,kind,age,avoid,rand,tuck=true){
   let c=pool.filter(p=>!p.used&&(!p.for||p.for.includes(kind))&&(age>2||p.open)&&!avoid.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<150));
   if(!c.length) return null;
-  if(age>=4){ const h=c.filter(p=>!p.open); if(h.length) c=h; }
+  if(age>=4){ const h=c.filter(p=>tuck?!p.open:p.open); if(h.length) c=h; }
   const f=c.filter(p=>p.fit&&p.fit.includes(kind)); if(f.length) c=f;
   const p=c[Math.floor(rand()*c.length)]; p.used=true; return p; }
 /* decoys: look-alikes near the find; a tap just wobbles them */
@@ -828,9 +829,11 @@ function layFinds(page,at,rand){
   const between=(a,b)=>a+rand()*(b-a);
   const pool=perches(page), age=AGE(), k=FINDK(), fl=finds(page).map(f=>({kind:f[0],x:f[1],y:f[2]})), fixed=fl.filter(f=>f.x!=null);
   for(const p of pool) if(fixed.some(f=>Math.hypot(f.x-p.x,f.y-p.y)<120)) p.used=true;
-  for(const f of fl) if(f.x==null){ const p=pickPerch(pool,f.kind,age,fl.filter(o=>o.x!=null),rand); if(p){ f.x=p.x; f.y=p.y; f.cover=p.cover; f.perch=p.open?'open':'half'; } else { f.x=800; f.y=930; f.perch='none'; } }
+  const free=fl.filter(f=>f.x==null), inView=free.length>1?free[Math.floor(rand()*free.length)]:null;
+  for(const f of free){ const p=pickPerch(pool,f.kind,age,fl.filter(o=>o.x!=null),rand,f!==inView); if(p){ f.x=p.x; f.y=p.y; f.cover=p.cover; f.perch=p.open?'open':'half'; } else { f.x=800; f.y=930; f.perch='none'; } }
   const dec=[], clear=hitR(k)*k+DECOY_R*k+4, clearOfFinds=(x,y)=>fl.every(o=>Math.hypot(o.x-x,o.y-y)>=clear); let s='';
-  for(const f of fl) for(let i=0;i<DECOYS()&&DECOY[f.kind];i++){
+  const perFind=Math.min(DECOYS(),page.decoys??Infinity);
+  for(const f of fl) for(let i=0;i<perFind&&DECOY[f.kind];i++){
     const near=pool.filter(p=>!p.used&&p.open&&p.fit&&p.fit.includes(f.kind)&&Math.hypot(p.x-f.x,p.y-f.y)<420&&clearOfFinds(p.x,p.y)); let d=null;   // a flower head goes on a stem; leaves, pods and pebbles lie on the ground
     if(near.length){ const p=near[Math.floor(rand()*near.length)]; p.used=true; d={x:p.x,y:p.y}; }
     else for(let t=0;t<14&&!d;t++){ const x=Math.min(1540,Math.max(60,f.x+between(-260,260))), y=f.y>680?Math.min(985,Math.max(700,f.y+between(-120,120))):between(760,960);
@@ -942,7 +945,7 @@ $('stage').addEventListener('pointerdown',e=>{
     animate(g.querySelector('.body'),F.anim,F.ms); F.snd();
     if(!found.has(i)){ found.add(i); const sp=$('hunt').querySelector(`[data-i="${i}"]`); if(sp) sp.classList.add('got');
       const m=g.transform.baseVal.consolidate().matrix; countTap(kind,i,m.e+60,m.f-70,list.filter(it=>it[0]===kind).length);
-      if(found.size===list.length){ clearTimeout(hintT); clearTimeout(slowT); if(!hinted&&performance.now()-shownAt<=AUTO_QUICK_MS) grade(1);
+      if(found.size===list.length){ clearTimeout(hintT); clearTimeout(slowT); if(!hinted&&performance.now()-shownAt<=autoRow.upMs*list.length) grade(1);
         later(()=>{ burst(800,420,'YOU FOUND THEM!','#8fd3c4','#1d1a17',60); sfx.fanfare(); },900*PACE()); } }
     return; }
   const a=g.querySelector('.anim'); const actor=g.closest('.actor'); const who=actor&&actor.dataset.who, ax=actor?+actor.dataset.ax:800, ay=actor?+actor.dataset.ay:600;
