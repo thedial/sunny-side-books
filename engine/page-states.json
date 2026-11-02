@@ -1,0 +1,46 @@
+{
+ "about": "The states a page passes through. Four parts run side by side: the page itself, the hunt (idle or hint), each flap, and the bursts. engine/toddler-bots.mjs watches the real engine while the bots play and fails on any rule below that it sees broken; check.py makes sure every rule here has a check there and no check is left without a rule.",
+ "parts": {
+  "page": {
+   "states": {"showing": "one page is up and takes taps", "turning": "the moment between two pages: Next, Back, a choice, Home"},
+   "start": "showing",
+   "moves": [
+    ["showing", "tap Next, Back or a choice, or hold Home", "turning"],
+    ["turning", "the new page is drawn", "showing"]
+   ]
+  },
+  "hunt": {
+   "states": {"idle": "nothing is pointed out", "hint": "the critters still hidden nudge and their icons glow"},
+   "start": "idle",
+   "moves": [
+    ["idle", "the age's hintMs with no tap on the picture, a critter still hidden", "hint"],
+    ["hint", "hintShowMs", "idle"],
+    ["hint", "the age's hintMs more with no tap, a critter still hidden", "hint"]
+   ]
+  },
+  "flap": {
+   "states": {"shut": "the flap covers who is behind it", "open": "the flap is lifted"},
+   "start": "shut",
+   "moves": [
+    ["shut", "tap the flap", "open"],
+    ["open", "tap the flap", "shut"]
+   ]
+  },
+  "burst": {
+   "states": {"calm": "no burst on the screen", "burst": "a starburst word is up (FOUND YOU!, PEEKABOO!, 3 PIGS!)"},
+   "start": "calm",
+   "moves": [
+    ["calm", "something on this page was found, lifted, counted to the end or tapped for its sound word", "burst"],
+    ["burst", "burstMs x the age's pace", "calm"]
+   ]
+  }
+ },
+ "rules": {
+  "hint-on-time": "a hint comes exactly hintMs after the last tap on the picture (or the last hint), and only while a critter is still hidden",
+  "hint-ends": "a hint glows for hintShowMs, then the hunt is idle again",
+  "burst-ends": "a burst is gone within burstMs x the age's pace",
+  "flap-toggles": "each tap on a flap moves it to the other state",
+  "turn-resets": "a turn lands on a new page that is idle, with every flap shut, no burst and no counting badges",
+  "turn-leaves-nothing": "nothing the last page started (a burst, a fanfare, a peekaboo, a hint) shows up or sounds on the new page"
+ }
+}

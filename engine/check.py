@@ -718,6 +718,55 @@ def check_determinism(eng, r):
         r.fail('determinism: the page layout is not seeded from hash32(book/page/visit/age)')
 
 
+# ---------------------------------------------------------------- 6. page statechart
+
+SHOWS_OR_SOUNDS = r'(burst|bubble|sparkle|tone|noise|voice|buzz|blub)'
+LEFT_BEHIND = re.compile(r'\b' + SHOWS_OR_SOUNDS + r'\(|\bsfx\.|\bSOUND[.\[]|^\s*' + SHOWS_OR_SOUNDS + r'\s*$')
+
+
+def check_statechart(eng, r):
+    """engine/page-states.json is the page's statechart. Here: it is whole, every rule has a check in the toddler bots
+    and every check has a rule, and nothing a page starts on a timer can outlive the page (the bots watch the rest)."""
+    chart = json.load(open(os.path.join(HERE, 'page-states.json'), encoding='utf-8'))
+    for name, part in chart['parts'].items():
+        states = set(part['states'])
+        if part['start'] not in states:
+            r.fail(f'statechart: {name} starts in "{part["start"]}", which is not one of its states')
+        for a, why, b in part['moves']:
+            for s in (a, b):
+                if s not in states:
+                    r.fail(f'statechart: {name} moves through "{s}", which is not one of its states')
+        reach, todo = {part['start']}, [part['start']]
+        while todo:
+            s = todo.pop()
+            for a, _, b in part['moves']:
+                if a == s and b not in reach:
+                    reach.add(b); todo.append(b)
+        for s in states - reach:
+            r.fail(f'statechart: {name} can never reach "{s}"')
+        for s in states:
+            if not any(a == s for a, _, _ in part['moves']):
+                r.fail(f'statechart: {name} can never leave "{s}"')
+    bots = open(os.path.join(HERE, 'toddler-bots.mjs'), encoding='utf-8').read()
+    checked = set(re.findall(r"broke\('([a-z-]+)'", bots))
+    for rule in chart['rules']:
+        if rule not in checked:
+            r.fail(f'statechart: the rule "{rule}" has no check in toddler-bots.mjs')
+    for rule in checked - set(chart['rules']):
+        r.fail(f'statechart: toddler-bots.mjs checks "{rule}", which page-states.json does not list')
+    for m in re.finditer(r'\bsetTimeout\(', eng.js_code):
+        args = call_args(eng.js_code, m.end() - 1)
+        if args and LEFT_BEHIND.search(args[0][1]):
+            r.fail(f'statechart turn-leaves-nothing: template line {eng.js_line(m.start())} plays or shows something on a bare '
+                   f'setTimeout, which outlives a turn; use later() so turning the page drops it')
+    for name in ('show', 'shelf'):
+        body = function_body(eng.js_code, name)
+        if body is None or 'dropLater()' not in body:
+            r.fail(f'statechart turn-resets: {name}() does not call dropLater(), so the last page\'s timers run on')
+    r.note(f'statechart: {len(chart["parts"])} parts, {sum(len(p["states"]) for p in chart["parts"].values())} states, '
+           f'{len(chart["rules"])} rules, each checked by the toddler bots')
+
+
 # ---------------------------------------------------------------- run
 
 def run_all(books, book_files=(), page=None, site_index=None, lint=False):
@@ -727,6 +776,7 @@ def run_all(books, book_files=(), page=None, site_index=None, lint=False):
     check_budgets(books, book_files, page, site_index, r)
     check_gentle(eng, r)
     check_determinism(eng, r)
+    check_statechart(eng, r)
     return r
 
 

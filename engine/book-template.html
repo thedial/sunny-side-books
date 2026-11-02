@@ -252,7 +252,7 @@ const SOUND={
   potato:()=>voice(160,120,.15,{type:'square',lp:500,vol:.07}),
   sun:()=>[1200,1600].forEach((f,i)=>tone(f,f,.15,'triangle',.06,i*.1)),
   scarecrow:()=>noise(.4,{f:1800,q:.6,vol:.05}),
-  mouse:()=>[0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d)), bunny:()=>tone(900,1300,.1,'triangle',.08), beeBig:()=>buzz(), hive:()=>{buzz();setTimeout(buzz,250);}, butterfly:()=>[1800,2400,3000].forEach((f,i)=>tone(f,f,.1,'triangle',.05,i*.08)),
+  mouse:()=>[0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d)), bunny:()=>tone(900,1300,.1,'triangle',.08), beeBig:()=>buzz(), hive:()=>{buzz();later(buzz,250);}, butterfly:()=>[1800,2400,3000].forEach((f,i)=>tone(f,f,.1,'triangle',.05,i*.08)),
   fish:()=>blub(), octopus:()=>noise(.6,{type:'lowpass',f:700,f2:200,vol:.12}), turtle:()=>tone(300,220,.4,'sine',.08),
   crab:()=>[0,.1,.2,.3].forEach(d=>noise(.03,{type:'highpass',f:3000,vol:.12,delay:d})), seahorse:()=>[1200,1600].forEach((f,i)=>tone(f,f,.15,'triangle',.06,i*.1)),
   jelly:()=>[2000,2400,2800,3200].forEach((f,i)=>tone(f,f,.15,'sine',.04,i*.06)), whale:()=>voice(140,90,1.4,{type:'sine',lp:600,vib:3,vol:.12}),
@@ -556,6 +556,10 @@ for(const name of Object.keys(P)){
 const _sun=P.sun; P.sun=(x,y)=>`<circle class="nohit" cx="${x}" cy="${y}" r="150" fill="#f6e3a8" opacity=".35"/>`+_sun(x,y);
 
 /* ---- little effects, each removes itself ---- */
+/* timers for what a tap sets off on this page (a burst, a peekaboo, a fanfare); a turn drops them all (page-states.json: turn-leaves-nothing) */
+const tapTimers=new Set();
+function later(fn,ms){ const t=setTimeout(()=>{ tapTimers.delete(t); fn(); },ms); tapTimers.add(t); return t; }
+function dropLater(){ tapTimers.forEach(clearTimeout); tapTimers.clear(); }
 function addFx(html,ms){ const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.innerHTML=recolor(html); fx.appendChild(g); pace(g); setTimeout(()=>g.remove(),ms*PACE()); }
 /* older child, calmer page: one-shot animations run faster (the endless ones, bobbing and blinking, are left alone) */
 function pace(node){ const p=PACE(); if(p===1||!node.getAnimations) return; node.getAnimations({subtree:true}).forEach(a=>{ if(a.effect.getTiming().iterations!==Infinity) a.playbackRate=1/p; }); }
@@ -582,10 +586,10 @@ const REACT={
         <circle cx="-10" cy="-36" r="5" fill="${OUT}"/><circle cx="10" cy="-36" r="5" fill="${OUT}"/><circle cx="0" cy="-22" r="5" fill="#ff8fa6"/></g>
       <g class="doorL"><rect x="-70" y="-150" width="70" height="150" fill="#b8402b" stroke="#f4ead2" stroke-width="9"/><path d="M-70 -150 L0 0 M0 -150 L-70 0" stroke="#f4ead2" stroke-width="7"/></g>
       <g class="doorR"><rect x="0" y="-150" width="70" height="150" fill="#b8402b" stroke="#f4ead2" stroke-width="9"/><path d="M70 -150 L0 0 M0 -150 L70 0" stroke="#f4ead2" stroke-width="7"/></g></g>`,2700);
-    setTimeout(()=>bubble(x+60,y-200,'Squeak!'),600); },
+    later(()=>bubble(x+60,y-200,'Squeak!'),600); },
   hay:(x,y)=>{ addFx(`<g transform="translate(${x+20} ${y-80})"><g class="fxpeek"><circle r="26" fill="#a7a3a0" ${S(4)}/><circle cx="-16" cy="-22" r="11" fill="#a7a3a0" ${S(4)}/><circle cx="16" cy="-22" r="11" fill="#a7a3a0" ${S(4)}/>
       <circle cx="-8" cy="-4" r="4" fill="${OUT}"/><circle cx="8" cy="-4" r="4" fill="${OUT}"/></g></g><rect x="${x-80}" y="${y-90}" width="160" height="90" rx="20" fill="#f0c34f" ${S(6)}/>`,2500);
-    setTimeout(()=>bubble(x+40,y-150,'Squeak!'),500); },
+    later(()=>bubble(x+40,y-150,'Squeak!'),500); },
   hen:(x,y)=>{ let s=''; for(let k=0;k<3;k++) s+=`<g transform="translate(${x} ${y-80})"><path class="fxfloat" style="--dx:${rnd(-100,100)|0}px;--dy:${rnd(-120,-40)|0}px;--r:${rnd(-180,180)|0}deg" d="M0 0 q10 -20 4 -36 q-10 16 -4 36z" fill="#fff" ${S(3)}/></g>`; addFx(s,2700); },
   pig:(x,y)=>{ let s=''; for(let k=0;k<6;k++) s+=`<circle class="fxsplat" style="--dx:${rnd(-120,120)|0}px;--dy:${rnd(-90,10)|0}px" cx="${x}" cy="${y-30}" r="${rnd(8,16)|0}" fill="#7a5133"/>`; addFx(s,1000); },
   duck:(x,y)=>{ let s=''; for(let k=0;k<7;k++) s+=`<circle class="fxsplat" style="--dx:${rnd(-110,110)|0}px;--dy:${rnd(-120,-20)|0}px" cx="${x}" cy="${y-30}" r="${rnd(6,12)|0}" fill="#8fd3f4" stroke="#fff" stroke-width="3"/>`; addFx(s,1000); },
@@ -663,21 +667,21 @@ function barnDoors(h,inside,say){
   const gl=document.getElementById(id+'L'), gr=document.getElementById(id+'R');
   const swing=k=>{ const o=k<.2?1-k/.2*.9:(k>.8?.1+(k-.8)/.2*.9:.1);
     gl.setAttribute('transform',`translate(${bL.x0} 0) scale(${o} 1) translate(${-bL.x0} 0)`); gr.setAttribute('transform',`translate(${bR.x1} 0) scale(${o} 1) translate(${-bR.x1} 0)`); };
-  tween(2700,swing); SOUND.barn&&voiceCreak(); if(say) setTimeout(()=>bubble(cx+60,by-dh-40,say),650);
+  tween(2700,swing); SOUND.barn&&voiceCreak(); if(say) later(()=>bubble(cx+60,by-dh-40,say),650);
 }
 function voiceCreak(){ voice(90,140,.6,{lp:500,vol:.06}); }
 /* each target hides a few surprises and takes turns */
 const GALLERY={
-  sun:[ (x,y,h)=>{ const r=h.r*PK; addFx(`<g transform="translate(${x} ${y})"><g class="fxshades"><path d="M${-r*.75} ${-r*.12} h${r*.62} v${r*.2} q0 ${r*.28} ${-r*.31} ${r*.28} q${-r*.31} 0 ${-r*.31} ${-r*.28}z M${r*.13} ${-r*.12} h${r*.62} v${r*.2} q0 ${r*.28} ${-r*.31} ${r*.28} q${-r*.31} 0 ${-r*.31} ${-r*.28}z M${-r*.13} ${-r*.08} h${r*.26}" fill="${OUT}" ${S(6)}/></g></g>`,2700); setTimeout(()=>bubble(x+r*.6,y+r*.3,'Cool!'),500); SOUND.sun(); },
+  sun:[ (x,y,h)=>{ const r=h.r*PK; addFx(`<g transform="translate(${x} ${y})"><g class="fxshades"><path d="M${-r*.75} ${-r*.12} h${r*.62} v${r*.2} q0 ${r*.28} ${-r*.31} ${r*.28} q${-r*.31} 0 ${-r*.31} ${-r*.28}z M${r*.13} ${-r*.12} h${r*.62} v${r*.2} q0 ${r*.28} ${-r*.31} ${r*.28} q${-r*.31} 0 ${-r*.31} ${-r*.28}z M${-r*.13} ${-r*.08} h${r*.26}" fill="${OUT}" ${S(6)}/></g></g>`,2700); later(()=>bubble(x+r*.6,y+r*.3,'Cool!'),500); SOUND.sun(); },
         (x,y,h)=>{ const r=h.r*PK; addFx(`<circle class="fxglow" cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#f4e3a6" stroke-width="18"/><circle class="fxglow" style="animation-delay:.3s" cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#f0c055" stroke-width="12"/>`,2000); bubble(x+r*.6,y+r*.3,'Hello!'); SOUND.sun(); },
-        (x,y,h)=>{ for(let k=0;k<8;k++) setTimeout(()=>sparkle(x+rnd(-h.r,h.r)*PK,y+rnd(-h.r,h.r)*PK),k*90); SOUND.flower(); } ],
+        (x,y,h)=>{ for(let k=0;k<8;k++) later(()=>sparkle(x+rnd(-h.r,h.r)*PK,y+rnd(-h.r,h.r)*PK),k*90); SOUND.flower(); } ],
   cloud:[ (x,y,h)=>{ let s=''; const w=h.r*PK*.8; for(let k=0;k<20;k++) s+=`<path class="fxdrop" style="animation-delay:${rnd(0,1.2).toFixed(2)}s" d="M${x+rnd(-w,w)} ${y+rnd(0,h.r*PK*.4)} q-6 14 0 20 q6 -6 0 -20z" fill="#4f9c9b"/>`; addFx(s,2300); SOUND.cloud(); },
           (x,y,h)=>{ const r=h.r*PK; addFx(`<g transform="translate(${x} ${y+r*.5})"><g class="fxbow">${['#c9432f','#e08a3c','#f0c055','#86a95a','#4f9c9b','#8d86c6'].map((c,i)=>`<path d="M${-r*1.1+i*14} 0 a${r*1.1-i*14} ${r*.9-i*14} 0 0 1 ${2*(r*1.1-i*14)} 0" fill="none" stroke="${c}" stroke-width="15"/>`).join('')}</g></g>`,3100); SOUND.flower(); },
           (x,y)=>{ flyOut(x,y,2); SOUND.tree(); } ],
-  barn:[ (x,y,h)=>{ barnDoors(h,(cx,by,s)=>CRIT.mouse(cx,by,s*1.4),'Squeak!'); setTimeout(()=>[0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d)),700); },
-         (x,y,h)=>{ barnDoors(h,(cx,by,s)=>P.chick(cx,by,s*1.6),'Peep!'); setTimeout(()=>SOUND.chick(),700); },
-         (x,y,h)=>{ barnDoors(h,(cx,by,s)=>CRIT.pig(cx-60*s,by,s*1.1),'Oink!'); setTimeout(()=>SOUND.pig(),700); } ],
-  fence:[ (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+60,b.x1-60), py=b.y0+(b.y1-b.y0)*.45; popUp(px,py,CRIT.bunny(px,py+40,.8)); setTimeout(()=>bubble(px+30,py-140,'Hop!'),500); SOUND.bunny(); },
+  barn:[ (x,y,h)=>{ barnDoors(h,(cx,by,s)=>CRIT.mouse(cx,by,s*1.4),'Squeak!'); later(()=>[0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d)),700); },
+         (x,y,h)=>{ barnDoors(h,(cx,by,s)=>P.chick(cx,by,s*1.6),'Peep!'); later(()=>SOUND.chick(),700); },
+         (x,y,h)=>{ barnDoors(h,(cx,by,s)=>CRIT.pig(cx-60*s,by,s*1.1),'Oink!'); later(()=>SOUND.pig(),700); } ],
+  fence:[ (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+60,b.x1-60), py=b.y0+(b.y1-b.y0)*.45; popUp(px,py,CRIT.bunny(px,py+40,.8)); later(()=>bubble(px+30,py-140,'Hop!'),500); SOUND.bunny(); },
           (x,y,h)=>{ const b=bounds(h.poly); flyOut(rnd(b.x0,b.x1),b.y0+40,1); [0,.12,.3].forEach(d=>tone(2600,3400,.07,'sine',.08,d)); },
           (x,y,h)=>{ flutter(x,y,2); } ],
   grass:[ (x,y)=>{ addFx(`<g transform="translate(${x-40} ${y+60})"><g class="fxjump">${CRIT.hopper()}</g></g>`,1300); tone(2400,2800,.05,'square',.03); tone(2400,2800,.05,'square',.03,.1); },
@@ -685,17 +689,17 @@ const GALLERY={
           (x,y,h)=>{ const b=bounds(h.poly), px=(b.x0+b.x1)/2, py=b.y0+(b.y1-b.y0)*.55; popUp(px,py,CRIT.bunny(px,py+40,.7)); SOUND.bunny(); } ],
   tree:[ (x,y)=>{ flyOut(x,y-60,3); SOUND.tree(); }, (x,y)=>{ REACT.tree(x,y+260); SOUND.tree(); }, (x,y)=>{ flutter(x,y,3); } ],
   pond:[ (x,y)=>{ REACT.pond(x,y); SOUND.pond(); }, (x,y)=>{ addFx(`<g transform="translate(${x-60} ${y})"><g class="fxjump">${P.frog(0,0)}</g></g>`,1300); SOUND.frog(); }, (x,y)=>{ addFx(`<ellipse class="fxring" cx="${x}" cy="${y}" rx="80" ry="22" fill="none" stroke="#f5eddb" stroke-width="6"/><ellipse class="fxring" style="animation-delay:.25s" cx="${x}" cy="${y}" rx="80" ry="22" fill="none" stroke="#f5eddb" stroke-width="5"/>`,1800); SOUND.pond(); } ],
-  flowers:[ (x,y)=>{ flutter(x,y,3); }, (x,y)=>{ REACT.flower(x,y+90); SOUND.flower(); }, (x,y)=>{ for(let k=0;k<6;k++) setTimeout(()=>sparkle(x+rnd(-90,90),y+rnd(-60,40)),k*100); SOUND.flower(); } ],
+  flowers:[ (x,y)=>{ flutter(x,y,3); }, (x,y)=>{ REACT.flower(x,y+90); SOUND.flower(); }, (x,y)=>{ for(let k=0;k<6;k++) later(()=>sparkle(x+rnd(-90,90),y+rnd(-60,40)),k*100); SOUND.flower(); } ],
   moon:[ (x,y)=>{ addFx(`<g transform="translate(${x+300} ${y-120})"><g class="fxstar"><path d="M0 0 L120 -60" stroke="#f4e3a6" stroke-width="6" stroke-linecap="round" opacity=".7"/><path d="M0 -14 L4 -4 L14 0 L4 4 L0 14 L-4 4 L-14 0 L-4 -4Z" fill="#f4e3a6"/></g></g>`,1400); [0,.1,.2].forEach((d,i)=>tone(1600+i*400,1600+i*400,.2,'triangle',.04,d)); },
-          (x,y,h)=>{ for(let k=0;k<6;k++) setTimeout(()=>sparkle(x+rnd(-260,260),y+rnd(-120,200)),k*120); SOUND.flower(); },
+          (x,y,h)=>{ for(let k=0;k<6;k++) later(()=>sparkle(x+rnd(-260,260),y+rnd(-120,200)),k*120); SOUND.flower(); },
           (x,y)=>{ bubble(x+80,y+60,'Hoo hoo!'); voice(420,380,.3,{type:'sine',lp:1200,vol:.07}); voice(420,380,.4,{type:'sine',lp:1200,vol:.07,delay:.4}); } ],
-  window:[ (x,y,h)=>{ const r=(h.r||40)*PK; addFx(`<circle class="fxhold" cx="${x}" cy="${y}" r="${r}" fill="#183847" opacity=".85"/>`,1400); tone(1200,1200,.05,'square',.03); setTimeout(()=>tone(1500,1500,.05,'square',.03),1300); } ],
-  hay:[ (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+80,b.x1-80), py=b.y0+(b.y1-b.y0)*.35; popUp(px,py,CRIT.mouse(px,py+50,1)); setTimeout(()=>bubble(px+30,py-110,'Squeak!'),500); [0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d+.5)); },
-         (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+80,b.x1-80), py=b.y0+(b.y1-b.y0)*.35; popUp(px,py,P.chick(px,py+60,1)); setTimeout(()=>bubble(px+30,py-110,'Peep!'),500); SOUND.chick(); },
+  window:[ (x,y,h)=>{ const r=(h.r||40)*PK; addFx(`<circle class="fxhold" cx="${x}" cy="${y}" r="${r}" fill="#183847" opacity=".85"/>`,1400); tone(1200,1200,.05,'square',.03); later(()=>tone(1500,1500,.05,'square',.03),1300); } ],
+  hay:[ (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+80,b.x1-80), py=b.y0+(b.y1-b.y0)*.35; popUp(px,py,CRIT.mouse(px,py+50,1)); later(()=>bubble(px+30,py-110,'Squeak!'),500); [0,.12].forEach(d=>tone(3000,3600,.08,'sine',.07,d+.5)); },
+         (x,y,h)=>{ const b=bounds(h.poly), px=rnd(b.x0+80,b.x1-80), py=b.y0+(b.y1-b.y0)*.35; popUp(px,py,P.chick(px,py+60,1)); later(()=>bubble(px+30,py-110,'Peep!'),500); SOUND.chick(); },
          (x,y)=>{ let s=''; for(let k=0;k<12;k++) s+=`<g transform="translate(${x+rnd(-80,80)} ${y+rnd(-40,40)})"><path class="fxfloat" style="--dx:${rnd(-160,160)|0}px;--dy:${rnd(-160,40)|0}px;--r:${rnd(-300,300)|0}deg" d="M0 0 l28 -6" stroke="#e3bd62" stroke-width="5" stroke-linecap="round"/></g>`; addFx(s,2700); noise(.4,{f:2500,q:.7,vol:.05}); } ],
-  beam:[ (x,y,h)=>{ for(let k=0;k<10;k++) setTimeout(()=>sparkle(x+rnd(-120,120),y+rnd(-120,160)),k*110); SOUND.flower(); }, (x,y)=>{ flyOut(x,y,1); SOUND.tree(); } ],
+  beam:[ (x,y,h)=>{ for(let k=0;k<10;k++) later(()=>sparkle(x+rnd(-120,120),y+rnd(-120,160)),k*110); SOUND.flower(); }, (x,y)=>{ flyOut(x,y,1); SOUND.tree(); } ],
   hen:[ (x,y)=>{ REACT.hen(x,y+80); SOUND.hen(); bubble(x+60,y-80,'Bawk!'); } ],
-  nest:[ (x,y)=>{ popUp(x,y,P.egg(x,y+30,1)); SOUND.egg(); setTimeout(()=>bubble(x+40,y-100,'Peep?'),500); } ],
+  nest:[ (x,y)=>{ popUp(x,y,P.egg(x,y+30,1)); SOUND.egg(); later(()=>bubble(x+40,y-100,'Peep?'),500); } ],
 };
 const shots={};
 CRIT.beeMini=()=>`<g transform="scale(.5)">${beeSmall()}</g>`;
@@ -707,7 +711,7 @@ Object.assign(REACT,{
   octopus:(x,y)=>addFx(`<g transform="translate(${x-60} ${y-90})"><g class="fxink">${[[-40,0,60],[30,-20,70],[10,40,55],[-20,-40,50],[60,30,45]].map(([a,b,r])=>`<circle cx="${a}" cy="${b}" r="${r}" fill="#2b2338"/>`).join('')}</g></g>`,2500),
   jelly:(x,y)=>addFx(`<circle class="fxglow" cx="${x}" cy="${y-130}" r="120" fill="none" stroke="#f3b6c8" stroke-width="16"/>`,1700),
   coral:(x,y)=>bubblesFx(x,y-150,7),
-  clam:(x,y)=>{ for(let k=0;k<5;k++) setTimeout(()=>sparkle(x+rnd(-50,50),y-rnd(40,120)),k*120); },
+  clam:(x,y)=>{ for(let k=0;k<5;k++) later(()=>sparkle(x+rnd(-50,50),y-rnd(40,120)),k*120); },
   butterfly:(x,y)=>flutter(x,y-80,2),
 });
 function gallery(g){ const page=BOOK.pages[cur], d=BOOK.art[page.scene], i=+g.dataset.hot, h=d.hot[i], list=GALLERY[h.who]; if(!list) return;
@@ -766,10 +770,10 @@ function flipFlap(g){ const i=+g.dataset.f, open=!flapState[i]; flapState[i]=ope
     fl.setAttribute('transform', ax==='x'?`translate(${hx} 0) scale(${v.toFixed(3)} 1) translate(${-hx} 0)`:`translate(0 ${hy}) scale(1 ${v.toFixed(3)}) translate(0 ${-hy})`); });
   noise(.18,{f:1800,q:.8,vol:.07}); world.querySelectorAll(`[data-flap="${i}"]`).forEach(n=>n.style.pointerEvents=open?'':'none');
   if(open){ const f=BOOK.pages[cur].flaps[i], who=[].concat(f.hide||[])[0]?.who; const hid=world.querySelector(`[data-flap="${i}"]`);
-    const m=g.getBBox(); setTimeout(()=>{ burst(m.x+m.width/2, m.y-40, f.peek||'PEEKABOO!','#f6c84c','#d0452f',56); if(who&&SOUND[who]) SOUND[who]();
-      if(hid){ const t=hid.querySelector('.tap'); const an=t&&t.querySelector('.anim'); animate(an,'boing',900); if(f.say) setTimeout(()=>bubble(m.x+m.width*.6,m.y+m.height*.3,f.say),500); } },380);
+    const m=g.getBBox(); later(()=>{ burst(m.x+m.width/2, m.y-40, f.peek||'PEEKABOO!','#f6c84c','#d0452f',56); if(who&&SOUND[who]) SOUND[who]();
+      if(hid){ const t=hid.querySelector('.tap'); const an=t&&t.querySelector('.anim'); animate(an,'boing',900); if(f.say) later(()=>bubble(m.x+m.width*.6,m.y+m.height*.3,f.say),500); } },380);
     const sp=$('hunt').querySelector(`[data-fl="${i}"]`); if(sp) sp.classList.add('got');
-    if(Object.values(flapState).filter(Boolean).length===BOOK.pages[cur].flaps.length && BOOK.pages[cur].flaps.length>1) setTimeout(()=>sfx.fanfare(),1200); }
+    if(Object.values(flapState).filter(Boolean).length===BOOK.pages[cur].flaps.length && BOOK.pages[cur].flaps.length>1) later(()=>sfx.fanfare(),1200); }
 }
 
 /* ---- age dial: one setting per tablet (2, 3, 4, 5 and auto). It drives the mechanics only: how big and where the finds sit, decoys,
@@ -784,7 +788,7 @@ let hintT=0, slowT=0, hinted=false, shownAt=0, graded=false;
 function grade(d){ if(!AUTO||graded) return; graded=true; OFFSET=Math.max(-1,Math.min(1,OFFSET+d)); store.set('ssb.autoOffset',OFFSET); }
 function restartIdleHint(){ clearTimeout(hintT); if(finds(BOOK.pages[cur]).length) hintT=setTimeout(hint,HINTMS()); }
 function hint(){ const left=[...world.querySelectorAll('.find')].filter((g,i)=>!found.has(i)); if(!left.length) return; hinted=true; grade(-1);
-  $('hunt').querySelectorAll('span[data-i]:not(.got)').forEach(s=>{ s.classList.add('hint'); setTimeout(()=>s.classList.remove('hint'),2600); });
+  $('hunt').querySelectorAll('span[data-i]:not(.got)').forEach(s=>{ s.classList.add('hint'); setTimeout(()=>s.classList.remove('hint'),TABLES.hintShowMs); });
   left.forEach(g=>animate(g.querySelector('.body'),'nudge',700)); restartIdleHint(); }
 function pageTimers(page){ clearTimeout(hintT); clearTimeout(slowT); shownAt=performance.now(); hinted=false; graded=false;
   if(finds(page).length){ slowT=setTimeout(()=>grade(-1),AUTO_SLOW_MS); restartIdleHint(); } }
@@ -886,7 +890,7 @@ function art(page,seed=''){
 function focusView(o){ const d=BOOK.art&&BOOK.art[o.scene]; if(d&&o.focus){ paintMap(d); const [fx_,fy,fw]=o.focus, w=fw*PK, h=w/1.6; return `${(PX(fx_)-w/2)|0} ${(PY(fy)-h/2)|0} ${w|0} ${h|0}`; } return o.view||'0 0 1600 1000'; }
 function thumb(o){ const s=art({scene:o.scene,actors:o.actors}); return s.replace(/id="paint"/g,'id="paintT"').replace(/#paint"/g,'#paintT"').replace(/class="tap actor"/g,'class="actor"'); }
 function show(id){
-  const page=BOOK.pages[id]; cur=id; counted={}; found=new Set(); flapState={}; $('shelf').hidden=true; $('home').hidden=false; $('gear').hidden=true;
+  dropLater(); const page=BOOK.pages[id]; cur=id; counted={}; found=new Set(); flapState={}; $('shelf').hidden=true; $('home').hidden=false; $('gear').hidden=true;
   marks.innerHTML=''; if(page.letter&&AGEROW().letterTiles){ $('letter').hidden=false; $('letter').textContent=page.letter[0]; } else $('letter').hidden=true;
   const pd=BOOK.art&&BOOK.art[page.scene]; document.body.classList.toggle('painted',!!pd);
   document.body.style.background=pd?(pd.bottom||'#7d9a4f'):(SCENEBG[page.scene]||'#8fae5a');
@@ -918,7 +922,7 @@ let counted={}, found=new Set();
 function badge(x,y,n){ const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','nohit');
   g.innerHTML=`<g transform="translate(${x} ${y})"><g class="popin"><circle r="40" fill="#fff6d8" ${S(6)}/><text class="bubble" y="17" text-anchor="middle" font-size="52" fill="#d0452f">${n}</text></g></g>`; marks.appendChild(g); }
 function countTap(kind,key,x,y,total){ if(total<2) return; const c=counted[kind]=counted[kind]||new Set(); if(c.has(key)) return; c.add(key); badge(x,y,c.size);
-  tone(500+c.size*120,500+c.size*120,.15,'triangle',.07); if(c.size===total) setTimeout(()=>{ burst(x,y-130,`${total} ${PLURAL[kind]||kind.toUpperCase()}!`); sfx.fanfare(); },450); }
+  tone(500+c.size*120,500+c.size*120,.15,'triangle',.07); if(c.size===total) later(()=>{ burst(x,y-130,`${total} ${PLURAL[kind]||kind.toUpperCase()}!`); sfx.fanfare(); },450); }
 function huntLabel(page){ const f=finds(page), h=(page.actors||[]).filter(a=>a.hide); $('hunt').hidden=!(f.length||h.length);
   const fl=page.flaps||[]; if(fl.length) $('hunt').hidden=false;
   $('hunt').innerHTML=(fl.length?'Lift '+fl.map((x,i)=>`<span data-fl="${i}">${FLAP[x.type].icon}</span>`).join(' ')+' ':'')+(f.length||h.length?'Find ':'')+h.map(a=>`<span data-h="1">${a.icon||'👀'}</span>`).join(' ')+' '+f.map((it,i)=>`<span data-i="${i}">${FINDS[it[0]].icon}</span>`).join(' '); }
@@ -939,11 +943,11 @@ $('stage').addEventListener('pointerdown',e=>{
     if(!found.has(i)){ found.add(i); const sp=$('hunt').querySelector(`[data-i="${i}"]`); if(sp) sp.classList.add('got');
       const m=g.transform.baseVal.consolidate().matrix; countTap(kind,i,m.e+60,m.f-70,list.filter(it=>it[0]===kind).length);
       if(found.size===list.length){ clearTimeout(hintT); clearTimeout(slowT); if(!hinted&&performance.now()-shownAt<=AUTO_QUICK_MS) grade(1);
-        setTimeout(()=>{ burst(800,420,'YOU FOUND THEM!','#8fd3c4','#1d1a17',60); sfx.fanfare(); },900*PACE()); } }
+        later(()=>{ burst(800,420,'YOU FOUND THEM!','#8fd3c4','#1d1a17',60); sfx.fanfare(); },900*PACE()); } }
     return; }
   const a=g.querySelector('.anim'); const actor=g.closest('.actor'); const who=actor&&actor.dataset.who, ax=actor?+actor.dataset.ax:800, ay=actor?+actor.dataset.ay:600;
   const hid=g.closest('[data-hide]'); if(hid && !hid.dataset.done){ hid.dataset.done=1; animate(a,'peekUp',2300); if(SOUND[who]) SOUND[who]();
-    burst(ax,ay-(+hid.dataset.h||180)-120,hid.dataset.hide,'#8fd3c4','#1d1a17',58); const sp=$('hunt').querySelector('[data-h="1"]'); if(sp) sp.classList.add('got'); setTimeout(()=>sfx.fanfare(),300); return; }
+    burst(ax,ay-(+hid.dataset.h||180)-120,hid.dataset.hide,'#8fd3c4','#1d1a17',58); const sp=$('hunt').querySelector('[data-h="1"]'); if(sp) sp.classList.add('got'); later(()=>sfx.fanfare(),300); return; }
   animate(a,g.dataset.react||'boing',1100);
   if(SOUND[who]) SOUND[who](); else if(g.dataset.sfx) sfx[g.dataset.sfx]();
   if(REACT[who]) REACT[who](ax,ay);
@@ -985,7 +989,7 @@ $('autoBtn').onclick=()=>{ ctx(); sfx.pop(); AUTO=!AUTO; OFFSET=0; store.set('ss
 $('ageDone').onclick=()=>{ ctx(); sfx.page(); $('ages').hidden=true; shelf(); };
 $('ages').addEventListener('click',e=>{ if(e.target===$('ages')) $('ageDone').onclick(); });
 gate($('gear'),()=>{ ctx(); sfx.chime(); ages(); });
-function shelf(){ $('shelf').hidden=false; ['hunt','choices','letter'].forEach(i=>$(i).hidden=true); $('words').hidden=true; $('next').hidden=true; $('back').hidden=true; $('home').hidden=true; $('gear').hidden=false;
+function shelf(){ dropLater(); fx.innerHTML=''; marks.innerHTML=''; $('shelf').hidden=false; ['hunt','choices','letter'].forEach(i=>$(i).hidden=true); $('words').hidden=true; $('next').hidden=true; $('back').hidden=true; $('home').hidden=true; $('gear').hidden=false;
   clearTimeout(hintT); clearTimeout(slowT);
   const keep=BOOK; $('shelf').querySelector('.covers').innerHTML=LIB.map((b,i)=>{ BOOK=b; const c=b.pages[b.start];
     const svg=art({scene:c.scene,actors:c.actors}).replace(/class="tap[^"]*"/g,'class="nohit"');

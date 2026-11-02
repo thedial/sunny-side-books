@@ -6,6 +6,7 @@
   "5": {"findScale": 0.55, "decoys": 4, "hintMs": 20000, "holdMs": 800, "pace": 0.6, "letterTiles": true}
  },
  "auto": {"quickMs": 5000, "slowMs": 25000},
+ "hintShowMs": 2600,
  "bots": {
   "about": "the toddler bots fail a page whose median time per critter or give-up rate is over its age's band; set 2026-11-02 from the bots' own numbers with about 25% headroom, the way the size budgets were",
   "band": {

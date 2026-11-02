@@ -116,12 +116,71 @@ function botSetup() {
     document.querySelectorAll('#choices .choice').forEach(e => add('choice', e));
     return t;
   };
+  // ---- the page statechart (engine/page-states.json), watched while the bots play
+  window.__broken = [];
+  const W = {};
+  const broke = (rule, what) => __broken.push({ rule, what, page: W.at || BOOK.id + '/' + cur, age: AGE(), seed: W.seed || $('seed').textContent.replace('seed=', '') });
+  window.__fxAdded = 0;
+  const addFx_ = addFx; window.addFx = (...a) => { __fxAdded++; return addFx_(...a); };
+  window.__watchFrom = () => { W.poke = shownAt; W.hintOn = null; W.pops = new Map(); };
+  window.__poked = () => { W.poke = __clock.now(); };
+  window.__watch = () => {
+    const now = __clock.now(), step = 100, left = finds(BOOK.pages[cur]).length - found.size;
+    const glowing = !!$('hunt').querySelector('span.hint');
+    if (glowing && W.hintOn == null) {
+      const quiet = now - W.poke;
+      if (left === 0) broke('hint-on-time', 'a hint came with every critter found');
+      const onTime = quiet >= HINTMS() && quiet <= HINTMS() + step;
+      if (left > 0 && !onTime) broke('hint-on-time', `a hint came ${quiet} ms after the last tap, not ${HINTMS()}`);
+      W.hintOn = now; W.poke = onTime ? W.poke + HINTMS() : now;
+    } else if (!glowing && W.hintOn != null) {
+      const lit = now - W.hintOn;
+      if (Math.abs(lit - TABLES.hintShowMs) > step) broke('hint-ends', `a hint glowed ${lit} ms, not ${TABLES.hintShowMs}`);
+      W.hintOn = null;
+    } else if (!glowing && left > 0 && now - W.poke > HINTMS() + step) {
+      broke('hint-on-time', `no hint ${now - W.poke} ms after the last tap (hintMs ${HINTMS()})`); W.poke = now;
+    }
+    const up = BURST_MS * PACE() + step;
+    for (const p of fx.querySelectorAll('.pop')) {
+      if (!W.pops.has(p)) W.pops.set(p, now);
+      else if (now - W.pops.get(p) > up && !p.__told) { p.__told = 1; broke('burst-ends', `a burst was still up after ${now - W.pops.get(p)} ms (burstMs x pace ${BURST_MS * PACE()})`); }
+    }
+  };
+  // set off everything the page can start, turn the page at once, then watch the new page with no taps
+  window.__turnTest = () => {
+    const go = !$('choices').hidden ? $('choices').querySelector('.choice') : $('next').hidden ? null : $('next');
+    if (!go) return false;
+    W.at = BOOK.id + '/' + cur + ' then a turn'; W.seed = $('seed').textContent.replace('seed=', '');
+    const poke = el => el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', isPrimary: true }));
+    for (const g of world.querySelectorAll('.flapG')) {
+      const i = g.dataset.f, was = !!flapState[i]; poke(g);
+      if (!!flapState[i] === was) broke('flap-toggles', `flap ${i} did not change on a tap`);
+    }
+    world.querySelectorAll('.find').forEach(poke);
+    world.querySelectorAll('.actor .tap:not([data-hot])').forEach(poke);
+    __clock.advance(30);
+    go.click();
+    const onShelf = !$('shelf').hidden, landed = cur;
+    if ($('hunt').querySelector('span.hint')) broke('turn-resets', 'a hint is still glowing');
+    if (Object.values(flapState).some(Boolean)) broke('turn-resets', 'a flap is still open');
+    if (fx.querySelector('.pop')) broke('turn-resets', 'a burst is still up');
+    if (marks.childElementCount) broke('turn-resets', 'counting badges are still up');
+    const quiet3s = () => { const f0 = __fxAdded, v0 = __voices.length; __clock.advance(3000); return [__fxAdded - f0, __voices.length - v0]; };
+    const turned = quiet3s();
+    if (onShelf) shelf(); else show(landed);
+    const fresh = quiet3s();
+    if (turned[0] > fresh[0]) broke('turn-leaves-nothing', `${turned[0] - fresh[0]} burst(s), bubble(s) or sparkle(s) from the last page showed up on the new one`);
+    if (turned[1] > fresh[1]) broke('turn-leaves-nothing', `${turned[1] - fresh[1]} sound(s) from the last page played on the new one`);
+    W.at = W.seed = null;
+    return true;
+  };
   // one toddler plays the page that is showing until every critter is found or she gives up
   window.__play = (M, seed, opts) => {
     const R = __rng(seed), page = BOOK.pages[cur], n = finds(page).length;
     const gauss = () => { let u = 0, v = 0; while (!u) u = R(); while (!v) v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
     const res = { n, times: [], all: false, tAll: null, hinted: false, hintAt: null, taps: 0, decoyTaps: 0, misses: 0, wild: 0 };
     let t = 0, boost = 0;
+    __watchFrom();
     const stage = $('stage').getBoundingClientRect();
     const finds_ = [...world.querySelectorAll('.find')], decoys = [...world.querySelectorAll('.decoy')];
     const actors = [...world.querySelectorAll('.actor .tap')];
@@ -129,7 +188,7 @@ function botSetup() {
       let gap = M.tapMs * Math.exp(0.35 * gauss());
       if (R() < M.pause) gap += M.pauseMs[0] + R() * (M.pauseMs[1] - M.pauseMs[0]);
       gap = Math.round(gap);
-      __clock.advance(gap);
+      for (let s = 0; s < gap; s += opts.stepMs) { __clock.advance(Math.min(opts.stepMs, gap - s)); __watch(); }
       t += gap;
       if (hinted && !res.hinted) { res.hinted = true; res.hintAt = t; boost = opts.hintBoost[1]; }
       const left = finds_.filter((g, i) => !found.has(i));
@@ -151,13 +210,14 @@ function botSetup() {
         x = a.left + a.width / 2 + gauss() * M.aimPx; y = a.top + a.height / 2 + gauss() * M.aimPx;
       } else { x = stage.left + R() * stage.width; y = stage.top + R() * stage.height; }
       const before = found.size, el = __tap(x, y);
+      if (el) __poked();
       res.taps++;
       if (el && el.closest('.decoy')) res.decoyTaps++;
       if (found.size > before) res.times.push(t);
       else if (aimed) res.misses++;
     }
     res.all = found.size === n; res.tAll = res.all ? res.times[res.times.length - 1] : null;
-    __clock.advance(4000);
+    for (let s = 0; s < 4000; s += opts.stepMs) { __clock.advance(opts.stepMs); __watch(); }
     return res;
   };
 }
@@ -247,6 +307,14 @@ async function main() {
   await replay.close();
   await browser.send('Target.activateTarget', { targetId: page.targetId });   // a tab in the background runs many times slower
   phase('replays');
+  // ---- the page statechart: set off everything on a page, turn at once, and watch the new page
+  let turns = 0;
+  for (const age of [2, 5]) for (const b of books) for (const p of b.pages) {
+    await page.evaluate(`__open(${b.i},${JSON.stringify(p.id)},${age})`);
+    if (await page.evaluate('__turnTest()')) turns++;
+  }
+  phase('turns');
+  await page.evaluate('__voices.length = 0');   // the turns set off everything at once; loudness is measured on the toddlers' play
   // ---- the toddlers
   const rows = [];
   for (const age of [2, 3, 4, 5]) {
@@ -257,7 +325,7 @@ async function main() {
         const seed = await page.evaluate(`__open(${b.i},${JSON.stringify(p.id)},${age})`);
         const lay = await page.evaluate(`__layout(${minTap})`);
         for (const pr of lay.problems) failures.push(`layout: ${b.id}/${p.id} age ${age}: ${pr} (seed ${seed})`);
-        const r = await page.evaluate(`__play(${JSON.stringify(TODDLERS[age])}, ${age * 100003 + k * 7919 + p.id.length}, ${JSON.stringify({ giveUpMs: GIVE_UP_MS, hintBoost: HINT_BOOST, halfSeen: HALF_HIDDEN_SEEN })})`);
+        const r = await page.evaluate(`__play(${JSON.stringify(TODDLERS[age])}, ${age * 100003 + k * 7919 + p.id.length}, ${JSON.stringify({ giveUpMs: GIVE_UP_MS, stepMs: 100, hintBoost: HINT_BOOST, halfSeen: HALF_HIDDEN_SEEN })})`);
         r.seed = seed; runs.push(r);
       }
       const tAll = runs.map(r => r.all ? r.tAll : Infinity);
@@ -281,11 +349,17 @@ async function main() {
   // ---- loudness of everything the toddlers did
   const loud = await page.evaluate(`(${loudest.toString()})(__voices, ${tables.sound.masterGain})`);
   const voices = await page.evaluate('__voices.length');
+  const broken = new Map();
+  for (const x of await page.evaluate('__broken')) {
+    const key = `statechart ${x.rule}: ${x.page}: ${x.what}`;
+    const k = broken.get(key) || { n: 0, ages: new Set(), seed: x.seed }; k.n++; k.ages.add(x.age); broken.set(key, k);
+  }
+  for (const [key, k] of broken) failures.push(`${key} (${k.n}x, ages ${[...k.ages].join(',')}; seed ${k.seed})`);
   const errors = [...page.errors, ...(await page.evaluate('__errors')), ...replayErrors];
   for (const e of errors) failures.push('engine error: ' + e);
 
   const report = { generated: new Date().toISOString(), page: PAGE, playedOn: PLAY_ON, runsPerPage: RUNS, model: TODDLERS,
-    hint: { halfHiddenSeen: HALF_HIDDEN_SEEN, boost: HINT_BOOST }, auto: tables.auto, rows, minTargetCss: minSize, replays,
+    hint: { halfHiddenSeen: HALF_HIDDEN_SEEN, boost: HINT_BOOST }, auto: tables.auto, rows, minTargetCss: minSize, replays, turns,
     loudest: loud, voices, failures, warnings };
   await finish(report, rows, { quickMs, slowMs, minTap, bots: tables.bots });
   await browser.close();
