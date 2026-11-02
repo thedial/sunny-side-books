@@ -1,8 +1,9 @@
 """Build the bookshelf.
   python3 -I build.py out.html book1.json book2.json ...          (one page, for the Claude artifact)
   python3 -I build.py --site site/ book1.json book2.json ...      (installable offline web app for any host)
+The checks in check.py run first; if any fails, nothing is written.
 """
-import json, sys, os, hashlib
+import json, sys, os, hashlib, importlib.util
 here = os.path.dirname(os.path.abspath(__file__))
 args = sys.argv[1:]
 site = args[0] == '--site'
@@ -10,22 +11,34 @@ if site: args = args[1:]
 out, files = args[0], args[1:]
 t = open(os.path.join(here, 'book-template.html'), encoding='utf-8').read()
 kit = open(os.path.join(here, 'kit.js'), encoding='utf-8').read()
+tables = json.load(open(os.path.join(here, 'tables.json'), encoding='utf-8'))
 books = [json.load(open(f, encoding='utf-8')) for f in files]
-page = t.replace('/*KIT*/', kit).replace('/*BOOKS*/', json.dumps(books))
+page = t.replace('/*KIT*/', kit).replace('/*TABLES*/', json.dumps(tables, separators=(',', ':'))).replace('/*BOOKS*/', json.dumps(books))
+
+ver = hashlib.sha1(page.encode()).hexdigest()[:10]
+head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">'
+        '<meta name="theme-color" content="#8fc3b8"><meta name="apple-mobile-web-app-capable" content="yes">'
+        '<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Sunny Side Books">'
+        '<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">'
+        '<link rel="apple-touch-icon" href="icon-192.png"></head><body>')
+tail = ('<script>if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));'
+        'try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock("landscape").catch(()=>{})}catch(e){}</script></body></html>')
+site_index = head + page + tail
+
+spec = importlib.util.spec_from_file_location('check', os.path.join(here, 'check.py'))
+check = importlib.util.module_from_spec(spec); spec.loader.exec_module(check)
+report = check.run_all(books, files, page=page, site_index=site_index if site else None)
+check.print_report(report)
+if report.problems:
+    print(f'build stopped: {len(report.problems)} problem(s), nothing written', file=sys.stderr)
+    sys.exit(1)
+
 if not site:
     open(out, 'w', encoding='utf-8').write(page)
 else:
     os.makedirs(out, exist_ok=True)
-    ver = hashlib.sha1(page.encode()).hexdigest()[:10]
-    head = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
-            '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">'
-            '<meta name="theme-color" content="#8fc3b8"><meta name="apple-mobile-web-app-capable" content="yes">'
-            '<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Sunny Side Books">'
-            '<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">'
-            '<link rel="apple-touch-icon" href="icon-192.png"></head><body>')
-    tail = ('<script>if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));'
-            'try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock("landscape").catch(()=>{})}catch(e){}</script></body></html>')
-    open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(head + page + tail)
+    open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(site_index)
     json.dump({"name": "Sunny Side Books", "short_name": "Books", "start_url": "./", "scope": "./", "display": "fullscreen",
                "orientation": "landscape", "background_color": "#8fc3b8", "theme_color": "#8fc3b8",
                "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
@@ -41,3 +54,4 @@ self.addEventListener('fetch',e=>{{ if(e.request.method!=='GET') return;
 """)
     open(os.path.join(out, '_headers'), 'w').write("/sw.js\n  Cache-Control: no-cache\n/index.html\n  Cache-Control: no-cache\n")
 print('built', ', '.join(b['title'] for b in books), '(site)' if site else '')
+print(check.summary(report))

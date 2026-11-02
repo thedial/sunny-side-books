@@ -48,7 +48,7 @@ html,body{height:100%;margin:0;background:var(--grass);overflow:hidden;
   border:5px solid var(--ink);background:var(--sun);font:800 34px var(--display);color:var(--ink);display:grid;place-items:center;padding:0;box-shadow:4px 4px 0 var(--ink)}
 .navbtn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
 #next{right:max(12px, env(safe-area-inset-right,0px))}
-#back{left:max(12px, env(safe-area-inset-left,0px));background:var(--paper);width:58px;height:58px;font-size:26px;bottom:calc(38px + env(safe-area-inset-bottom,0px))}
+#back{left:max(12px, env(safe-area-inset-left,0px));background:var(--paper);width:64px;height:64px;font-size:28px;bottom:calc(36px + env(safe-area-inset-bottom,0px))}
 .navbtn[hidden]{display:none}
 #choices{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;gap:4vw;padding-bottom:18vh;box-sizing:border-box}
 #choices[hidden]{display:none}
@@ -197,6 +197,7 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
   <button id="autoBtn" class="autoT">Auto on</button><small id="ageNote"></small><button id="ageDone">Done</button></div></div>
 
 <script>
+const TABLES=/*TABLES*/;
 const OUT='#1d1a17';
 /* print palette: the kit's toy-bright colors mapped to the screenprint look of Scott's art */
 const PAL={'#fff':'#f5eddb','#ffb3c1':'#eba891','#ff8fa6':'#d9826f','#e8382f':'#c9432f','#e2412f':'#c9432f','#d6402f':'#b8432f','#f2a03d':'#e08a3c','#f2903d':'#e08a3c',
@@ -772,57 +773,21 @@ function flipFlap(g){ const i=+g.dataset.f, open=!flapState[i]; flapState[i]=ope
    how soon a hint comes, how long a grown-up holds Home/Mute/gear, how long the bursts run. Story, words, art, surprises and pages never change. ---- */
 const store={get:k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} }};
 let AGESET=Math.min(5,Math.max(2,+store.get('ssb.age')||2)), AUTO=store.get('ssb.auto')!=='0', OFFSET=Math.max(-1,Math.min(1,+store.get('ssb.autoOffset')||0));
-const AGE=()=>Math.min(5,Math.max(2,AGESET+(AUTO?OFFSET:0)));          // the age the page is built for: the set age nudged one step by auto
-const ageT=()=>(AGE()-2)/3;                                              // 0 at two, 1 at five
-const FINDK=()=>1-.45*ageT(), DECOYS=()=>[0,1,2,4][AGE()-2], HINTMS=()=>[4000,8000,14000,20000][AGE()-2], HOLDMS=()=>AGE()<4?1200:800, PACE=()=>1-.4*ageT();
-/* auto: a quick page (all found inside 5 s, no hint) steps the band up, a hint or 25 s with a critter unfound steps it down; one step per page */
+const AGE=()=>Math.min(5,Math.max(2,AGESET+(AUTO?OFFSET:0))), AGEROW=()=>TABLES.ages[AGE()];
+const FINDK=()=>AGEROW().findScale, DECOYS=()=>AGEROW().decoys, HINTMS=()=>AGEROW().hintMs, HOLDMS=()=>AGEROW().holdMs, PACE=()=>AGEROW().pace;
+/* auto moves one step per page: all found within quickMs and no hint steps up; a hint, or slowMs with a critter unfound, steps down */
+const {quickMs:AUTO_QUICK_MS, slowMs:AUTO_SLOW_MS}=TABLES.auto;
 let hintT=0, slowT=0, hinted=false, shownAt=0, graded=false;
 function grade(d){ if(!AUTO||graded) return; graded=true; OFFSET=Math.max(-1,Math.min(1,OFFSET+d)); store.set('ssb.autoOffset',OFFSET); }
-function armHint(){ clearTimeout(hintT); if(finds(BOOK.pages[cur]).length) hintT=setTimeout(hint,HINTMS()); }
+function restartIdleHint(){ clearTimeout(hintT); if(finds(BOOK.pages[cur]).length) hintT=setTimeout(hint,HINTMS()); }
 function hint(){ const left=[...world.querySelectorAll('.find')].filter((g,i)=>!found.has(i)); if(!left.length) return; hinted=true; grade(-1);
   $('hunt').querySelectorAll('span[data-i]:not(.got)').forEach(s=>{ s.classList.add('hint'); setTimeout(()=>s.classList.remove('hint'),2600); });
-  left.forEach(g=>animate(g.querySelector('.body'),'nudge',700)); armHint(); }
+  left.forEach(g=>animate(g.querySelector('.body'),'nudge',700)); restartIdleHint(); }
 function pageTimers(page){ clearTimeout(hintT); clearTimeout(slowT); shownAt=performance.now(); hinted=false; graded=false;
-  if(finds(page).length){ slowT=setTimeout(()=>grade(-1),25000); armHint(); } }
+  if(finds(page).length){ slowT=setTimeout(()=>grade(-1),AUTO_SLOW_MS); restartIdleHint(); } }
 
-/* perches: the spots a critter may sit on, measured against the kit's drawings. open: in plain view (the only kind age 2 gets).
-   cover: a piece drawn in front so the critter is half hidden (what age 4 and 5 look for). for: only these critters (a cloud edge is for a bee). fit: these critters first. */
-const FL=['ladybug','bee'], CR=['caterpillar','snail'], CL={who:'leaf'}, TUFT=(x,y,c,s=1)=>({who:'tuft',x,y,args:[c,s]});
-const PERCH={
-  meadow:[ {x:250,y:822,on:'pink flower',open:true,fit:FL}, {x:520,y:832,on:'cream flower',open:true,fit:FL}, {x:380,y:870,on:'yellow flower',open:true,fit:FL}, {x:160,y:884,on:'purple flower',open:true,fit:FL},
-    {x:1095,y:615,on:'tree, low leaves',open:true}, {x:1240,y:612,on:'tree, right leaves',open:true}, {x:640,y:292,on:'cloud edge',open:true,for:['bee']},
-    {x:1125,y:828,on:'tree foot',open:true,fit:CR}, {x:760,y:925,on:'under a leaf',open:false,cover:{who:'leaf',x:690,y:990,args:[-6,1.3]},fit:CR},
-    {x:920,y:800,on:'in the grass',open:false,cover:TUFT(920,870,'#6b8a45')}, {x:1420,y:900,on:'by a pebble',open:false,cover:{who:'pebble',x:1400,y:950,args:[1.2]},fit:CR} ],
-  yard:[ {x:660,y:640,on:'fence post',open:true}, {x:960,y:640,on:'fence post',open:true}, {x:1160,y:640,on:'fence post',open:true}, {x:1460,y:900,on:'pink flower',open:true,fit:FL}, {x:1540,y:928,on:'yellow flower',open:true,fit:FL},
-    {x:1445,y:598,on:'tree, low leaves',open:true}, {x:470,y:560,on:'barn roof edge',open:true}, {x:440,y:262,on:'cloud edge',open:true,for:['bee']},
-    {x:860,y:930,on:'in the grass',open:false,cover:TUFT(860,1000,'#6b8a45'),fit:CR}, {x:1310,y:880,on:'under a leaf',open:false,cover:{who:'leaf',x:1240,y:950,args:[-8,1.2]},fit:CR},
-    {x:640,y:800,on:'by a pebble',open:false,cover:{who:'pebble',x:620,y:850,args:[1.2]}} ],
-  barn:[ {x:1335,y:700,on:'top of the hay',open:true}, {x:1180,y:800,on:'hay bale side',open:true}, {x:545,y:555,on:'ladder rung',open:true}, {x:537,y:635,on:'ladder rung',open:true}, {x:1230,y:565,on:'window sill',open:true},
-    {x:800,y:318,on:'the beam',open:true,for:['bee','ladybug']}, {x:300,y:620,on:'the post',open:true}, {x:700,y:920,on:'in the straw',open:false,cover:TUFT(700,990,'#c99a3e'),fit:CR},
-    {x:1000,y:860,on:'in the straw',open:false,cover:TUFT(1000,930,'#c99a3e')} ],
-  pond:[ {x:130,y:900,on:'yellow flower',open:true,fit:FL}, {x:220,y:937,on:'pink flower',open:true,fit:FL}, {x:680,y:846,on:'lily pad',open:true}, {x:905,y:866,on:'lily pad',open:true}, {x:560,y:730,on:'reed top',open:true},
-    {x:1345,y:700,on:'pine branch',open:true}, {x:1500,y:738,on:'pine branch',open:true}, {x:1070,y:250,on:'cloud edge',open:true,for:['bee']},
-    {x:700,y:945,on:'pond edge',open:false,cover:TUFT(690,1015,'#6b8a45'),fit:CR}, {x:1200,y:930,on:'by a pebble',open:false,cover:{who:'pebble',x:1180,y:980,args:[1.2]},fit:CR},
-    {x:380,y:880,on:'in the grass',open:false,cover:TUFT(380,950,'#6b8a45')} ],
-  garden:[ {x:160,y:712,on:'cabbage',open:true}, {x:360,y:712,on:'cabbage',open:true}, {x:240,y:785,on:'cabbage',open:true}, {x:560,y:722,on:'carrot top',open:true}, {x:1330,y:636,on:'scarecrow arm',open:true},
-    {x:1470,y:552,on:'scarecrow hat',open:true}, {x:1560,y:918,on:'yellow flower',open:true,fit:FL}, {x:470,y:262,on:'cloud edge',open:true,for:['bee']},
-    {x:1000,y:930,on:'the soil',open:false,cover:TUFT(1000,1000,'#6b8a45'),fit:CR}, {x:760,y:850,on:'under a leaf',open:false,cover:{who:'leaf',x:700,y:920,args:[-8,1.2]},fit:CR},
-    {x:1150,y:800,on:'by a pebble',open:false,cover:{who:'pebble',x:1130,y:850,args:[1.2]}} ],
-  night:[ {x:1300,y:402,on:'the moon',open:true}, {x:1235,y:330,on:'moon tip',open:true}, {x:480,y:545,on:'barn roof edge',open:true}, {x:330,y:518,on:'window sill',open:true}, {x:420,y:650,on:'barn wall',open:true},
-    {x:906,y:810,on:'by a firefly',open:true}, {x:1208,y:940,on:'by a firefly',open:true}, {x:700,y:930,on:'in the grass',open:false,cover:TUFT(700,1000,'#24403a'),fit:CR},
-    {x:1100,y:900,on:'by a pebble',open:false,cover:{who:'pebble',x:1080,y:950,args:[1.2,'#5e6a66']}} ],
-  reef:[ {x:230,y:668,on:'the rock',open:true}, {x:300,y:690,on:'coral tip',open:true}, {x:1255,y:615,on:'coral tip',open:true}, {x:1500,y:665,on:'coral tip',open:true}, {x:1540,y:755,on:'kelp foot',open:true},
-    {x:700,y:930,on:'the sand',open:true}, {x:1000,y:900,on:'the sand',open:true}, {x:600,y:850,on:'behind a rock',open:false,cover:{who:'rockS',x:560,y:880,s:.5}}, {x:900,y:960,on:'behind coral',open:false,cover:{who:'coral',x:860,y:1020,args:['#e58a8a',.5]}} ],
-  kelp:[ {x:1430,y:712,on:'the rock',open:true}, {x:220,y:785,on:'kelp foot',open:true}, {x:1340,y:785,on:'kelp foot',open:true}, {x:700,y:940,on:'the sand',open:true}, {x:900,y:920,on:'the sand',open:true}, {x:560,y:880,on:'the sand',open:true},
-    {x:1000,y:860,on:'behind a rock',open:false,cover:{who:'rockS',x:960,y:890,s:.5}}, {x:800,y:980,on:'behind coral',open:false,cover:{who:'coral',x:760,y:1040,args:['#ef9a4f',.5]}} ],
-  sand:[ {x:1330,y:630,on:'the big rock',open:true}, {x:200,y:690,on:'the small rock',open:true}, {x:1480,y:650,on:'coral tip',open:true}, {x:600,y:880,on:'the sand',open:true}, {x:900,y:850,on:'the sand',open:true}, {x:1100,y:900,on:'the sand',open:true},
-    {x:450,y:930,on:'behind a rock',open:false,cover:{who:'rockS',x:410,y:960,s:.5}}, {x:800,y:960,on:'behind coral',open:false,cover:{who:'coral',x:760,y:1020,args:['#c58b9e',.5]}} ],
-  deep:[ {x:1280,y:670,on:'the rock',open:true}, {x:1500,y:775,on:'kelp foot',open:true}, {x:120,y:785,on:'kelp foot',open:true}, {x:600,y:920,on:'the sand',open:true}, {x:900,y:900,on:'the sand',open:true}, {x:400,y:950,on:'the sand',open:true},
-    {x:1000,y:860,on:'behind a rock',open:false,cover:{who:'rockS',x:960,y:890,s:.5}}, {x:700,y:990,on:'behind a rock',open:false,cover:{who:'rockS',x:660,y:1020,s:.45}} ],
-};
-/* perches that come with an actor (offsets from its foot, scaled with it): the hive's base and roof, a rock's top, a hay bale's top */
-const ONTOP={ hive:[{dx:-125,dy:-6,open:true,fit:CR},{dx:125,dy:-6,open:true,fit:CR},{dx:0,dy:-248,open:true}], rock:[{dx:0,dy:-70,open:true}], hay:[{dx:0,dy:-96,open:true}], tree:[{dx:-90,dy:-312,open:true},{dx:75,dy:-325,open:true}],
-  cabbage:[{dx:0,dy:-108,open:true}], rockS:[{dx:-10,dy:-100,open:true}], log:[{dx:0,dy:-72,open:true}], mushroom:[{dx:0,dy:-138,open:true}] };
+/* perches and actor-top perches live in tables.json (fields: open, cover, for, fit; see BOOK-FORMAT "Age and finds") */
+const PERCH=TABLES.perches, ONTOP=TABLES.onTop;
 function perches(page){ const list=(PERCH[page.scene]||[]).map(p=>({...p}));
   for(const a of page.actors||[]){ const on=ONTOP[a.who]; if(!on||a.hide) continue; const sc=(a.s||1)*(NOBIG.includes(a.who)?1:BIG);
     for(const o of on) list.push({x:a.x+o.dx*sc,y:a.y+o.dy*sc,open:o.open!==false,fit:o.fit,on:a.who}); }
@@ -846,11 +811,11 @@ const DECOY={
 };
 P.tuft=(x,y,c='#6b8a45',s=1)=>`<g class="nohit" transform="translate(${x} ${y}) scale(${s})"><path d="M-40 0 q-6 -40 -22 -58 q26 10 32 44 q-2 -46 10 -74 q10 30 6 72 q10 -34 36 -46 q-14 26 -22 62 z" fill="${c}" ${L(5,OUT)}/></g>`;
 P.pebble=(x,y,s=1,c='#a9a596')=>`<g class="nohit" transform="translate(${x} ${y}) scale(${s})"><path d="M-40 0 q-4 -36 32 -40 q40 -2 44 26 q0 14 -22 14 z" fill="${c}" ${L(5,OUT)}/><path d="M-26 -14 q14 -10 30 -8" fill="none" ${L(3,'#cfcbbc')}/></g>`;
-/* the hit circle: never under 64 CSS px across at the tablet's size, however small the drawing */
-const pxPer=()=>{ const m=$('stage').getScreenCTM(); return m?m.a:.6; };
-const hitR=k=>Math.max(95,32/(pxPer()*k)).toFixed(0);
+const cssPxPerWorld=()=>{ const m=$('stage').getScreenCTM(); return m?m.a:.6; };
+const {minCss:MIN_TAP_CSS, findHitR:FIND_HIT_R, decoyR:DECOY_R}=TABLES.tap;
+const hitR=k=>Math.max(FIND_HIT_R,MIN_TAP_CSS/2/(cssPxPerWorld()*k)).toFixed(0);
 P.find=(kind,x,y,k=1)=>`<g class="tap find" data-kind="${kind}" data-k="${k}" transform="translate(${x} ${y}) scale(${k})"><circle class="hit" r="${hitR(k)}"/><g class="anim body">${FINDS[kind].draw()}</g></g>`;
-P.decoy=(kind,x,y,k,i)=>`<g class="tap decoy" transform="translate(${x} ${y}) scale(${k})"><circle r="60" fill="transparent"/><g class="anim">${DECOY[kind](i)}</g></g>`;
+P.decoy=(kind,x,y,k,i)=>`<g class="tap decoy" transform="translate(${x} ${y}) scale(${k})"><circle r="${DECOY_R}" fill="transparent"/><g class="anim">${DECOY[kind](i)}</g></g>`;
 /* lay out a page's finds for the age: perch the coordinate-free ones, scatter decoys near each, add the covers of the perches used */
 function layFinds(page,at){
   const pool=perches(page), age=AGE(), k=FINDK(), fl=finds(page).map(f=>({kind:f[0],x:f[1],y:f[2]})), fixed=fl.filter(f=>f.x!=null);
@@ -909,7 +874,7 @@ function focusView(o){ const d=BOOK.art&&BOOK.art[o.scene]; if(d&&o.focus){ pain
 function thumb(o){ const s=art({scene:o.scene,actors:o.actors}); return s.replace(/id="paint"/g,'id="paintT"').replace(/#paint"/g,'#paintT"').replace(/class="tap actor"/g,'class="actor"'); }
 function show(id){
   const page=BOOK.pages[id]; cur=id; counted={}; found=new Set(); flapState={}; $('shelf').hidden=true; $('home').hidden=false; $('gear').hidden=true;
-  marks.innerHTML=''; if(page.letter&&AGE()>=3){ $('letter').hidden=false; $('letter').textContent=page.letter[0]; } else $('letter').hidden=true;   // letter tiles from age 3
+  marks.innerHTML=''; if(page.letter&&AGEROW().letterTiles){ $('letter').hidden=false; $('letter').textContent=page.letter[0]; } else $('letter').hidden=true;
   const pd=BOOK.art&&BOOK.art[page.scene]; document.body.classList.toggle('painted',!!pd);
   document.body.style.background=pd?(pd.bottom||'#7d9a4f'):(SCENEBG[page.scene]||'#8fae5a');
   $('words').innerHTML=page.text||''; $('words').hidden=!page.text;
@@ -951,7 +916,7 @@ function bubble(x,y,text){
 }
 
 $('stage').addEventListener('pointerdown',e=>{
-  ctx(); armHint(); const g=e.target.closest('.tap'); if(!g){ const w=toWorld(e); sparkle(w.x,w.y); return; }   // any tap on the page is "not idle"
+  ctx(); restartIdleHint(); const g=e.target.closest('.tap'); if(!g){ const w=toWorld(e); sparkle(w.x,w.y); return; }
   if(g.dataset.hot!=null){ gallery(g); return; }
   if(g.classList.contains('flapG')){ flipFlap(g); return; }
   if(g.classList.contains('decoy')){ animate(g.querySelector('.anim'),'nudge',500); return; }   // a look-alike: a gentle wobble and nothing else
@@ -959,7 +924,7 @@ $('stage').addEventListener('pointerdown',e=>{
     animate(g.querySelector('.body'),F.anim,F.ms); F.snd();
     if(!found.has(i)){ found.add(i); const sp=$('hunt').querySelector(`[data-i="${i}"]`); if(sp) sp.classList.add('got');
       const m=g.transform.baseVal.consolidate().matrix; countTap(kind,i,m.e+60,m.f-70,list.filter(it=>it[0]===kind).length);
-      if(found.size===list.length){ clearTimeout(hintT); clearTimeout(slowT); if(!hinted&&performance.now()-shownAt<=5000) grade(1);
+      if(found.size===list.length){ clearTimeout(hintT); clearTimeout(slowT); if(!hinted&&performance.now()-shownAt<=AUTO_QUICK_MS) grade(1);
         setTimeout(()=>{ burst(800,420,'YOU FOUND THEM!','#8fd3c4','#1d1a17',60); sfx.fanfare(); },900*PACE()); } }
     return; }
   const a=g.querySelector('.anim'); const actor=g.closest('.actor'); const who=actor&&actor.dataset.who, ax=actor?+actor.dataset.ax:800, ay=actor?+actor.dataset.ay:600;
