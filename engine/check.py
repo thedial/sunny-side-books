@@ -687,6 +687,37 @@ def check_burst_pace(eng, paces, r):
         r.fail('gentle: burst() must keep its burst up for BURST_MS (tables.json burstMs)')
 
 
+# ---------------------------------------------------------------- 4. determinism
+
+SEEDED = ('pickPerch', 'layFinds')     # where the perch picks and decoys are made
+
+
+def function_body(code, name):
+    m = re.search(r'function ' + name + r'\(', code)
+    if not m:
+        return None
+    i = code.index('{', m.end())
+    depth = 0
+    for j in range(i, len(code)):
+        depth += {'{': 1, '}': -1}.get(code[j], 0)
+        if depth == 0:
+            return code[i:j + 1]
+    return code[i:]
+
+
+def check_determinism(eng, r):
+    """Perch picks and decoys come only from the page's seeded random (book, page, visit, age), so ?seed= replays them.
+    The toddler bots replay seeds and compare the layouts."""
+    for name in SEEDED:
+        body = function_body(eng.js_code, name)
+        if body is None:
+            r.fail(f'determinism: the engine has no function {name}()'); continue
+        if re.search(r'Math\.random|\brnd\(', body):
+            r.fail(f'determinism: {name}() uses Math.random; use the page\'s seeded random so a layout can be replayed')
+    if not re.search(r'\bmulberry32\(hash32\(', eng.js_code):
+        r.fail('determinism: the page layout is not seeded from hash32(book/page/visit/age)')
+
+
 # ---------------------------------------------------------------- run
 
 def run_all(books, book_files=(), page=None, site_index=None, lint=False):
@@ -695,6 +726,7 @@ def run_all(books, book_files=(), page=None, site_index=None, lint=False):
     check_books(books, eng, r)
     check_budgets(books, book_files, page, site_index, r)
     check_gentle(eng, r)
+    check_determinism(eng, r)
     return r
 
 

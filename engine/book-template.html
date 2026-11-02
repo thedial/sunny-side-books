@@ -153,6 +153,7 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 #hunt .hint{animation:pulse .5s ease-in-out 5;display:inline-block}
 .hit{fill:transparent}.debug .hit{fill:rgba(255,0,0,.15);stroke:red;stroke-width:4}
 .perchD{display:none}.debug .perchD{display:block}
+#seed{display:none}.debug #seed{display:block;position:fixed;left:50%;bottom:2px;transform:translateX(-50%);z-index:7;font:600 13px monospace;color:#1d1a17;background:#fff6d8cc;padding:1px 8px;border-radius:6px;user-select:text;-webkit-user-select:text}
 </style>
 
 <svg id="stage" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid meet" aria-label="Picture book page">
@@ -187,6 +188,7 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 <button id="home" class="gate" aria-label="Back to the bookshelf (hold)">📚</button>
 <button id="letter" hidden aria-label="Letter sound"></button>
 <div id="hunt" hidden>Find the ladybug!</div>
+<div id="seed"></div>
 <div id="choices" hidden></div>
 <div id="words"></div>
 <button id="back" class="navbtn" aria-label="Previous page">◀</button>
@@ -795,12 +797,12 @@ function perches(page){ const list=(PERCH[page.scene]||[]).map(p=>({...p}));
   for(const p of page.perches||[]) list.push({...p,open:p.open!==false,cover:typeof p.cover==='object'?p.cover:null});   // a number means "that piece in front already hides it"
   return list; }
 /* which perch a critter gets: age 2 open spots only; 4 and 5 tucked-away spots first; a spot made for that critter wins; never one already taken or on top of another find */
-function pickPerch(pool,kind,age,avoid){
+function pickPerch(pool,kind,age,avoid,rand){
   let c=pool.filter(p=>!p.used&&(!p.for||p.for.includes(kind))&&(age>2||p.open)&&!avoid.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<150));
   if(!c.length) return null;
   if(age>=4){ const h=c.filter(p=>!p.open); if(h.length) c=h; }
   const f=c.filter(p=>p.fit&&p.fit.includes(kind)); if(f.length) c=f;
-  const p=c[Math.floor(Math.random()*c.length)]; p.used=true; return p; }
+  const p=c[Math.floor(rand()*c.length)]; p.used=true; return p; }
 /* decoys: look-alikes near the find; a tap just wobbles them */
 const DECOY={
   ladybug:()=>[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-24" rx="14" ry="20" fill="#d0452f" transform="rotate(${a})" ${L(4,OUT)}/>`).join('')+`<circle r="12" fill="#f2a24e" ${L(4,OUT)}/><circle cx="-3" cy="-3" r="4" fill="#f6d08a"/>`,
@@ -818,15 +820,16 @@ const hitR=k=>Math.max(FIND_HIT_R,MIN_TAP_CSS/2/(cssPxPerWorld()*k)).toFixed(0);
 P.find=(kind,x,y,k=1)=>`<g class="tap find" data-kind="${kind}" data-k="${k}" transform="translate(${x} ${y}) scale(${k})"><circle class="hit" r="${hitR(k)}"/><g class="anim body">${FINDS[kind].draw()}</g></g>`;
 P.decoy=(kind,x,y,k,i)=>`<g class="tap decoy" transform="translate(${x} ${y}) scale(${k})"><circle r="${DECOY_R}" fill="transparent"/><g class="anim">${DECOY[kind](i)}</g></g>`;
 /* lay out a page's finds for the age: perch the coordinate-free ones, scatter decoys near each, add the covers of the perches used */
-function layFinds(page,at){
+function layFinds(page,at,rand){
+  const between=(a,b)=>a+rand()*(b-a);
   const pool=perches(page), age=AGE(), k=FINDK(), fl=finds(page).map(f=>({kind:f[0],x:f[1],y:f[2]})), fixed=fl.filter(f=>f.x!=null);
   for(const p of pool) if(fixed.some(f=>Math.hypot(f.x-p.x,f.y-p.y)<120)) p.used=true;
-  for(const f of fl) if(f.x==null){ const p=pickPerch(pool,f.kind,age,fl.filter(o=>o.x!=null)); if(p){ f.x=p.x; f.y=p.y; f.cover=p.cover; } else { f.x=800; f.y=930; } }
+  for(const f of fl) if(f.x==null){ const p=pickPerch(pool,f.kind,age,fl.filter(o=>o.x!=null),rand); if(p){ f.x=p.x; f.y=p.y; f.cover=p.cover; } else { f.x=800; f.y=930; } }
   const dec=[], taken=()=>[...fl,...dec]; let s='';
   for(const f of fl) for(let i=0;i<DECOYS()&&DECOY[f.kind];i++){
     const near=pool.filter(p=>!p.used&&p.open&&p.fit&&p.fit.includes(f.kind)&&Math.hypot(p.x-f.x,p.y-f.y)<420); let d=null;   // a flower head goes on a stem; leaves, pods and pebbles lie on the ground
-    if(near.length){ const p=near[Math.floor(Math.random()*near.length)]; p.used=true; d={x:p.x,y:p.y}; }
-    else for(let t=0;t<14&&!d;t++){ const x=Math.min(1540,Math.max(60,f.x+rnd(-260,260))), y=f.y>680?Math.min(985,Math.max(700,f.y+rnd(-120,120))):rnd(760,960);
+    if(near.length){ const p=near[Math.floor(rand()*near.length)]; p.used=true; d={x:p.x,y:p.y}; }
+    else for(let t=0;t<14&&!d;t++){ const x=Math.min(1540,Math.max(60,f.x+between(-260,260))), y=f.y>680?Math.min(985,Math.max(700,f.y+between(-120,120))):between(760,960);
       if(!taken().some(q=>Math.hypot(q.x-x,q.y-y)<110)) d={x,y}; }
     if(d) dec.push({kind:f.kind,x:d.x,y:d.y,i}); }
   for(const d of dec){ const [x,y,kk]=at(d.x,d.y); s+=P.decoy(d.kind,x,y,kk*k,d.i); }
@@ -836,6 +839,13 @@ function layFinds(page,at){
   /* ?debug: every perch outlined (red open, blue half hidden) with its name */
   s+=`<g class="perchD nohit">`+pool.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="30" fill="none" stroke="${p.open?'red':'blue'}" stroke-width="3"/><text x="${p.x+34}" y="${p.y+6}" font-size="20" fill="${p.open?'red':'blue'}">${p.on||''}</text>`).join('')+`</g>`;
   return s; }
+
+/* a page's perch picks and decoys replay exactly from its seed: book/page/visit/age. A new visit re-rolls them.
+   ?debug shows the seed; ?seed=<that text> opens that page at that age with the same layout. */
+const visits={};
+const hash32=s=>{ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; };
+function mulberry32(a){ return ()=>{ a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function nextSeed(id){ const key=BOOK.id+'/'+id, v=visits[key]=(visits[key]||0)+1; return `${key}/${v}/${AGE()}`; }
 
 /* ---- the book (generated content goes here; the engine above never changes) ---- */
 const LIB = /*BOOKS*/; let BOOK = LIB[0];
@@ -849,7 +859,7 @@ const SHADES=['#e2d6ba','#e5b94a','#d98a78','#a97c4c','#918d7f','#c7a63e','#d36d
 const halftone=str=>str.replace(/<(path|ellipse|circle)([^>]*?)fill="(#[0-9a-f]{6})"([^>]*?)\/>/g,(m,tag,a,c,b)=>SHADES.includes(c)&&!/stroke=/.test(a+b)?m+`<${tag}${a}fill="url(#dots)"${b}/>`:m);
 const HEIGHT={hen:150,chick:95,cow:220,pig:150,duck:130,frog:100,egg:90,beeBig:180,butterfly:150,fish:140,octopus:200,turtle:140,crab:160,seahorse:260,jelly:200,whale:230,clam:90,carrot:90,flower:130,potato:70,rock:70};
 const BIG=1.35, NOBIG=['hive','shell','coral','kelp','rockS','wreck','cabbage','carrot','scarecrow','leafBig'];
-function art(page){
+function art(page,seed=''){
   const pd=BOOK.art&&BOOK.art[page.scene], acts=page.actors||[];
   /* on narrow screens, center the crop on where the characters are */
   const focus=pd&&acts.length?acts.reduce((t,a)=>t+toPic(a.x,a.y)[0],0)/acts.length:null;
@@ -867,7 +877,7 @@ function art(page){
     s+=flapPiece(f,i,x,y,k); });
   for(const f of page.front||[]){ const fn=P[f.who]; if(!fn) continue; const [x,y,k]=at(f.x,f.y);
     const pc=fn(x,y,...(f.args||[])); s+=`<g style="pointer-events:none">`+((f.s||1)*k!==1?`<g transform="translate(${x} ${y}) scale(${(f.s||1)*k}) translate(${-x} ${-y})">${pc}</g>`:pc)+`</g>`; }
-  if(finds(page).length) s+=layFinds(page,at);
+  if(finds(page).length) s+=layFinds(page,at,mulberry32(hash32(seed)));
   return halftone(recolor(s));
 }
 
@@ -879,7 +889,8 @@ function show(id){
   const pd=BOOK.art&&BOOK.art[page.scene]; document.body.classList.toggle('painted',!!pd);
   document.body.style.background=pd?(pd.bottom||'#7d9a4f'):(SCENEBG[page.scene]||'#8fae5a');
   $('words').innerHTML=page.text||''; $('words').hidden=!page.text;
-  layout(); world.innerHTML=art(page); fx.innerHTML='';
+  const seed=nextSeed(id); $('seed').textContent='seed='+seed;
+  layout(); world.innerHTML=art(page,seed); fx.innerHTML='';
   huntLabel(page); pageTimers(page);
   const ch=$('choices');
   if(page.choice){
@@ -980,5 +991,9 @@ function shelf(){ $('shelf').hidden=false; ['hunt','choices','letter'].forEach(i
 $('shelf').addEventListener('click',e=>{ const b=e.target.closest('[data-b]'); if(!b) return; ctx(); sfx.chime(); BOOK=LIB[+b.dataset.b]; history=[]; show(BOOK.start); });
 gate($('home'),()=>{ ctx(); sfx.page(); shelf(); });
 $('letter').onclick=()=>{ ctx(); const L_=BOOK.pages[cur].letter; if(!L_) return; burst(800,330,`${L_[1]}  ${L_[2]}`,'#fff6d8','#d0452f',62); tone(660,880,.12,'triangle',.07); };
-if(LIB.length>1) shelf(); else show(BOOK.start);
+function replay(seed){ const [bookId,pageId,visit,age]=seed.split('/'), b=LIB.find(x=>x.id===bookId);
+  if(!b||!b.pages[pageId]||!(+age>=2&&+age<=5)) return false;
+  BOOK=b; AGESET=+age; AUTO=false; visits[bookId+'/'+pageId]=(+visit||1)-1; show(pageId); return true; }
+const seedArg=new URLSearchParams(location.search).get('seed');
+if(!(seedArg&&replay(seedArg))){ if(LIB.length>1) shelf(); else show(BOOK.start); }
 </script>
