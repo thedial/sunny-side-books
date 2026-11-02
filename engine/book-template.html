@@ -816,24 +816,24 @@ P.tuft=(x,y,c='#6b8a45',s=1)=>`<g class="nohit" transform="translate(${x} ${y}) 
 P.pebble=(x,y,s=1,c='#a9a596')=>`<g class="nohit" transform="translate(${x} ${y}) scale(${s})"><path d="M-40 0 q-4 -36 32 -40 q40 -2 44 26 q0 14 -22 14 z" fill="${c}" ${L(5,OUT)}/><path d="M-26 -14 q14 -10 30 -8" fill="none" ${L(3,'#cfcbbc')}/></g>`;
 const cssPxPerWorld=()=>{ const m=$('stage').getScreenCTM(); return m?m.a:.6; };
 const {minCss:MIN_TAP_CSS, findHitR:FIND_HIT_R, decoyR:DECOY_R}=TABLES.tap;
-const hitR=k=>Math.max(FIND_HIT_R,MIN_TAP_CSS/2/(cssPxPerWorld()*k)).toFixed(0);
-P.find=(kind,x,y,k=1)=>`<g class="tap find" data-kind="${kind}" data-k="${k}" transform="translate(${x} ${y}) scale(${k})"><circle class="hit" r="${hitR(k)}"/><g class="anim body">${FINDS[kind].draw()}</g></g>`;
+const hitR=(k,base=FIND_HIT_R)=>Math.ceil(Math.max(base,MIN_TAP_CSS/2/(cssPxPerWorld()*k)));
+P.find=(kind,x,y,k=1,perch='fixed')=>`<g class="tap find" data-kind="${kind}" data-k="${k}" data-perch="${perch}" transform="translate(${x} ${y}) scale(${k})"><circle class="hit" data-k="${k}" r="${hitR(k)}"/><g class="anim body">${FINDS[kind].draw()}</g></g>`;
 P.decoy=(kind,x,y,k,i)=>`<g class="tap decoy" transform="translate(${x} ${y}) scale(${k})"><circle r="${DECOY_R}" fill="transparent"/><g class="anim">${DECOY[kind](i)}</g></g>`;
 /* lay out a page's finds for the age: perch the coordinate-free ones, scatter decoys near each, add the covers of the perches used */
 function layFinds(page,at,rand){
   const between=(a,b)=>a+rand()*(b-a);
   const pool=perches(page), age=AGE(), k=FINDK(), fl=finds(page).map(f=>({kind:f[0],x:f[1],y:f[2]})), fixed=fl.filter(f=>f.x!=null);
   for(const p of pool) if(fixed.some(f=>Math.hypot(f.x-p.x,f.y-p.y)<120)) p.used=true;
-  for(const f of fl) if(f.x==null){ const p=pickPerch(pool,f.kind,age,fl.filter(o=>o.x!=null),rand); if(p){ f.x=p.x; f.y=p.y; f.cover=p.cover; } else { f.x=800; f.y=930; } }
-  const dec=[], taken=()=>[...fl,...dec]; let s='';
+  for(const f of fl) if(f.x==null){ const p=pickPerch(pool,f.kind,age,fl.filter(o=>o.x!=null),rand); if(p){ f.x=p.x; f.y=p.y; f.cover=p.cover; f.perch=p.open?'open':'half'; } else { f.x=800; f.y=930; f.perch='none'; } }
+  const dec=[], clear=hitR(k)*k+DECOY_R*k+4, clearOfFinds=(x,y)=>fl.every(o=>Math.hypot(o.x-x,o.y-y)>=clear); let s='';
   for(const f of fl) for(let i=0;i<DECOYS()&&DECOY[f.kind];i++){
-    const near=pool.filter(p=>!p.used&&p.open&&p.fit&&p.fit.includes(f.kind)&&Math.hypot(p.x-f.x,p.y-f.y)<420); let d=null;   // a flower head goes on a stem; leaves, pods and pebbles lie on the ground
+    const near=pool.filter(p=>!p.used&&p.open&&p.fit&&p.fit.includes(f.kind)&&Math.hypot(p.x-f.x,p.y-f.y)<420&&clearOfFinds(p.x,p.y)); let d=null;   // a flower head goes on a stem; leaves, pods and pebbles lie on the ground
     if(near.length){ const p=near[Math.floor(rand()*near.length)]; p.used=true; d={x:p.x,y:p.y}; }
     else for(let t=0;t<14&&!d;t++){ const x=Math.min(1540,Math.max(60,f.x+between(-260,260))), y=f.y>680?Math.min(985,Math.max(700,f.y+between(-120,120))):between(760,960);
-      if(!taken().some(q=>Math.hypot(q.x-x,q.y-y)<110)) d={x,y}; }
+      if(clearOfFinds(x,y)&&!dec.some(q=>Math.hypot(q.x-x,q.y-y)<110)) d={x,y}; }
     if(d) dec.push({kind:f.kind,x:d.x,y:d.y,i}); }
   for(const d of dec){ const [x,y,kk]=at(d.x,d.y); s+=P.decoy(d.kind,x,y,kk*k,d.i); }
-  for(const f of fl){ const [x,y,kk]=at(f.x,f.y); s+=P.find(f.kind,x,y,kk*k); }
+  for(const f of fl){ const [x,y,kk]=at(f.x,f.y); s+=P.find(f.kind,x,y,kk*k,f.perch); }
   for(const f of fl) if(f.cover){ const c=f.cover, fn=P[c.who]; if(!fn) continue; const [x,y,kk]=at(c.x,c.y), sc=(c.s||1)*kk, pc=fn(x,y,...(c.args||[]));
     s+=`<g style="pointer-events:none">`+(sc!==1?`<g transform="translate(${x} ${y}) scale(${sc}) translate(${-x} ${-y})">${pc}</g>`:pc)+`</g>`; }
   /* ?debug: every perch outlined (red open, blue half hidden) with its name */
@@ -859,6 +859,7 @@ const SHADES=['#e2d6ba','#e5b94a','#d98a78','#a97c4c','#918d7f','#c7a63e','#d36d
 const halftone=str=>str.replace(/<(path|ellipse|circle)([^>]*?)fill="(#[0-9a-f]{6})"([^>]*?)\/>/g,(m,tag,a,c,b)=>SHADES.includes(c)&&!/stroke=/.test(a+b)?m+`<${tag}${a}fill="url(#dots)"${b}/>`:m);
 const HEIGHT={hen:150,chick:95,cow:220,pig:150,duck:130,frog:100,egg:90,beeBig:180,butterfly:150,fish:140,octopus:200,turtle:140,crab:160,seahorse:260,jelly:200,whale:230,clam:90,carrot:90,flower:130,potato:70,rock:70};
 const BIG=1.35, NOBIG=['hive','shell','coral','kelp','rockS','wreck','cabbage','carrot','scarecrow','leafBig'];
+function withTapFloor(piece,h,sc){ return piece.replace(/<g class="tap[^"]*"[^>]*>/,m=>m+`<circle class="hit" data-k="${sc}" data-base="0" cx="0" cy="${-h/2}" r="${hitR(sc,0)}"/>`); }
 function art(page,seed=''){
   const pd=BOOK.art&&BOOK.art[page.scene], acts=page.actors||[];
   /* on narrow screens, center the crop on where the characters are */
@@ -867,8 +868,9 @@ function art(page,seed=''){
   const at=(x,y)=>{ if(!pd) return [x,y,1]; const [px,py]=toPic(x,y); return [PX(px),PY(py),PK/CK]; };
   for(const a of acts){
     const fn=P[a.who]; if(!fn) continue; const [x,y,k]=at(a.x,a.y), sc=(a.s||1)*k*(pd||NOBIG.includes(a.who)?1:BIG);
-    const piece = a.who==='egg' ? P.egg(x,y,1,a.wobble?'wobbleEgg':'') : fn(x,y,...(a.args||[]));
+    let piece = a.who==='egg' ? P.egg(x,y,1,a.wobble?'wobbleEgg':'') : fn(x,y,...(a.args||[]));
     const n=acts.filter(b=>b.who===a.who).length, hgt=((HEIGHT[a.who]||150)*sc)|0;
+    if(n>1||a.hide) piece=withTapFloor(piece,HEIGHT[a.who]||150,sc);
     s += `<g data-i="${acts.indexOf(a)}" data-n="${n}" data-h="${hgt}"${a.hide?` data-hide="${a.found||'FOUND YOU!'}"`:''}>`+(sc!==1 ? `<g transform="translate(${x} ${y}) scale(${sc}) translate(${-x} ${-y})">${piece}</g>` : piece)+`</g>`;
   }
   (page.flaps||[]).forEach((f,i)=>{ const [x,y,k]=at(f.x,f.y);
@@ -957,7 +959,7 @@ function layout(){
   T=Math.max(170,Math.min(460,T));
   world.setAttribute('transform',`translate(0 ${-T})`); fx.setAttribute('transform',`translate(0 ${-T})`); marks.setAttribute('transform',`translate(0 ${-T})`);
   if(m){ VIEW={x0:(0-m.e)/m.a, x1:(innerWidth-m.e)/m.a, y0:(0-m.f)/m.d+T, y1:(innerHeight-m.f)/m.d+T};
-    world.querySelectorAll('.find').forEach(g=>g.querySelector('.hit').setAttribute('r',hitR(+g.dataset.k||1))); }   // keep the finger target big when the screen changes
+    world.querySelectorAll('.hit').forEach(c=>c.setAttribute('r',hitR(+c.dataset.k||1,c.dataset.base!=null?+c.dataset.base:FIND_HIT_R))); }
 }
 let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ const pd=BOOK.art&&BOOK.art[BOOK.pages[cur].scene]; if(pd) show(cur); else layout(); },150); });
 $('next').onclick=()=>{ ctx(); const p=BOOK.pages[cur]; sfx.page();
