@@ -54,4 +54,5 @@ self.addEventListener('fetch',e=>{{ if(e.request.method!=='GET') return;
 """)
     open(os.path.join(out, '_headers'), 'w').write("/sw.js\n  Cache-Control: no-cache\n/index.html\n  Cache-Control: no-cache\n")
 print('built', ', '.join(b['title'] for b in books), '(site)' if site else '')
-print(check.summary(report))
+for line in report.numbers + [check.summary(report)]:
+    print(line)

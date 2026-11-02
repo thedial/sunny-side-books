@@ -405,12 +405,86 @@ def check_books(books, eng, r):
     r.note(f'book rules: {len(books)} books, {pages} pages, {nfinds} finds')
 
 
+# ---------------------------------------------------------------- 2. budgets
+
+def art_kind(name):
+    n = os.path.basename(name).lower()
+    if n.startswith('plate'):
+        return 'plate'
+    if n.startswith('door'):
+        return 'door'
+    if n.startswith(('sun', 'moon')):
+        return 'sunmoon'
+    return 'character'
+
+
+def art_files(books, book_files):
+    """Every art file present: the art/ folder, plus any picture a book's "art" entry names."""
+    found = {}
+    art_dir = os.path.join(ROOT, 'art')
+    for dirpath, _, names in os.walk(art_dir):
+        for n in names:
+            if n.lower().endswith(('.webp', '.png', '.jpg', '.jpeg', '.avif')):
+                found[os.path.normpath(os.path.join(dirpath, n))] = None
+    for b, f in zip(books, list(book_files) + [None] * len(books)):
+        for scene, d in (b.get('art') or {}).items():
+            for src in [d.get('src')] + [x.get('src') for x in (d.get('art') or {}).values() if isinstance(x, dict)]:
+                if not src:
+                    continue
+                for base in [ROOT] + ([os.path.dirname(os.path.abspath(f))] if f else []):
+                    path = os.path.normpath(os.path.join(base, src))
+                    if os.path.exists(path):
+                        found[path] = b['id']; break
+                else:
+                    pass   # a missing picture falls back to the drawn scene
+    return list(found)
+
+
+def check_budgets(books, book_files, page, site_index, r):
+    def size(label, data, limit):
+        n = len(data.encode('utf-8'))
+        (r.fail if n > limit else r.note)(f'budget: {label} is {n / 1024:.1f} KB of {limit / 1024:.0f} KB')
+    if page is not None:
+        size('the one-page build', page, PAGE_BUDGET)
+    if site_index is not None:
+        size('site/index.html', site_index, SITE_INDEX_BUDGET)
+    for f in book_files:
+        n = os.path.getsize(f)
+        if n > BOOK_BUDGET:
+            r.fail(f'budget: {os.path.basename(f)} is {n / 1024:.1f} KB, over {BOOK_BUDGET / 1024:.0f} KB')
+    files = art_files(books, book_files)
+    by_scene = {}
+    for path in files:
+        n, kind = os.path.getsize(path), art_kind(path)
+        target, hard = ART_LIMITS[kind]
+        rel = os.path.relpath(path, ROOT)
+        if n > hard:
+            r.fail(f'art budget: {rel} is {n / KB:.0f} KB, over the {hard / KB:.0f} KB limit for a {kind}')
+        elif n > target:
+            r.warn(f'art budget: {rel} is {n / KB:.0f} KB, over the {target / KB:.0f} KB target for a {kind}')
+        by_scene.setdefault(os.path.dirname(path), []).append(n)
+    for scene, sizes in by_scene.items():
+        total, (target, hard) = sum(sizes), ART_PAGE
+        rel = os.path.relpath(scene, ROOT)
+        if total > hard:
+            r.fail(f'art budget: {rel} (the plate and layers of one page) is {total / KB:.0f} KB, over {hard / KB:.0f} KB')
+        elif total > target:
+            r.warn(f'art budget: {rel} is {total / KB:.0f} KB, over the {target / KB:.0f} KB page target')
+    total = sum(os.path.getsize(p) for p in files)
+    if total > ART_BOOK[1]:
+        r.fail(f'art budget: all art together is {total / KB / 1024:.1f} MB, over {ART_BOOK[1] / KB / 1024:.0f} MB for the offline cache')
+    elif total > ART_BOOK[0]:
+        r.warn(f'art budget: all art together is {total / KB / 1024:.1f} MB, over the {ART_BOOK[0] / KB / 1024:.0f} MB target')
+    r.note(f'budget: {len(files)} art files ({total / KB:.0f} KB)')
+
+
 # ---------------------------------------------------------------- run
 
 def run_all(books, book_files=(), page=None, site_index=None, lint=False):
     eng = Engine()
     r = Report()
     check_books(books, eng, r)
+    check_budgets(books, book_files, page, site_index, r)
     return r
 
 
