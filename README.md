@@ -23,10 +23,25 @@ python3 -I engine/build.py shelf.html books/*.json       # one self-contained pa
 ```
 Host `site/` anywhere static (it runs on Cloudflare Pages).
 
+## Checks
+The build runs `engine/check.py` first and writes nothing if a check fails: the book rules, the size budgets, the gentle rules (speed, flashing, loudness, burst length), seeded layouts and the page statechart (`engine/page-states.json`).
+
+The toddler bots play every page in the real engine, in the Chrome already on the machine (headless and muted):
+```
+python3 -I engine/build.py preview.html books/*.json
+node engine/toddler-bots.mjs preview.html                 # about 3 minutes; --runs 4 for a quick look
+```
+A bot per age (2 to 5) taps at a toddler's pace with misses and decoy taps. It fails when a page is outside its age's band (`tables.json`, `bots`), when a tap target is under 64 CSS px, when a seed does not replay, or when the engine breaks a statechart rule. It prints time to find, hint rate, how often auto would step up or down, and suggested auto thresholds. Every failure carries a seed: open `preview.html?debug&seed=<seed>` to see that exact layout.
+
+## Ratchet
+A bug gets its check before its fix. Write the check, watch it fail on the engine as it is, then fix the engine until it passes, and keep the check. Examples: the caterpillar's wiggle ran faster than the speed floor (gentle rules); perches came from `Math.random`, so a bad layout could not be replayed (determinism); a burst or a fanfare from the last page went off on the next one after a quick turn (statechart, `turn-leaves-nothing`). A comment that records a bug is a check waiting to be written.
+
 ## Layout
 - `engine/kit.js`: the drawing kit (every character and scene, drawn in code) and the tap behaviours
 - `engine/book-template.html`: the reader
 - `engine/build.py`: builds a page or the offline app from book files
+- `engine/check.py`: the build's checks; `engine/tables.json`: the age table, the perches and the bots' bands; `engine/page-states.json`: the page statechart
+- `engine/toddler-bots.mjs`, `engine/browser.mjs`: the toddler bots and the headless Chrome they play in
 - `books/`: the four published books
 - `BOOK-FORMAT.md`: the book format
 
