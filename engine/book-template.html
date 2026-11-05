@@ -124,7 +124,8 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 #turn .card{background:var(--paper);border:5px solid var(--ink);border-radius:26px;padding:22px 26px;max-width:300px;text-align:center;font:700 22px/1.3 var(--display);color:var(--ink)}
 #turn .phone{font-size:64px;display:inline-block;animation:rot 2.4s ease-in-out infinite}@keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
 #turn button{margin-top:14px;font:700 16px var(--display);color:var(--ink);background:transparent;border:3px solid var(--ink);border-radius:20px;padding:6px 16px}
-@media (prefers-reduced-motion: reduce){.bob,.pulse,.wobbleEgg,.sway,.drift,.breathe,.hover,.flapW,.flutterW,.rise,.wave,.glow,.blink,.flap,#turn .phone{animation:none}}
+@media (prefers-reduced-motion: reduce){.bob,.pulse,.wobbleEgg,.sway,.drift,.breathe,.hover,.flapW,.flutterW,.rise,.wave,.glow,.blink,.flap,.wag,#turn .phone{animation:none}}
+.wag{transform-box:fill-box;transform-origin:100% 100%;animation:wag 1.6s ease-in-out infinite alternate}@keyframes wag{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
 /* age dial: hold-to-press gates (a toddler's tap does nothing, a grown-up's hold fills the ring), the age screen, decoys and hints */
 .gate{position:relative;overflow:hidden;touch-action:none}
 .gate::after{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(201,67,47,.4);transform:scale(0);pointer-events:none}
@@ -148,7 +149,31 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 .autoT.on{background:#b7d88a;padding:10px 72px 10px 26px}.autoT.on::before{content:"☀️";left:auto;right:8px}
 #ages small{display:block;margin-top:12px;opacity:.75;font-weight:600}
 #ageDone{margin-top:18px;font:800 clamp(18px,2.4vw,24px) var(--display);color:var(--ink);background:var(--sun);border:5px solid var(--ink);border-radius:18px;padding:8px 30px;box-shadow:4px 4px 0 var(--ink)}
-#ages button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+#ages button:active,#fam button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+/* our family: who is in this tablet's books, edited by a grown-up behind the gear */
+#famBtn{margin:18px 10px 0 0;font:800 clamp(18px,2.4vw,24px) var(--display);color:var(--ink);background:#b2d8cc;border:5px solid var(--ink);border-radius:18px;padding:8px 22px;box-shadow:4px 4px 0 var(--ink)}
+#fam{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:rgba(31,42,46,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+#fam[hidden]{display:none}
+#fam .card{background:var(--paper);border:6px solid var(--ink);border-radius:30px;padding:14px 22px 18px;box-shadow:10px 10px 0 var(--ink);color:var(--ink);font:600 16px/1.3 var(--display);
+  width:min(96vw,980px);height:min(94vh,720px);box-sizing:border-box;display:grid;grid-template-columns:minmax(200px,38%) 1fr;grid-template-rows:auto auto minmax(0,1fr) auto;gap:10px 18px;overflow:hidden}
+#fam h2{grid-column:1/-1;margin:0;font:400 clamp(22px,3vw,32px) Bangers,var(--display);letter-spacing:2px;color:#d0452f;text-align:center}
+#famWho{grid-column:1/-1;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#famWho button{border:4px solid var(--ink);border-radius:16px;background:#efe9d8;padding:2px 8px 4px;font:800 14px var(--display);color:var(--ink);box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;align-items:center}
+#famWho button.on{background:var(--sun)}
+#famWho svg{width:64px;height:64px}
+#famBig{width:100%;height:100%;min-height:0;background:#cfe3d6;border:4px solid var(--ink);border-radius:20px;box-sizing:border-box}
+#famEdit{overflow:auto;padding-right:6px;min-height:0}
+#famEdit label{display:block;font-weight:800;margin:8px 0 4px}
+#famEdit input{font:700 22px var(--display);width:100%;box-sizing:border-box;border:4px solid var(--ink);border-radius:12px;padding:6px 10px;background:#fff}
+.famRow{display:flex;flex-wrap:wrap;gap:6px}
+.famRow button{border:3px solid var(--ink);border-radius:20px;background:#efe9d8;font:700 15px var(--display);color:var(--ink);padding:4px 12px;min-height:36px}
+.famRow button.sw{width:38px;height:38px;padding:0;border-radius:50%}
+.famRow button.on{outline:4px solid #d0452f;outline-offset:2px}
+.famRow button.on:not(.sw){background:var(--sun)}
+#famFoot{grid-column:1/-1;display:flex;gap:12px;align-items:center;justify-content:space-between}
+#famFoot small{opacity:.75}
+#famDone{font:800 22px var(--display);color:var(--ink);background:var(--sun);border:5px solid var(--ink);border-radius:18px;padding:8px 30px;box-shadow:4px 4px 0 var(--ink)}
+@media (max-width:700px){#fam .card{grid-template-columns:1fr;grid-template-rows:auto auto 160px minmax(0,1fr) auto}}
 .nudge{animation:nudge .5s ease-in-out}@keyframes nudge{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
 #hunt .hint{animation:pulse .5s ease-in-out 5;display:inline-block}
 .hit{fill:transparent}.debug .hit{fill:rgba(255,0,0,.15);stroke:red;stroke-width:4}
@@ -196,7 +221,10 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 <button id="next" class="navbtn" aria-label="Next page">▶</button>
 <button id="gear" class="gate" hidden aria-label="Grown-ups: age setting (hold)">⚙️</button>
 <div id="ages" hidden><div class="card"><h2>How old is the reader?</h2><div id="ageNum">2</div><div id="ageRow"></div>
-  <button id="autoBtn" class="autoT">Auto on</button><small id="ageNote"></small><button id="ageDone">Done</button></div></div>
+  <button id="autoBtn" class="autoT">Auto on</button><small id="ageNote"></small><button id="famBtn">Our family</button><button id="ageDone">Done</button></div></div>
+<div id="fam" hidden><div class="card"><h2>Who is in our books?</h2><div id="famWho"></div>
+  <svg id="famBig" viewBox="-170 -300 340 320" aria-hidden="true"></svg><div id="famEdit"></div>
+  <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><button id="famDone">Done</button></div></div></div>
 
 <script>
 const TABLES=/*TABLES*/;
@@ -535,7 +563,7 @@ Object.assign(P,{
 
 /* ---- tag every kit piece so taps know what was touched; add sway, breathing and ground shadows ---- */
 const INKED=[];
-const SWAY=['tree','pine','flower'], BREATHE=['cow','pig','hen','duck','chick','frog','crab','octopus','clam'], SHADOW={crab:80,octopus:80,clam:70,hive:110,cow:110,pig:85,hen:55,duck:70,chick:40,frog:60,barn:180,hay:85,rock:50,potato:55,egg:36,scarecrow:70,bunny:45,tree:120,pine:100};
+const SWAY=['tree','pine','flower'], BREATHE=['cow','pig','hen','duck','chick','frog','crab','octopus','clam','person','pet','lovey'], SHADOW={person:50,pet:75,lovey:50,crab:80,octopus:80,clam:70,hive:110,cow:110,pig:85,hen:55,duck:70,chick:40,frog:60,barn:180,hay:85,rock:50,potato:55,egg:36,scarecrow:70,bunny:45,tree:120,pine:100};
 for(const name of Object.keys(P)){
   const orig=P[name]; if(typeof orig!=='function'||['sky','ground','hills','fence','stars','barnInside','leaf','button'].includes(name)) continue;
   P[name]=(...args)=>{
@@ -855,7 +883,17 @@ function mulberry32(a){ return ()=>{ a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,
 function nextSeed(id){ const key=BOOK.id+'/'+id, v=visits[key]=(visits[key]||0)+1; return `${key}/${v}/${AGE()}`; }
 
 /* ---- the book (generated content goes here; the engine above never changes) ---- */
-const LIB = /*BOOKS*/; let BOOK = LIB[0];
+/* our family: the book names slots ({kid} in words, "slot":"kid" on a piece); this tablet's family fills them in.
+   The sample family comes with the app; a grown-up's own is kept in localStorage and nowhere else. */
+const FAMILY_SAMPLE=/*FAMILY*/, SLOTS=Object.keys(FAMILY_SAMPLE).filter(k=>k[0]!=='_');
+function loadFamily(){ let mine={}; try{ mine=JSON.parse(store.get('ssb.family')||'{}')||{}; }catch(e){}
+  const f={}; for(const k of SLOTS) f[k]={...FAMILY_SAMPLE[k],...(mine[k]||{}),kind:FAMILY_SAMPLE[k].kind}; return f; }
+function personalize(books,fam){
+  const json=JSON.stringify(books).replace(/\{(\w+)\}/g,(m,k)=>fam[k]?JSON.stringify(esc(fam[k].name)).slice(1,-1):m);
+  const walk=o=>{ if(Array.isArray(o)) return o.forEach(walk); if(!o||typeof o!=='object') return;
+    if(o.slot&&fam[o.slot]) o.args=[fam[o.slot]]; Object.values(o).forEach(walk); };
+  const out=JSON.parse(json); walk(out); return out; }
+const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,FAMILY); let BOOK = LIB[0];
 
 /* ---- engine ---- */
 const world=$('world'), fx=$('fx'), marks=$('marks');
@@ -864,7 +902,7 @@ const SCENEBG={night:'#2f4d40',barn:'#e2c48a',reef:'#2c6f7e',kelp:'#24585c',sand
 
 const SHADES=['#e2d6ba','#e5b94a','#d98a78','#a97c4c','#918d7f','#c7a63e','#d36d5a','#6a8f4a','#d3a94e','#c58b9e','#3d7f86'];
 const halftone=str=>str.replace(/<(path|ellipse|circle)([^>]*?)fill="(#[0-9a-f]{6})"([^>]*?)\/>/g,(m,tag,a,c,b)=>SHADES.includes(c)&&!/stroke=/.test(a+b)?m+`<${tag}${a}fill="url(#dots)"${b}/>`:m);
-const HEIGHT={hen:150,chick:95,cow:220,pig:150,duck:130,frog:100,egg:90,beeBig:180,butterfly:150,fish:140,octopus:200,turtle:140,crab:160,seahorse:260,jelly:200,whale:230,clam:90,carrot:90,flower:130,potato:70,rock:70};
+const HEIGHT={person:250,pet:150,lovey:150,hen:150,chick:95,cow:220,pig:150,duck:130,frog:100,egg:90,beeBig:180,butterfly:150,fish:140,octopus:200,turtle:140,crab:160,seahorse:260,jelly:200,whale:230,clam:90,carrot:90,flower:130,potato:70,rock:70};
 const BIG=1.35, NOBIG=['hive','shell','coral','kelp','rockS','wreck','cabbage','carrot','scarecrow','leafBig'];
 function withTapFloor(piece,h,sc){ return piece.replace(/<g class="tap[^"]*"[^>]*>/,m=>m+`<circle class="hit" data-k="${sc}" data-base="0" cx="0" cy="${-h/2}" r="${hitR(sc,0)}"/>`); }
 function art(page,seed=''){
@@ -992,6 +1030,25 @@ $('autoBtn').onclick=()=>{ ctx(); sfx.pop(); AUTO=!AUTO; OFFSET=0; store.set('ss
 $('ageDone').onclick=()=>{ ctx(); sfx.page(); $('ages').hidden=true; shelf(); };
 $('ages').addEventListener('click',e=>{ if(e.target===$('ages')) $('ageDone').onclick(); });
 gate($('gear'),()=>{ ctx(); sfx.chime(); ages(); });
+/* the family screen: pick a member along the top, change their name and looks, see them drawn as you go */
+let famPick=SLOTS[0];
+const castSvg=m=>recolor(P[m.kind](0,0,m));
+const famStage=()=>{ $('famBig').innerHTML=`<ellipse cx="0" cy="4" rx="150" ry="14" fill="#a9c49a"/>`+castSvg(FAMILY[famPick]); };
+function drawFamily(){
+  $('famWho').innerHTML=SLOTS.map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}"><svg viewBox="-150 -290 300 300">${castSvg(FAMILY[k])}</svg><span>${esc(FAMILY[k].name)}</span></button>`).join('');
+  const m=FAMILY[famPick]; famStage();
+  $('famEdit').innerHTML=`<label for="famName">Name</label><input id="famName" maxlength="14" autocomplete="off" value="${esc(m.name)}">`
+    +CAST_OPTS[m.kind].map(([key,label,vals])=>`<label>${label}</label><div class="famRow">`+vals.map(v=>{ const sw=/^#/.test(v);
+      return `<button data-key="${key}" data-v="${v}" class="${sw?'sw':''}${m[key]===v?' on':''}"${sw?` style="background:${v}" aria-label="${label} ${v}"`:''}>${sw?'':v}</button>`; }).join('')+`</div>`).join('');
+}
+function saveFamily(){ store.set('ssb.family',JSON.stringify(FAMILY)); const id=BOOK.id; LIB=personalize(LIB_RAW,FAMILY); BOOK=LIB.find(b=>b.id===id)||LIB[0]; }
+$('famBtn').onclick=()=>{ ctx(); sfx.chime(); FAMILY=loadFamily(); $('ages').hidden=true; $('fam').hidden=false; drawFamily(); };
+$('famWho').addEventListener('click',e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
+$('famEdit').addEventListener('click',e=>{ const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); FAMILY[famPick][b.dataset.key]=b.dataset.v; saveFamily(); drawFamily(); });
+$('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=e.target.value.slice(0,14); saveFamily(); famStage();
+  const tab=$('famWho').querySelector(`[data-slot="${famPick}"] span`); if(tab) tab.textContent=e.target.value; });
+$('famEdit').addEventListener('change',e=>{ if(e.target.id==='famName'&&!e.target.value.trim()){ FAMILY[famPick].name=FAMILY_SAMPLE[famPick].name; saveFamily(); drawFamily(); } });
+$('famDone').onclick=()=>{ ctx(); sfx.page(); saveFamily(); $('fam').hidden=true; shelf(); };
 function shelf(){ dropLater(); fx.innerHTML=''; marks.innerHTML=''; $('shelf').hidden=false; ['hunt','choices','letter'].forEach(i=>$(i).hidden=true); $('words').hidden=true; $('next').hidden=true; $('back').hidden=true; $('home').hidden=true; $('gear').hidden=false;
   clearTimeout(hintT); clearTimeout(slowT);
   const keep=BOOK; $('shelf').querySelector('.covers').innerHTML=LIB.map((b,i)=>{ BOOK=b; const c=b.pages[b.start];

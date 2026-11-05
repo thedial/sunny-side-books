@@ -1,0 +1,99 @@
+{
+ "id": "2026-11-04-peekaboo-family",
+ "series": "Sunny Side Farm",
+ "title": "Peekaboo, Family!",
+ "made": "2026-11-04",
+ "status": "draft",
+ "start": "cover",
+ "coverView": "80 330 1300 900",
+ "pages": {
+  "cover": {
+   "scene": "yard",
+   "text": "<b>Peekaboo, {kid}!</b><br>A Sunny Side Farm story about our family",
+   "actors": [
+    {"who": "person", "slot": "grownup1", "x": 560, "y": 960, "s": 0.9},
+    {"who": "person", "slot": "kid", "x": 720, "y": 975, "s": 1},
+    {"who": "person", "slot": "grownup2", "x": 880, "y": 960, "s": 0.9},
+    {"who": "pet", "slot": "pet", "x": 1110, "y": 975, "s": 0.9}
+   ],
+   "next": "p1"
+  },
+  "p1": {
+   "scene": "yard",
+   "text": "{kid} and {grownup1} go to the farm. Someone is hiding behind the barn door. Who is it? Lift the flap!",
+   "actors": [
+    {"who": "person", "slot": "grownup1", "x": 760, "y": 960, "s": 0.9},
+    {"who": "person", "slot": "kid", "x": 920, "y": 975, "s": 1}
+   ],
+   "flaps": [
+    {"type": "door", "x": 300, "y": 730, "w": 140, "h": 150, "hide": {"who": "person", "slot": "grownup2", "s": 0.42, "dx": -18}, "say": "Peekaboo! It's {grownup2}!"}
+   ],
+   "find": [["ladybug", 1250, 620]],
+   "next": "p2"
+  },
+  "p2": {
+   "scene": "yard",
+   "text": "Something is wiggling in the bushes. Who could it be?",
+   "flaps": [
+    {"type": "bush", "x": 640, "y": 980, "w": 290, "h": 200, "hide": {"who": "pet", "slot": "pet", "s": 0.75, "dx": -10}, "say": "It's {pet}!"},
+    {"type": "bush", "x": 1120, "y": 975, "w": 290, "h": 200, "hide": {"who": "duck", "s": 0.8}, "say": "Quack!"}
+   ],
+   "find": [["bee", 300, 520]],
+   "next": "p3"
+  },
+  "p3": {
+   "scene": "meadow",
+   "text": "Oh no! {lovey} is lost in the flowers. Can you find {lovey}?",
+   "actors": [
+    {"who": "person", "slot": "kid", "x": 980, "y": 975, "s": 1},
+    {"who": "person", "slot": "grownup2", "x": 1170, "y": 960, "s": 0.9},
+    {"who": "lovey", "slot": "lovey", "x": 330, "y": 965, "s": 0.8, "hide": true, "icon": "🧸", "found": "THERE'S {lovey}!"}
+   ],
+   "front": [
+    {"who": "flower", "x": 290, "y": 985, "args": ["#f4ead2", 1.15]},
+    {"who": "flower", "x": 370, "y": 990, "args": ["#e58a8a", 1.1]},
+    {"who": "flower", "x": 330, "y": 1000, "args": ["#f0c055", 1]},
+    {"who": "flower", "x": 620, "y": 990, "args": ["#f4ead2", 0.95]}
+   ],
+   "find": [["bee", 700, 470]],
+   "next": "p4"
+  },
+  "p4": {
+   "scene": "barn",
+   "text": "{grownup2} and {kid} count the hens. One, two, three hens! Tap them and count.",
+   "actors": [
+    {"who": "person", "slot": "grownup2", "x": 300, "y": 960, "s": 0.9},
+    {"who": "hen", "x": 620, "y": 950, "s": 0.8},
+    {"who": "hen", "x": 800, "y": 965, "s": 0.8},
+    {"who": "hen", "x": 980, "y": 950, "s": 0.8},
+    {"who": "person", "slot": "kid", "x": 1230, "y": 975, "s": 1},
+    {"who": "pet", "slot": "pet", "x": 1400, "y": 970, "s": 0.75}
+   ],
+   "find": [["caterpillar", 1400, 760]],
+   "next": "n1"
+  },
+  "n1": {
+   "scene": "night",
+   "text": "It's bedtime. Who is snuggled under the blanket? Lift it and say goodnight!",
+   "actors": [
+    {"who": "person", "slot": "grownup1", "x": 330, "y": 930, "s": 0.85}
+   ],
+   "flaps": [
+    {"type": "blanket", "x": 860, "y": 930, "w": 460, "h": 170, "hide": [{"who": "person", "slot": "kid", "s": 0.7, "dx": -70, "dy": 10}, {"who": "lovey", "slot": "lovey", "s": 0.65, "dx": 100}], "peek": "GOODNIGHT!", "say": "Goodnight, {kid}!"}
+   ],
+   "next": "end"
+  },
+  "end": {
+   "scene": "night",
+   "text": "<b>The End.</b> Goodnight, {pet}. Goodnight, {lovey}. Goodnight, {kid}. We love you!",
+   "actors": [
+    {"who": "person", "slot": "grownup1", "x": 480, "y": 930, "s": 0.85},
+    {"who": "person", "slot": "kid", "x": 640, "y": 940, "s": 0.95},
+    {"who": "lovey", "slot": "lovey", "x": 760, "y": 940, "s": 0.7},
+    {"who": "person", "slot": "grownup2", "x": 900, "y": 930, "s": 0.85},
+    {"who": "pet", "slot": "pet", "x": 1130, "y": 940, "s": 0.8}
+   ],
+   "end": true
+  }
+ }
+}

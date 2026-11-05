@@ -158,7 +158,9 @@ def line_of(src, offset):
 class Engine:
     def __init__(self):
         self.template = open(os.path.join(HERE, 'book-template.html'), encoding='utf-8').read()
-        self.kit = open(os.path.join(HERE, 'kit.js'), encoding='utf-8').read()
+        self.cast = open(os.path.join(HERE, 'cast.js'), encoding='utf-8').read()
+        self.kit = open(os.path.join(HERE, 'kit.js'), encoding='utf-8').read() + '\n' + self.cast
+        self.family = json.load(open(os.path.join(HERE, 'family.json'), encoding='utf-8'))
         self.tables = json.load(open(os.path.join(HERE, 'tables.json'), encoding='utf-8'))
         css = re.search(r'<style>(.*?)</style>', self.template, re.S)
         self.css, self.css_at = css.group(1), css.start(1)
@@ -391,6 +393,48 @@ def check_tap_floor(books, eng, r):
                     r.fail(f'{b["id"]}/{pid}: flap {i} is {side:.0f} CSS px on its short side, under {floor}')
 
 
+CAST = ('person', 'pet', 'lovey')
+
+
+def check_family(book, eng, r):
+    """A family piece names a slot of the right kind, and every {slot} in the words is one the family has;
+    an unknown one would print as {typo} on the page."""
+    slots = {k: v for k, v in eng.family.items() if not k.startswith('_')}
+
+    def walk(o, where):
+        if isinstance(o, list):
+            for x in o:
+                walk(x, where)
+        elif isinstance(o, dict):
+            if o.get('who') in CAST:
+                sl = o.get('slot')
+                if sl not in slots:
+                    r.fail(f'{where}: a {o["who"]} needs a "slot" from the family ({", ".join(slots)}), has {sl!r}')
+                elif slots[sl]['kind'] != o['who']:
+                    r.fail(f'{where}: slot "{sl}" is a {slots[sl]["kind"]}, not a {o["who"]}')
+            for v in o.values():
+                walk(v, where)
+        elif isinstance(o, str):
+            for k in re.findall(r'\{(\w+)\}', o):
+                if k not in slots:
+                    r.fail(f'{where}: "{{{k}}}" is not a family slot ({", ".join(slots)})')
+    for pid, p in book['pages'].items():
+        walk(p, f'{book["id"]}/{pid}')
+    walk({k: v for k, v in book.items() if k != 'pages'}, book['id'])
+
+
+def check_swatches(eng, r):
+    """recolor() maps PAL keys to the print palette, so a family color that is a PAL key would draw as some other color."""
+    pal = set(re.findall(r"'(#[0-9a-fA-F]{3,6})':", re.search(r'const PAL=\{(.*?)\};', eng.js, re.S).group(1)))
+    sw = re.search(r'const SWATCH=\{(.*?)\};', eng.cast, re.S)
+    picks = set(re.findall(r'#[0-9a-fA-F]{6}', sw.group(1) if sw else ''))
+    picks |= set(re.findall(r'#[0-9a-fA-F]{6}', json.dumps(eng.family)))
+    for c in sorted(picks):
+        if c.lower() in pal:
+            r.fail(f'family colors: {c} is a PAL key, so recolor() would draw it as some other color')
+    r.note(f'family: {len([k for k in eng.family if not k.startswith("_")])} slots, {len(picks)} colors to pick from')
+
+
 def check_books(books, eng, r):
     ids = [b.get('id') for b in books]
     for dup in {i for i in ids if ids.count(i) > 1}:
@@ -401,6 +445,8 @@ def check_books(books, eng, r):
         check_names(b, eng, r)
         check_finds(b, eng, r)
         check_letters(b, r)
+        check_family(b, eng, r)
+    check_swatches(eng, r)
     check_tap_floor(books, eng, r)
     pages = sum(len(b['pages']) for b in books)
     nfinds = sum(len(finds_of(p)) for b in books for p in b['pages'].values())
@@ -775,7 +821,7 @@ STOP = set('''a an the and or but if of to in on at by for with from into onto a
 these those so then than when while do does did not no yes we you she he they them her his our their one two all any each
 every some only just also here there what which who how why up down out off over under after before again still yet can
 will would should could may might must has have had get gets got set sets make makes use uses used new old'''.split())
-LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs',
+LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/cast.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs',
           'engine/check.py', 'engine/build.py')
 
 
