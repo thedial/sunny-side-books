@@ -38,6 +38,7 @@ const PLAY_ON = TABLETS[0];     // the smallest tablet: the smallest targets
 // setTimeout, requestAnimationFrame and performance.now run on virtual time, so a minute of play takes milliseconds
 // and every run replays. CSS animations still run on real time; only their classes come and go on the virtual clock.
 const PRELOAD = `(() => {
+  try { localStorage.setItem('ssb.welcomed', '1'); } catch (e) { } // the bots are not a new grown-up: skip the first-open card
   let now = 0, seq = 0; const queue = [];
   window.__errors = [];
   window.__clock = {

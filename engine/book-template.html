@@ -135,6 +135,19 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 #gear[hidden]{display:none}
 #holdTip{position:fixed;z-index:8;pointer-events:none;background:var(--paper);border:3px solid var(--ink);border-radius:12px;padding:4px 12px;font:700 15px var(--display);color:var(--ink);box-shadow:3px 3px 0 var(--ink);white-space:nowrap}
 #holdTip[hidden]{display:none}
+/* first open: a one-time card for the grown-up that teaches the hold by doing it, then offers the family screen */
+#hello{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:rgba(31,42,46,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+#hello[hidden]{display:none}
+#hello .card{background:var(--paper);border:6px solid var(--ink);border-radius:30px;padding:20px 34px 26px;box-shadow:10px 10px 0 var(--ink);text-align:center;color:var(--ink);font:600 clamp(16px,2.2vw,21px)/1.4 var(--display);max-width:min(92vw,640px)}
+#hello h2{margin:0 0 8px;font:400 clamp(26px,3.6vw,40px) Bangers,var(--display);letter-spacing:2px;color:#d0452f}
+#hello p{margin:8px 0}
+#hello .icons{font-size:1.3em;letter-spacing:.3em}
+#helloHold{margin:16px auto 6px;display:block;width:clamp(120px,22vh,170px);aspect-ratio:1;border-radius:50%;border:6px solid var(--ink);background:var(--sun);box-shadow:5px 5px 0 var(--ink);font:400 clamp(24px,4vh,34px) Bangers,var(--display);color:var(--ink);letter-spacing:1px}
+#hello .row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+#hello .row button{font:800 clamp(18px,2.4vw,22px) var(--display);color:var(--ink);border:5px solid var(--ink);border-radius:18px;padding:8px 24px;box-shadow:4px 4px 0 var(--ink);background:#efe9d8}
+#hello .row button.go{background:#b2d8cc}
+#hello button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+#hello small{display:block;margin-top:14px;opacity:.7}
 #ages{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;background:rgba(31,42,46,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 #ages[hidden]{display:none}
 #ages .card{background:var(--paper);border:6px solid var(--ink);border-radius:30px;padding:18px 34px 26px;box-shadow:10px 10px 0 var(--ink);text-align:center;font:600 clamp(16px,2.2vw,22px)/1.3 var(--display);color:var(--ink);max-width:min(92vw,720px)}
@@ -225,6 +238,16 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 <div id="ages" hidden><div class="card"><h2>How old is the reader?</h2><div id="ageNum">2</div><div id="ageRow"></div>
   <button id="autoBtn" class="autoT">Auto on</button><small id="ageNote"></small><button id="famBtn">Our family</button><button id="ageDone">Done</button></div></div>
 <div id="holdTip" hidden></div>
+<div id="hello" hidden><div class="card">
+  <div id="hello1"><h2>Hi, grown-up!</h2>
+    <p>These books are made for little hands. The grown-up buttons need a held finger, so a toddler can't leave a book by accident:</p>
+    <p class="icons">📚 🔊 ⚙️</p><p>Try it: hold this until the ring fills.</p>
+    <button id="helloHold" class="gate">Hold me</button></div>
+  <div id="hello2" hidden><h2>That's it!</h2>
+    <p>Want your family in the books? Add the grown-ups, your little one, a pet and a favorite stuffed animal.</p>
+    <div class="row"><button class="go" id="helloFam">Set up our family</button><button id="helloLater">Maybe later</button></div>
+    <small>You can always find it later: hold the ⚙️ gear on the bookshelf.</small></div>
+</div></div>
 <div id="fam" hidden><div class="card"><h2>Who is in our books?</h2><div id="famWho"></div>
   <svg id="famBig" viewBox="-170 -300 340 320" aria-hidden="true"></svg><div id="famEdit"></div>
   <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><button id="famDone">Done</button></div></div></div>
@@ -1059,6 +1082,10 @@ $('famEdit').addEventListener('click',e=>{ const b=e.target.closest('[data-key]'
 $('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=cleanName(e.target.value); saveFamily(); famStage();
   const tab=$('famWho').querySelector(`[data-slot="${famPick}"] span`); if(tab) tab.textContent=e.target.value; });
 $('famEdit').addEventListener('change',e=>{ if(e.target.id==='famName'&&!e.target.value.trim()){ FAMILY[famPick].name=FAMILY_SAMPLE[famPick].name; saveFamily(); drawFamily(); } });
+function hello(){ $('hello').hidden=false; $('hello1').hidden=false; $('hello2').hidden=true; }
+gate($('helloHold'),()=>{ ctx(); sfx.chime(); store.set('ssb.welcomed','1'); $('hello1').hidden=true; $('hello2').hidden=false; });
+$('helloFam').onclick=()=>{ $('hello').hidden=true; $('famBtn').onclick(); };
+$('helloLater').onclick=()=>{ ctx(); sfx.page(); $('hello').hidden=true; };
 $('famDone').onclick=()=>{ ctx(); sfx.page(); saveFamily(); $('fam').hidden=true; shelf(); };
 function shelf(){ dropLater(); fx.innerHTML=''; marks.innerHTML=''; $('shelf').hidden=false; ['hunt','choices','letter'].forEach(i=>$(i).hidden=true); $('words').hidden=true; $('next').hidden=true; $('back').hidden=true; $('home').hidden=true; $('gear').hidden=false;
   clearTimeout(hintT); clearTimeout(slowT);
@@ -1072,5 +1099,5 @@ function replay(seed){ const [bookId,pageId,visit,age]=seed.split('/'), b=LIB.fi
   if(!b||!b.pages[pageId]||!(+age>=2&&+age<=5)) return false;
   BOOK=b; AGESET=+age; AUTO=false; visits[bookId+'/'+pageId]=(+visit||1)-1; show(pageId); return true; }
 const seedArg=new URLSearchParams(location.search).get('seed');
-if(!(seedArg&&replay(seedArg))){ if(LIB.length>1) shelf(); else show(BOOK.start); }
+if(!(seedArg&&replay(seedArg))){ if(LIB.length>1) shelf(); else show(BOOK.start); if(!store.get('ssb.welcomed')) hello(); }
 </script>
