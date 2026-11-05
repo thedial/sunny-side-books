@@ -887,7 +887,9 @@ function nextSeed(id){ const key=BOOK.id+'/'+id, v=visits[key]=(visits[key]||0)+
    The sample family comes with the app; a grown-up's own is kept in localStorage and nowhere else. */
 const FAMILY_SAMPLE=/*FAMILY*/, SLOTS=Object.keys(FAMILY_SAMPLE).filter(k=>k[0]!=='_');
 function loadFamily(){ let mine={}; try{ mine=JSON.parse(store.get('ssb.family')||'{}')||{}; }catch(e){}
-  const f={}; for(const k of SLOTS) f[k]={...FAMILY_SAMPLE[k],...(mine[k]||{}),kind:FAMILY_SAMPLE[k].kind}; return f; }
+  const f={}; for(const k of SLOTS){ f[k]={...FAMILY_SAMPLE[k],...(mine[k]||{}),kind:FAMILY_SAMPLE[k].kind}; f[k].name=cleanName(f[k].name)||FAMILY_SAMPLE[k].name; } return f; }
+/* a name is words, not markup: it lands in bubbles and bursts that are built as SVG text */
+function cleanName(t){ return String(t||'').replace(/[<>&"\{}]/g,'').slice(0,14); }
 function personalize(books,fam){
   const json=JSON.stringify(books).replace(/\{(\w+)\}/g,(m,k)=>fam[k]?JSON.stringify(esc(fam[k].name)).slice(1,-1):m);
   const walk=o=>{ if(Array.isArray(o)) return o.forEach(walk); if(!o||typeof o!=='object') return;
@@ -1045,7 +1047,7 @@ function saveFamily(){ store.set('ssb.family',JSON.stringify(FAMILY)); const id=
 $('famBtn').onclick=()=>{ ctx(); sfx.chime(); FAMILY=loadFamily(); $('ages').hidden=true; $('fam').hidden=false; drawFamily(); };
 $('famWho').addEventListener('click',e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
 $('famEdit').addEventListener('click',e=>{ const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); FAMILY[famPick][b.dataset.key]=b.dataset.v; saveFamily(); drawFamily(); });
-$('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=e.target.value.slice(0,14); saveFamily(); famStage();
+$('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=cleanName(e.target.value); saveFamily(); famStage();
   const tab=$('famWho').querySelector(`[data-slot="${famPick}"] span`); if(tab) tab.textContent=e.target.value; });
 $('famEdit').addEventListener('change',e=>{ if(e.target.id==='famName'&&!e.target.value.trim()){ FAMILY[famPick].name=FAMILY_SAMPLE[famPick].name; saveFamily(); drawFamily(); } });
 $('famDone').onclick=()=>{ ctx(); sfx.page(); saveFamily(); $('fam').hidden=true; shelf(); };
