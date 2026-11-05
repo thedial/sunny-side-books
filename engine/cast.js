@@ -17,6 +17,9 @@ const CAST_OPTS={
 const esc=t=>String(t==null?'':t).replace(/[&<>"'\\{}]/g,c=>'&#'+c.charCodeAt(0)+';');
 /* a slightly darker or lighter shade of a member's color, for shading and markings */
 const tint=(hex,k)=>'#'+[1,3,5].map(i=>{ const v=parseInt(hex.slice(i,i+2),16), w=k<0?v*(1+k):v+(255-v)*k; return Math.round(Math.max(0,Math.min(255,w))).toString(16).padStart(2,'0'); }).join('');
+/* on a dark coat or skin a plain ink dot vanishes, so the eye gets a light rim */
+const dark=hex=>{ const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)); return .3*r+.59*g+.11*b<95; };
+const eyeRim=(x,y,on)=>on?`<circle cx="${x}" cy="${y}" r="8.5" fill="#f5eddb"/>`:'';
 const castWrap=(x,y,s,sfxName,say,inner)=>`<g class="tap" data-react="boing" data-sfx="${sfxName}" data-bubble="${say}" transform="translate(${x} ${y}) scale(${s})"><g class="anim">${inner}</g></g>`;
 
 /* body sizes per role: head radius and center, shoulder and waist heights, half body width */
@@ -46,8 +49,10 @@ function person(m){
   const neck=`<rect x="-10" y="${hy+hr-10}" width="20" height="${sh-hy-hr+16}" fill="${sk}" ${S(5)}/>`;
   const head=[-1,1].map(d=>`<circle cx="${d*hr}" cy="${hy+6}" r="10" fill="${sk}" ${S(5)}/>`).join('')+`<circle cy="${hy}" r="${hr}" fill="${sk}" ${S(6)}/>`;
   const ey=hy+4, ex=hr*.38;
-  let face=[-1,1].map(d=>`<circle cx="${d*ex}" cy="${ey}" r="5.5" fill="${OUT}"/><circle cx="${d*ex+1.5}" cy="${ey-2}" r="1.8" fill="#fff"/><circle cx="${d*hr*.62}" cy="${ey+15}" r="7" fill="#e9a6a0" opacity=".65"/>`).join('');
-  if(m.beard==='yes'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.88} ${hy+4} Q${-hr*.8} ${hy+hr+20} 0 ${hy+hr+22} Q${hr*.8} ${hy+hr+20} ${hr*.88} ${hy+4} Q${hr*.5} ${hy+30} 0 ${hy+26} Q${-hr*.5} ${hy+30} ${-hr*.88} ${hy+4}Z" fill="${hc}" ${S(5)}/>`;
+  let face=[-1,1].map(d=>eyeRim(d*ex,ey,dark(sk))+`<circle cx="${d*ex}" cy="${ey}" r="5.5" fill="${OUT}"/><circle cx="${d*ex+1.5}" cy="${ey-2}" r="1.8" fill="#fff"/><circle cx="${d*hr*.62}" cy="${ey+15}" r="7" fill="#e9a6a0" opacity=".65"/>`).join('');
+  /* the beard sits below the smile and a small mustache above it, so the smile still shows */
+  if(m.beard==='yes'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.92} ${hy+6} Q${-hr*.85} ${hy+hr+16} 0 ${hy+hr+18} Q${hr*.85} ${hy+hr+16} ${hr*.92} ${hy+6} Q${hr*.6} ${hy+36} 0 ${hy+33} Q${-hr*.6} ${hy+36} ${-hr*.92} ${hy+6}Z" fill="${hc}" ${S(5)}/>`
+    +`<path d="M-16 ${ey+12} q8 -7 16 -1 q8 -6 16 1" fill="none" ${L(7,hc)}/>`;
   face+=`<path d="M-11 ${ey+17} q11 11 22 0" fill="none" ${S(4.5)}/>`;
   if(m.glasses==='yes') face+=[-1,1].map(d=>`<circle cx="${d*ex}" cy="${ey}" r="13" fill="#fff" fill-opacity=".25" ${S(4)}/>`).join('')+`<path d="M${-ex+13} ${ey} h${2*ex-26}" ${S(4)}/>`;
   return hairBack(m.hair,hc,hr,hy)+legs+arm(-1)+arm(1)+body+neck+head+face+hairFront(m.hair,hc,hr,hy);
@@ -71,7 +76,7 @@ function pet(m){
     +`<path d="M${hx+44} ${hy+2} h26 M${hx+44} ${hy+10} l24 6 M${hx+16} ${hy+2} h-24 M${hx+16} ${hy+10} l-22 6" ${L(2.5,OUT)}/>`;
   else s+=`<ellipse cx="${hx+30}" cy="${hy+12}" rx="24" ry="17" fill="${lt}" ${S(5)}/><ellipse cx="${hx+50}" cy="${hy+4}" rx="9" ry="7" fill="${OUT}"/>`
     +`<path d="M${hx+28} ${hy+22} q10 10 22 2" fill="none" ${S(4)}/><path d="M${hx+34} ${hy+26} q2 14 10 10 q4 -4 0 -10" fill="#e58a8a" ${S(3)}/>`;
-  s+=`<circle cx="${hx+(cat?10:12)}" cy="${hy-6}" r="5.5" fill="${OUT}"/><circle cx="${hx+(cat?11.5:13.5)}" cy="${hy-8}" r="1.8" fill="#fff"/>`
+  s+=eyeRim(hx+(cat?10:12),hy-6,dark(c))+(cat?eyeRim(hx-10,hy-6,dark(c)):'')+`<circle cx="${hx+(cat?10:12)}" cy="${hy-6}" r="5.5" fill="${OUT}"/><circle cx="${hx+(cat?11.5:13.5)}" cy="${hy-8}" r="1.8" fill="#fff"/>`
     +(cat?`<circle cx="${hx-10}" cy="${hy-6}" r="5" fill="${OUT}"/>`:'');
   s+=`<path d="M${hx-hr+6} ${hy+hr-10} q${hr} 20 ${2*hr-14} -4" fill="none" ${L(10,OUT)}/><path d="M${hx-hr+6} ${hy+hr-10} q${hr} 20 ${2*hr-14} -4" fill="none" ${L(6,m.collar||SWATCH.cloth[0])}/><circle cx="${hx+4}" cy="${hy+hr+4}" r="7" fill="#f0c055" ${S(3)}/>`;
   return s;
@@ -98,7 +103,7 @@ function lovey(m){
   return `<g transform="rotate(-4)">${s}</g>`;
 }
 /* the pieces a book places: {"who":"person","slot":"grownup1"}; the family fills the slot before drawing */
-const SAYS={dog:'Woof! Woof!',cat:'Meow!'};
+const SAYS={dog:'Woof! Woof!',cat:'Meow!'}, CAST_ICON={dog:'🐶',cat:'🐱',bear:'🧸',bunny:'🐰',elephant:'🐘'};
 Object.assign(P,{
   person:(x,y,m={})=>castWrap(x,y,1,'chime',esc(m.name||'Hello')+'!',person(m)),
   pet:(x,y,m={})=>castWrap(x,y,1,m.type==='cat'?'meow':'woof',SAYS[m.type]||SAYS.dog,pet(m)),

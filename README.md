@@ -42,8 +42,9 @@ A bug gets its check before its fix. Write the check, watch it fail on the engin
 - `engine/build.py`: builds a page or the offline app from book files
 - `engine/check.py`: the build's checks; `engine/tables.json`: the age table, the perches and the bots' bands; `engine/page-states.json`: the page statechart
 - `engine/toddler-bots.mjs`, `engine/browser.mjs`: the toddler bots and the headless Chrome they play in
-- `books/`: the four published books
+- `engine/cast.js`, `engine/family.json`: the family cast (people, pets, loveys drawn from parts) and the sample family
+- `books/`: the four published books, plus Peekaboo, Family! (draft)
 - `BOOK-FORMAT.md`: the book format
 
 ## Rules for books
-Books are pre-made and approved by a parent before they go on the shelf. No child's name or photo goes into a book or into any AI model.
+Books are pre-made and approved by a parent before they go on the shelf. No child's name or photo goes into a book file, the site or any AI model. Family books name slots (`{kid}`, `{pet}`); the names and looks are set on the tablet behind the gear and stay in that tablet's storage (see BOOK-FORMAT.md, Our family).

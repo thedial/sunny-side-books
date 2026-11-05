@@ -47,3 +47,14 @@ The tablet has one age setting (2, 3, 4 or 5, plus auto; see README). The age ch
 - **Hints.** If nothing on the page has been tapped for 4 s (age 2), 8 s (3), 14 s (4) or 20 s (5), the unfound chip icons pulse and the critters wiggle; it repeats after the same idle time.
 - **Replay.** Perch picks and decoys come from a seed made of the book, the page, the visit (the first, second... time the page is shown since the app opened) and the age, so a new visit re-rolls them and the same seed always lays the page out the same way. With `?debug` the seed shows at the bottom of the screen; open the page with `?seed=<that text>` (for example `?debug&seed=2026-10-21-bees-busy-day/p1/1/5`) to see exactly that layout again. Replaying sets the age for that session only; nothing is stored.
 - **Other mechanics the age drives.** Letter tiles show from age 3 (hidden at 2). Home, Mute and the gear need a 1.2 s hold at ages 2 and 3, 0.8 s at 4 and 5. Found bursts and surprise animations run their full length at age 2 and about 60% of it at age 5. Counting badges and choice pages are the same at every age.
+
+## Our family (added Nov 4 2026)
+A book can star the reader's own family. The book never holds a name or a look; it names **slots**, and the tablet fills them from its family.
+- Slots: `grownup1`, `grownup2`, `kid` (people), `pet`, `lovey` (a stuffed animal). The sample family is `engine/family.json` (Mama, Daddy, Baby, Biscuit the dog, Bun-Bun the bunny).
+- In words (page text, a flap's `say` or `peek`, a hidden actor's `found`): write `{kid}`, `{grownup1}`, `{pet}`... and the name goes in when the book opens.
+- As a piece: `{"who":"person","slot":"grownup2","x":300,"y":960,"s":0.9}`, `{"who":"pet","slot":"pet",...}`, `{"who":"lovey","slot":"lovey",...}`. Works anywhere a piece goes: `actors`, a flap's `hide`, a hidden actor (`"hide": true`; the hunt chip's icon follows the pet or lovey type).
+- Sizes at `s: 1`: a grown-up is about 250 tall, a kid 190, a baby 145, a pet 150, a lovey 150 (all times 1.35 like every character). Behind the barn door a grown-up fits at `s: 0.42`.
+- Write words that fit any family: a pet can be a dog or a cat, a grown-up can be Mama, Papa, Nana or anyone. Say "It's {pet}!", not "Woof!".
+- The build fails on a slot that does not exist, a slot of the wrong kind, or a `{word}` that is not a slot.
+- The family screen: hold the gear, then **Our family**. Pick a member along the top and change the name and looks (people: who, skin, hair, hair color, shirt, pants, glasses, beard; pets: dog or cat, coat, markings, ears, collar; loveys: bear, bunny or elephant, color, patch, bow, eyes). It is stored on that tablet only (`localStorage` `ssb.family`).
+- Parts and colors live in `engine/cast.js` (`SWATCH`, `CAST_OPTS`, `person`, `pet`, `lovey`). Colors there must not be `PAL` keys (the build checks), or the print palette would swap them.

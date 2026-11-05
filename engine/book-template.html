@@ -891,7 +891,7 @@ function loadFamily(){ let mine={}; try{ mine=JSON.parse(store.get('ssb.family')
 function personalize(books,fam){
   const json=JSON.stringify(books).replace(/\{(\w+)\}/g,(m,k)=>fam[k]?JSON.stringify(esc(fam[k].name)).slice(1,-1):m);
   const walk=o=>{ if(Array.isArray(o)) return o.forEach(walk); if(!o||typeof o!=='object') return;
-    if(o.slot&&fam[o.slot]) o.args=[fam[o.slot]]; Object.values(o).forEach(walk); };
+    if(o.slot&&fam[o.slot]){ o.args=[fam[o.slot]]; if(o.icon) o.icon=CAST_ICON[fam[o.slot].type]||o.icon; } Object.values(o).forEach(walk); };
   const out=JSON.parse(json); walk(out); return out; }
 const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,FAMILY); let BOOK = LIB[0];
 
