@@ -423,6 +423,158 @@ def check_family(book, eng, r):
     walk({k: v for k, v in book.items() if k != 'pages'}, book['id'])
 
 
+# A family can switch an optional member out ("out": true). The book marks what depends on one:
+#   words  "[pet: Goodnight, {pet}. | other words]"  (the part after | is optional)
+#   pieces "needs": "pet" on any piece, flap or page; a piece with "slot" needs that slot without saying so
+#   else   "else": {...} is merged over the thing (dropping its slot) when what it needs is out; no else drops it
+# A dropped page is skipped: whatever went to it goes to its "next". personalize() in book-template.html does the same.
+BRANCH = re.compile(r'\[(\w+):([^\[\]|]*)(?:\|([^\[\]]*))?\]')
+DROP = object()
+
+
+def optional_slots(eng):
+    return {k for k, v in eng.family.items() if not k.startswith('_') and v.get('optional')}
+
+
+def needs_of(o):
+    n = o.get('needs') or []
+    return ([n] if isinstance(n, str) else list(n)) + ([o['slot']] if o.get('slot') else [])
+
+
+def resolve_words(s, out):
+    if '[' not in s:
+        return s
+    s = BRANCH.sub(lambda m: ((m.group(3) or '') if m.group(1) in out else m.group(2)).strip(), s)
+    return re.sub(r'\s{2,}', ' ', s).strip()
+
+
+def resolve(o, out):
+    if isinstance(o, list):
+        return [x for x in (resolve(v, out) for v in o) if x is not DROP]
+    if isinstance(o, str):
+        return resolve_words(o, out)
+    if not isinstance(o, dict):
+        return o
+    if any(k in out for k in needs_of(o)):
+        if not isinstance(o.get('else'), dict):
+            return DROP
+        rest = {k: v for k, v in o.items() if k not in ('needs', 'else', 'slot')}
+        return resolve({**rest, **o['else']}, out)
+    res = {}
+    for k, v in o.items():
+        if k not in ('needs', 'else'):
+            x = resolve(v, out)
+            if x is not DROP:
+                res[k] = x
+    return res
+
+
+def resolve_book(book, out):
+    raw = book['pages']
+    gone = {pid for pid, p in raw.items() if any(k in out for k in needs_of(p)) and 'else' not in p}
+
+    def to(pid):
+        seen = set()
+        while pid in gone and pid not in seen:
+            seen.add(pid); pid = raw[pid].get('next')
+        return pid
+    b = resolve({k: v for k, v in book.items() if k != 'pages'}, out)
+    b['pages'] = {pid: resolve(p, out) for pid, p in raw.items() if pid not in gone}
+    b['start'] = to(b.get('start'))
+    for p in b['pages'].values():
+        if p.get('next'):
+            p['next'] = to(p['next'])
+        for o in (p.get('choice') or {}).get('options', []):
+            o['go'] = to(o.get('go'))
+    return b
+
+
+def uses_optional(book, opt):
+    s = json.dumps(book)
+    return any(f'{{{k}}}' in s or f'"{k}"' in s for k in opt)
+
+
+def check_marks(book, opt, r):
+    """the marks only name optional members, and a skipped page has somewhere to go on to"""
+    def walk(o, where):
+        if isinstance(o, list):
+            for x in o:
+                walk(x, where)
+        elif isinstance(o, dict):
+            n = o.get('needs')
+            for k in ([n] if isinstance(n, str) else n or []):
+                if k not in opt:
+                    r.fail(f'{where}: "needs": "{k}" names a member that is always in the family (optional: {", ".join(sorted(opt))})')
+            if 'else' in o and not isinstance(o['else'], dict):
+                r.fail(f'{where}: "else" is the fields to use instead, an object')
+            for v in o.values():
+                walk(v, where)
+        elif isinstance(o, str):
+            for m in BRANCH.finditer(o):
+                if m.group(1) not in opt:
+                    r.fail(f'{where}: "[{m.group(1)}: ...]" names a member that is always in the family (optional: {", ".join(sorted(opt))})')
+            if BRANCH.sub('', o).count('[') or BRANCH.sub('', o).count(']'):
+                r.fail(f'{where}: a bracket that is not a [slot: words | other words] part: {o!r}')
+    for pid, p in book['pages'].items():
+        walk(p, f'{book["id"]}/{pid}')
+        if needs_of(p) and 'else' not in p and not p.get('next'):
+            r.fail(f'{book["id"]}/{pid}: a page that can be skipped needs a "next" to go on to (or an "else")')
+
+
+def check_left_out(book, out, r):
+    """with these members out, nothing on any page still names them, and no flap is left hiding nothing"""
+    def walk(o, where):
+        if isinstance(o, list):
+            for x in o:
+                walk(x, where)
+        elif isinstance(o, dict):
+            if o.get('slot') in out:
+                r.fail(f'{where}: {o["slot"]} is still drawn')
+            for v in o.values():
+                walk(v, where)
+        elif isinstance(o, str):
+            for k in sorted(set(re.findall(r'\{(\w+)\}', o))):
+                if k in out:
+                    r.fail(f'{where}: still says {{{k}}}: "{plain(o)}"; put it in a [{k}: ... | ...] part')
+    for pid, p in book['pages'].items():
+        walk(p, f'{book["id"]}/{pid}')
+        for i, f in enumerate(p.get('flaps') or []):
+            if not f.get('hide'):
+                r.fail(f'{book["id"]}/{pid}: flap {i} ({f.get("type")}) hides nothing; give it an "else" with something else to hide')
+
+
+def check_book_rules(book, eng, r):
+    check_graph(book, r)
+    check_words(book, r)
+    check_names(book, eng, r)
+    check_finds(book, eng, r)
+    check_letters(book, r)
+    check_family(book, eng, r)
+
+
+def check_optional(book, eng, r):
+    """Every page reads complete with any mix of optional members out: the whole book rulebook runs on each mix."""
+    opt = sorted(optional_slots(eng))
+    check_marks(book, set(opt), r)
+    base = Report()
+    check_book_rules(resolve_book(book, set()), eng, base)
+    r.problems += base.problems; r.warnings += base.warnings
+    if not uses_optional(book, opt):
+        return 0
+    mixes = sorted(({k for i, k in enumerate(opt) if m >> i & 1} for m in range(1, 1 << len(opt))), key=len)
+    seen = set(base.problems) | set(base.warnings)
+    for out in mixes:
+        sub = Report()
+        b = resolve_book(book, out)
+        check_book_rules(b, eng, sub)
+        check_left_out(b, out, sub)
+        tag = 'with ' + ' and '.join(sorted(out)) + ' out: '
+        r.problems += [tag + p for p in sub.problems if p not in seen]
+        r.warnings += [tag + w for w in sub.warnings if w not in seen]
+        seen |= set(sub.problems) | set(sub.warnings)
+    return len(mixes)
+
+
 def check_swatches(eng, r):
     """recolor() maps PAL keys to the print palette, so a family color that is a PAL key would draw as some other color."""
     pal = set(re.findall(r"'(#[0-9a-fA-F]{3,6})':", re.search(r'const PAL=\{(.*?)\};', eng.js, re.S).group(1)))
@@ -439,13 +591,10 @@ def check_books(books, eng, r):
     ids = [b.get('id') for b in books]
     for dup in {i for i in ids if ids.count(i) > 1}:
         r.fail(f'two books share the id "{dup}"')
+    mixes = 0
     for b in books:
-        check_graph(b, r)
-        check_words(b, r)
-        check_names(b, eng, r)
-        check_finds(b, eng, r)
-        check_letters(b, r)
-        check_family(b, eng, r)
+        mixes += check_optional(b, eng, r)
+    r.note(f'not in our family: {mixes} mixes of members out checked')
     check_swatches(eng, r)
     check_tap_floor(books, eng, r)
     pages = sum(len(b['pages']) for b in books)
