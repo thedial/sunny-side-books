@@ -33,6 +33,13 @@ node engine/toddler-bots.mjs preview.html                 # about 3 minutes; --r
 ```
 A bot per age (2 to 5) taps at a toddler's pace with misses and decoy taps. It fails when a page is outside its age's band (`tables.json`, `bots`), when a tap target is under 64 CSS px, when a seed does not replay, or when the engine breaks a statechart rule. It prints time to find, hint rate, how often the engine's auto stepped up or down (and fails if a step does not match `tables.json`, `auto`), and her quickest and slowest fifth per critter to retune that table from. Every failure carries a seed: open `preview.html?debug&seed=<seed>` to see that exact layout.
 
+## Screenshots
+Show a change instead of describing it. After a build:
+```
+node engine/shots.mjs shelf family peekaboo-family/p1+open cast:hair      # pictures land in reports/shots/
+```
+Targets: `shelf`, `hello` (the first-open card), `family` or `family:pet` (the family screen on a member), `<book>/<page>` (the book matched by the end of its id; `+open` lifts every flap and finds every hidden actor; `<book>/*` shoots every page), `cast:hair`, `cast:pets`, `cast:loveys` (every option side by side). `--family my.json` plays a test family, `--age 4` sets the age, `--size 1366x768` the screen. It exits 1 if the page throws.
+
 ## Ratchet
 A bug gets its check before its fix. Write the check, watch it fail on the engine as it is, then fix the engine until it passes, and keep the check. Examples: the caterpillar's wiggle ran faster than the speed floor (gentle rules); perches came from `Math.random`, so a bad layout could not be replayed (determinism); a burst or a fanfare from the last page went off on the next one after a quick turn (statechart, `turn-leaves-nothing`); a hint stepped the book down at ages 2 and 3, three plays in four at age 2 (statechart, `hint-never-steps-down`: the old engine fails it in a quick look, `--runs 4`). A comment that records a bug is a check waiting to be written.
 
@@ -42,6 +49,7 @@ A bug gets its check before its fix. Write the check, watch it fail on the engin
 - `engine/build.py`: builds a page or the offline app from book files
 - `engine/check.py`: the build's checks; `engine/tables.json`: the age table, the perches and the bots' bands; `engine/page-states.json`: the page statechart
 - `engine/toddler-bots.mjs`, `engine/browser.mjs`: the toddler bots and the headless Chrome they play in
+- `engine/shots.mjs`: screenshots of any screen, page or cast option
 - `engine/cast.js`, `engine/family.json`: the family cast (people, pets, loveys drawn from parts) and the sample family
 - `books/`: the four published books, plus Peekaboo, Family! (draft)
 - `BOOK-FORMAT.md`: the book format

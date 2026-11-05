@@ -75,6 +75,7 @@ export async function openPage(browser, { width, height, preload = '' }) {
       return r.result.value;
     },
     resize: (w, h) => s('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }),
+    screenshot: async () => Buffer.from((await s('Page.captureScreenshot', { format: 'png' })).data, 'base64'),
     close: () => browser.send('Target.closeTarget', { targetId }),
   };
   return page;

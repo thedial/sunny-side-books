@@ -821,7 +821,7 @@ STOP = set('''a an the and or but if of to in on at by for with from into onto a
 these those so then than when while do does did not no yes we you she he they them her his our their one two all any each
 every some only just also here there what which who how why up down out off over under after before again still yet can
 will would should could may might must has have had get gets got set sets make makes use uses used new old'''.split())
-LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/cast.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs',
+LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/cast.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs', 'engine/shots.mjs',
           'engine/check.py', 'engine/build.py')
 
 
