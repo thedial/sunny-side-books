@@ -9,11 +9,15 @@ const SWATCH={
   lovey:['#d8b08a','#e9b5c0','#a9c7d9','#f2ead8','#b9a6d6','#9fc29a','#8a7a6c']
 };
 const CAST_OPTS={
-  person:[['role','Who',['grownup','kid','baby']],['skin','Skin',SWATCH.skin],['hair','Hair',['short','long','bun','curly','ponytail','bald','tuft']],
-    ['hairColor','Hair color',SWATCH.hair],['shirt','Shirt',SWATCH.cloth],['pants','Pants',SWATCH.cloth],['glasses','Glasses',['no','yes']],['beard','Beard',['no','short','full']]],
+  person:[['role','Who',['grownup','kid','baby']],['look','',['f','m']],['skin','Skin',SWATCH.skin],['hair','Hair',m=>HAIR[m.look==='m'?'m':'f']],
+    ['hairColor','Hair color',SWATCH.hair],['shirt','Shirt',SWATCH.cloth],['pants','Pants',SWATCH.cloth],['glasses','Glasses',['no','yes']],['beard','Beard',m=>m.look==='m'&&m.role==='grownup'?['no','short','full']:null]],
   pet:[['type','Pet',['dog','cat']],['coat','Coat',SWATCH.coat],['marks','Markings',['none','patch','spots','socks','stripes']],['ears','Ears',['floppy','pointy']],['collar','Collar',SWATCH.cloth]],
   lovey:[['type','Lovey',['bear','bunny','elephant']],['fur','Color',SWATCH.lovey],['patch','Patch',['none',...SWATCH.cloth]],['bow','Bow',['none',...SWATCH.cloth]],['eyes','Eyes',['buttons','one stitched']]]
 };
+/* hair styles offered for each look; a style can be in both lists */
+const HAIR={f:['long','bob','ponytail','pigtails','bun','curly','pixie','short','tuft'],m:['short','swoop','spiky','buzz','curly','long','balding','bald','tuft']};
+/* what a choice button says: the look reads woman/man for a grown-up and girl/boy for a kid or baby */
+const optLabel=(key,v,m)=>key==='look'?(m.role==='grownup'?{f:'woman',m:'man'}:{f:'girl',m:'boy'})[v]:v;
 const esc=t=>String(t==null?'':t).replace(/[&<>"'\\{}]/g,c=>'&#'+c.charCodeAt(0)+';');
 /* a slightly darker or lighter shade of a member's color, for shading and markings */
 const tint=(hex,k)=>'#'+[1,3,5].map(i=>{ const v=parseInt(hex.slice(i,i+2),16), w=k<0?v*(1+k):v+(255-v)*k; return Math.round(Math.max(0,Math.min(255,w))).toString(16).padStart(2,'0'); }).join('');
@@ -24,18 +28,41 @@ const castWrap=(x,y,s,sfxName,say,inner)=>`<g class="tap" data-react="boing" dat
 
 /* body sizes per role: head radius and center, shoulder and waist heights, half body width */
 const ROLE={grownup:{hr:44,hy:-206,sh:-158,wa:-70,bw:44},kid:{hr:42,hy:-150,sh:-106,wa:-44,bw:34},baby:{hr:40,hy:-104,sh:-64,wa:-22,bw:32}};
+/* hair hugs the head: an outer edge just outside the skull, a hairline across the forehead, sideburns by the ears.
+   (A dome that stops in a straight line at the ears reads as a hat.) Everything is in head units: hr is the head radius. */
+const f0=n=>(+n).toFixed(1);
 function hairBack(st,c,hr,hy){
   if(st==='long') return `<path d="M${-hr-10} ${hy} q0 ${-hr-12} ${hr+10} ${-hr-12} q${hr+10} 0 ${hr+10} ${hr+12} v${hr*1.3} q${-hr-10} 20 ${-2*hr-20} 0 z" fill="${c}" ${S(5)}/>`;
+  if(st==='bob') return `<path d="M${-hr-11} ${f0(hy+hr*.8)} V${hy} A${hr+11} ${hr+11} 0 0 1 ${hr+11} ${hy} V${f0(hy+hr*.8)} Q0 ${f0(hy+hr*1.02)} ${-hr-11} ${f0(hy+hr*.8)}Z" fill="${c}" ${S(5)}/>`;
   if(st==='ponytail') return `<ellipse cx="${hr+16}" cy="${hy+8}" rx="18" ry="34" fill="${c}" transform="rotate(-18 ${hr+16} ${hy+8})" ${S(5)}/>`;
+  if(st==='pigtails') return [-1,1].map(d=>`<ellipse cx="${d*(hr+14)}" cy="${hy+14}" rx="15" ry="28" fill="${c}" transform="rotate(${d*-22} ${d*(hr+14)} ${hy+14})" ${S(5)}/>`).join('');
   if(st==='bun') return `<circle cy="${hy-hr-10}" r="20" fill="${c}" ${S(5)}/>`;
   if(st==='curly') return Array.from({length:9},(_,i)=>{ const a=Math.PI*(0.95+i*0.14); return `<circle cx="${(Math.cos(a)*(hr+4)).toFixed(0)}" cy="${(hy+Math.sin(a)*(hr+4)+6).toFixed(0)}" r="17" fill="${c}" ${S(5)}/>`; }).join('');
   return '';
 }
+/* the short cut most men's styles build on: outer edge, a side-parted hairline, sideburns */
+const shortCut=(c,hr,hy)=>`<path d="M${-hr-2} ${hy+10} A${hr+5} ${hr+5} 0 1 1 ${hr+2} ${hy+10} L${hr-8} ${hy+10} L${hr-6} ${f0(hy-hr*.25)} Q${f0(hr*.45)} ${f0(hy-hr*.66)} ${f0(-hr*.05)} ${f0(hy-hr*.56)} Q${f0(-hr*.5)} ${f0(hy-hr*.5)} ${-hr+6} ${f0(hy-hr*.22)} L${-hr+8} ${hy+10} Z" fill="${c}" ${S(5)}/>`
+  +`<path d="M${f0(-hr*.28)} ${f0(hy-hr*.56)} q${f0(hr*.05)} ${f0(-hr*.3)} ${f0(hr*.3)} ${f0(-hr*.45)}" fill="none" stroke="${tint(c,-.3)}" stroke-width="3" stroke-linecap="round"/>`;
+/* pulled back (bun, ponytail, pigtails): a smooth cap with a higher, rounder hairline */
+const sleek=(c,hr,hy)=>`<path d="M${-hr-3} ${hy+4} A${hr+3} ${hr+3} 0 1 1 ${hr+3} ${hy+4} L${hr-5} ${hy+4} Q${hr-4} ${f0(hy-hr*.42)} 0 ${f0(hy-hr*.58)} Q${-hr+4} ${f0(hy-hr*.42)} ${-hr+5} ${hy+4} Z" fill="${c}" ${S(5)}/>`;
+/* framing the face down to the chin (bob, long): a center part, sides over the ears; the hair behind draws the outline */
+const framed=(c,hr,hy)=>`<path d="M${-hr-4} ${f0(hy+hr*.62)} V${hy} A${hr+4} ${hr+6} 0 0 1 ${hr+4} ${hy} V${f0(hy+hr*.62)} L${hr-7} ${f0(hy+hr*.62)} Q${hr-5} ${f0(hy-hr*.35)} 0 ${f0(hy-hr*.58)} Q${-hr+5} ${f0(hy-hr*.35)} ${-hr+7} ${f0(hy+hr*.62)} Z" fill="${c}"/>`
+  +`<path d="M${hr-7} ${f0(hy+hr*.4)} Q${hr-5} ${f0(hy-hr*.35)} 0 ${f0(hy-hr*.58)} Q${-hr+5} ${f0(hy-hr*.35)} ${-hr+7} ${f0(hy+hr*.4)}" fill="none" stroke="${tint(c,-.35)}" stroke-width="3" stroke-linecap="round"/>`;
 function hairFront(st,c,hr,hy){
-  if(st==='bald') return `<path d="M${-hr*.45} ${hy-hr*.6} q12 -10 26 -8" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>`;
+  const shine=`<path d="M${f0(-hr*.45)} ${f0(hy-hr*.62)} q12 -10 26 -8" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>`;
+  if(st==='bald') return shine;
+  if(st==='balding') return shine+[-1,1].map(d=>`<path d="M${d*(hr-7)} ${hy+12} L${d*(hr+3)} ${hy+12} Q${d*(hr+6)} ${f0(hy-hr*.42)} ${f0(d*hr*.55)} ${f0(hy-hr*.7)} Q${d*(hr-2)} ${f0(hy-hr*.38)} ${d*(hr-7)} ${hy+12} Z" fill="${c}" ${S(5)}/>`).join('');
+  if(st==='buzz') return `<path d="M${-hr+3} ${hy+4} A${hr-3} ${hr-3} 0 1 1 ${hr-3} ${hy+4} L${hr-8} ${hy+4} Q${hr-7} ${f0(hy-hr*.38)} ${f0(hr*.4)} ${f0(hy-hr*.56)} Q0 ${f0(hy-hr*.64)} ${f0(-hr*.4)} ${f0(hy-hr*.56)} Q${-hr+7} ${f0(hy-hr*.38)} ${-hr+8} ${hy+4} Z" fill="${c}" opacity=".7"/>`;
+  if(st==='spiky') return Array.from({length:7},(_,i)=>{ const a=(203+i*22.5)*Math.PI/180, w=.17, at=(t,r)=>`${f0(Math.cos(t)*r)} ${f0(hy+Math.sin(t)*r)}`;
+      return `<path d="M${at(a-w,hr+2)} L${at(a,hr+20)} L${at(a+w,hr+2)} Z" fill="${c}" ${S(5)}/>`; }).join('')+shortCut(c,hr,hy);
+  if(st==='swoop') return shortCut(c,hr,hy)+`<path d="M${f0(-hr*.78)} ${f0(hy-hr*.5)} C${f0(-hr*.75)} ${f0(hy-hr*1.6)} ${f0(hr*.85)} ${f0(hy-hr*1.6)} ${f0(hr*.88)} ${f0(hy-hr*.62)} Q${f0(hr*.3)} ${f0(hy-hr*.98)} ${f0(-hr*.78)} ${f0(hy-hr*.5)} Z" fill="${c}" ${S(5)}/>`
+      +`<path d="M${f0(-hr*.4)} ${f0(hy-hr*.82)} q${f0(hr*.5)} ${f0(-hr*.4)} ${f0(hr*.95)} ${f0(-hr*.05)}" fill="none" stroke="${tint(c,-.3)}" stroke-width="3" stroke-linecap="round"/>`;
+  if(st==='pixie') return shortCut(c,hr,hy)+`<path d="M${f0(hr*.75)} ${f0(hy-hr*.55)} Q${f0(hr*.1)} ${f0(hy-hr*.62)} ${f0(-hr*.78)} ${f0(hy-hr*.05)} Q${f0(-hr*.45)} ${f0(hy-hr*.85)} ${f0(hr*.75)} ${f0(hy-hr*.55)} Z" fill="${c}"/>`;
+  if(st==='short') return shortCut(c,hr,hy);
   if(st==='tuft') return `<path d="M-4 ${hy-hr+2} q-4 -22 10 -26 q10 -2 8 10 q-4 6 -10 0" fill="none" ${L(6,c)}/>`;
   if(st==='curly') return `<path d="M${-hr} ${hy-6} q8 ${-hr+2} ${hr} ${-hr+2} q${hr-8} 0 ${hr} ${hr-2} q-14 -18 -30 -14 q-10 12 -26 8 q-16 10 -32 4 z" fill="${c}"/>`;
-  return `<path d="M${-hr-4} ${hy+4} A${hr+4} ${hr+6} 0 0 1 ${hr+4} ${hy+4} Q${hr*.5} ${hy-hr*.5} ${-hr*.15} ${hy-hr*.42} Q${-hr*.7} ${hy-hr*.3} ${-hr-4} ${hy+4} Z" fill="${c}" ${S(5)}/>`;
+  if(st==='bun'||st==='ponytail'||st==='pigtails') return sleek(c,hr,hy);
+  return framed(c,hr,hy);
 }
 function person(m){
   const R=ROLE[m.role]||ROLE.grownup, {hr,hy,sh,wa,bw}=R, sk=m.skin||SWATCH.skin[1], hc=m.hairColor||SWATCH.hair[1], sh1=m.shirt||SWATCH.cloth[2];
@@ -52,10 +79,10 @@ function person(m){
   let face=[-1,1].map(d=>eyeRim(d*ex,ey,dark(sk))+`<circle cx="${d*ex}" cy="${ey}" r="5.5" fill="${OUT}"/><circle cx="${d*ex+1.5}" cy="${ey-2}" r="1.8" fill="#fff"/><circle cx="${d*hr*.62}" cy="${ey+15}" r="7" fill="#e9a6a0" opacity=".65"/>`).join('');
   /* the beard sits below the smile and a small mustache above it, so the smile still shows */
   /* short: a soft band along the jaw; full: a rounder beard with a small mustache. Both sit below the smile */
-  const bd=m.beard==='yes'?'full':m.beard;
-  if(bd==='short'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.95} ${hy+2} Q${-hr*.9} ${hy+hr+4} 0 ${hy+hr+8} Q${hr*.9} ${hy+hr+4} ${hr*.95} ${hy+2} Q${hr*.75} ${hy+hr-6} 0 ${hy+hr-6} Q${-hr*.75} ${hy+hr-6} ${-hr*.95} ${hy+2}Z" fill="${tint(hc,.18)}" ${S(4)}/>`;
-  if(bd==='full'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.92} ${hy+4} Q${-hr*.8} ${hy+hr+10} 0 ${hy+hr+12} Q${hr*.8} ${hy+hr+10} ${hr*.92} ${hy+4} Q${hr*.6} ${hy+34} 0 ${hy+32} Q${-hr*.6} ${hy+34} ${-hr*.92} ${hy+4}Z" fill="${tint(hc,.15)}" ${S(5)}/>`
-    +`<path d="M-13 ${ey+12} q6.5 -5 13 -1 q6.5 -4 13 1" fill="none" ${L(6,tint(hc,.15))}/>`;
+  const bd=m.look!=='m'?'no':m.beard==='yes'?'full':m.beard;
+  if(bd==='short'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.95} ${hy+2} Q${-hr*.9} ${hy+hr+4} 0 ${hy+hr+8} Q${hr*.9} ${hy+hr+4} ${hr*.95} ${hy+2} Q${hr*.75} ${hy+hr-6} 0 ${hy+hr-6} Q${-hr*.75} ${hy+hr-6} ${-hr*.95} ${hy+2}Z" fill="${hc}" ${S(4)}/>`;
+  if(bd==='full'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.92} ${hy+4} Q${-hr*.8} ${hy+hr+10} 0 ${hy+hr+12} Q${hr*.8} ${hy+hr+10} ${hr*.92} ${hy+4} Q${hr*.6} ${hy+34} 0 ${hy+32} Q${-hr*.6} ${hy+34} ${-hr*.92} ${hy+4}Z" fill="${hc}" ${S(5)}/>`
+    +`<path d="M-13 ${ey+12} q6.5 -5 13 -1 q6.5 -4 13 1" fill="none" ${L(6,hc)}/>`;
   face+=`<path d="M-11 ${ey+17} q11 11 22 0" fill="none" ${S(4.5)}/>`;
   if(m.glasses==='yes') face+=[-1,1].map(d=>`<circle cx="${d*ex}" cy="${ey}" r="13" fill="#fff" fill-opacity=".25" ${S(4)}/>`).join('')+`<path d="M${-ex+13} ${ey} h${2*ex-26}" ${S(4)}/>`;
   return hairBack(m.hair,hc,hr,hy)+legs+arm(-1)+arm(1)+body+neck+head+face+hairFront(m.hair,hc,hr,hy);

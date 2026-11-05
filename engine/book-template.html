@@ -1072,13 +1072,16 @@ function drawFamily(){
   $('famWho').innerHTML=SLOTS.map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}"><svg viewBox="-150 -290 300 300">${castSvg(FAMILY[k])}</svg><span>${esc(FAMILY[k].name)}</span></button>`).join('');
   const m=FAMILY[famPick]; famStage();
   $('famEdit').innerHTML=`<label for="famName">Name</label><input id="famName" maxlength="14" autocomplete="off" value="${esc(m.name)}">`
-    +CAST_OPTS[m.kind].map(([key,label,vals])=>`<label>${label}</label><div class="famRow">`+vals.map(v=>{ const sw=/^#/.test(v);
-      return `<button data-key="${key}" data-v="${v}" class="${sw?'sw':''}${m[key]===v?' on':''}"${sw?` style="background:${v}" aria-label="${label} ${v}"`:''}>${sw?'':v}</button>`; }).join('')+`</div>`).join('');
+    +CAST_OPTS[m.kind].map(([key,label,list])=>{ const vals=typeof list==='function'?list(m):list; if(!vals) return '';
+      return (label?`<label>${label}</label>`:'')+`<div class="famRow">`+vals.map(v=>{ const sw=/^#/.test(v);
+      return `<button data-key="${key}" data-v="${v}" class="${sw?'sw':''}${m[key]===v?' on':''}"${sw?` style="background:${v}" aria-label="${label} ${v}"`:''}>${sw?'':optLabel(key,v,m)}</button>`; }).join('')+`</div>`; }).join('');
 }
 function saveFamily(){ store.set('ssb.family',JSON.stringify(FAMILY)); const id=BOOK.id; LIB=personalize(LIB_RAW,FAMILY); BOOK=LIB.find(b=>b.id===id)||LIB[0]; }
 $('famBtn').onclick=()=>{ ctx(); sfx.chime(); FAMILY=loadFamily(); $('ages').hidden=true; $('fam').hidden=false; drawFamily(); };
 $('famWho').addEventListener('click',e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
-$('famEdit').addEventListener('click',e=>{ const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); FAMILY[famPick][b.dataset.key]=b.dataset.v; saveFamily(); drawFamily(); });
+$('famEdit').addEventListener('click',e=>{ const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); const m=FAMILY[famPick]; m[b.dataset.key]=b.dataset.v;
+  if(m.kind==='person'){ if(!HAIR[m.look==='m'?'m':'f'].includes(m.hair)) m.hair=HAIR[m.look==='m'?'m':'f'][0]; if(m.look!=='m'||m.role!=='grownup') m.beard='no'; }
+  saveFamily(); drawFamily(); });
 $('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=cleanName(e.target.value); saveFamily(); famStage();
   const tab=$('famWho').querySelector(`[data-slot="${famPick}"] span`); if(tab) tab.textContent=e.target.value; });
 $('famEdit').addEventListener('change',e=>{ if(e.target.id==='famName'&&!e.target.value.trim()){ FAMILY[famPick].name=FAMILY_SAMPLE[famPick].name; saveFamily(); drawFamily(); } });
