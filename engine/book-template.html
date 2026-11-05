@@ -133,6 +133,8 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 #gear{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:40px;height:40px;border-radius:50%;z-index:4;
   border:3px solid rgba(42,29,22,.35);background:rgba(255,248,231,.7);font-size:18px;padding:0;opacity:.75}
 #gear[hidden]{display:none}
+#holdTip{position:fixed;z-index:8;pointer-events:none;background:var(--paper);border:3px solid var(--ink);border-radius:12px;padding:4px 12px;font:700 15px var(--display);color:var(--ink);box-shadow:3px 3px 0 var(--ink);white-space:nowrap}
+#holdTip[hidden]{display:none}
 #ages{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;background:rgba(31,42,46,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 #ages[hidden]{display:none}
 #ages .card{background:var(--paper);border:6px solid var(--ink);border-radius:30px;padding:18px 34px 26px;box-shadow:10px 10px 0 var(--ink);text-align:center;font:600 clamp(16px,2.2vw,22px)/1.3 var(--display);color:var(--ink);max-width:min(92vw,720px)}
@@ -210,18 +212,19 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 </svg>
 <div id="turn"><div class="card"><span class="phone" aria-hidden="true">📱</span><br>Turn sideways to see the whole picture<br><button id="anyway">Read this way</button></div></div>
 <div id="frame"></div><div id="shelf" hidden><h1>Sunny Side Books</h1><div class="covers"></div></div>
-<button id="home" class="gate" aria-label="Back to the bookshelf (hold)">📚</button>
+<button id="home" class="gate" data-tip="Hold to go back to the books" aria-label="Back to the bookshelf (hold)">📚</button>
 <button id="letter" hidden aria-label="Letter sound"></button>
 <div id="hunt" hidden>Find the ladybug!</div>
 <div id="seed"></div>
 <div id="choices" hidden></div>
 <div id="words"></div>
 <button id="back" class="navbtn" aria-label="Previous page">◀</button>
-<button id="mute" class="gate" aria-label="Sound on or off (hold)">🔊</button>
+<button id="mute" class="gate" data-tip="Hold to turn the sound on or off" aria-label="Sound on or off (hold)">🔊</button>
 <button id="next" class="navbtn" aria-label="Next page">▶</button>
-<button id="gear" class="gate" hidden aria-label="Grown-ups: age setting (hold)">⚙️</button>
+<button id="gear" class="gate" hidden data-tip="Hold for grown-up settings" aria-label="Grown-ups: age setting (hold)">⚙️</button>
 <div id="ages" hidden><div class="card"><h2>How old is the reader?</h2><div id="ageNum">2</div><div id="ageRow"></div>
   <button id="autoBtn" class="autoT">Auto on</button><small id="ageNote"></small><button id="famBtn">Our family</button><button id="ageDone">Done</button></div></div>
+<div id="holdTip" hidden></div>
 <div id="fam" hidden><div class="card"><h2>Who is in our books?</h2><div id="famWho"></div>
   <svg id="famBig" viewBox="-170 -300 340 320" aria-hidden="true"></svg><div id="famEdit"></div>
   <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><button id="famDone">Done</button></div></div></div>
@@ -1016,7 +1019,13 @@ $('choices').addEventListener('click',e=>{ const b=e.target.closest('.choice'); 
 document.addEventListener('contextmenu',e=>e.preventDefault());
 $('anyway').onclick=()=>document.body.classList.add('anyway');
 /* hold gates: Home, Mute and the gear need a held finger (1.2 s at age 2 and 3, 0.8 s at 4 and 5); a tap or a slip off the button does nothing */
+/* a quick tap shows the grown-up a word on what to do; a toddler can't read it, so it gives her nothing */
+let tipT=0;
+function holdTip(btn){ const tip=$('holdTip'), r=btn.getBoundingClientRect(); tip.textContent=btn.dataset.tip; tip.hidden=false;
+  tip.style.top=(r.top<innerHeight/2?r.bottom+8:r.top-tip.offsetHeight-8)+'px'; tip.style.right=Math.max(8,innerWidth-r.right)+'px';
+  clearTimeout(tipT); tipT=setTimeout(()=>{ tip.hidden=true; },2200); }
 function gate(btn,fn){ let t=0; const stop=()=>{ clearTimeout(t); t=0; btn.classList.remove('holding'); };
+  btn.addEventListener('pointerup',()=>{ if(t&&btn.dataset.tip) holdTip(btn); });
   btn.addEventListener('pointerdown',e=>{ e.preventDefault(); stop(); btn.style.setProperty('--hold',HOLDMS()+'ms'); btn.classList.add('holding'); t=setTimeout(()=>{ stop(); fn(); },HOLDMS()); });
   ['pointerup','pointercancel','pointerleave'].forEach(ev=>btn.addEventListener(ev,stop)); }
 gate($('mute'),()=>{ muted=!muted; $('mute').textContent=muted?'🔇':'🔊'; });
