@@ -116,20 +116,27 @@ function lovey(m){
   let s='';
   if(t==='bunny') s+=`<ellipse cx="-16" cy="${hy-50}" rx="13" ry="36" fill="${c}" ${S(5)}/><ellipse cx="-16" cy="${hy-48}" rx="6" ry="24" fill="${lt}"/>`
     +`<path d="M10 ${hy-26} q8 -40 22 -44 q22 -2 30 14 q-14 -6 -26 4 q-12 12 -14 30 z" fill="${c}" ${S(5)}/>`;
-  if(t==='elephant') s+=[-1,1].map(d=>`<ellipse cx="${d*40}" cy="${hy+2}" rx="26" ry="32" fill="${c}" ${S(5)}/><ellipse cx="${d*40}" cy="${hy+4}" rx="15" ry="20" fill="${lt}"/>`).join('');
+  if(t==='elephant') s+=[-1,1].map(d=>`<ellipse cx="${d*38}" cy="${hy+4}" rx="22" ry="27" fill="${c}" ${S(5)}/><ellipse cx="${d*40}" cy="${hy+6}" rx="12" ry="16" fill="${lt}"/>`).join('');
   s+=[-1,1].map(d=>`<ellipse cx="${d*28}" cy="-16" rx="24" ry="17" fill="${c}" ${S(5)}/><ellipse cx="${d*34}" cy="-16" rx="10" ry="9" fill="${lt}"/>`).join('');
   s+=`<ellipse cy="-50" rx="42" ry="38" fill="${c}" ${S(6)}/><ellipse cy="-46" rx="26" ry="24" fill="${lt}"/><path d="M0 -84 v62" stroke="${dk}" stroke-width="3" stroke-dasharray="6 6"/>`;
   s+=[-1,1].map(d=>`<ellipse cx="${d*42}" cy="-56" rx="13" ry="22" fill="${c}" transform="rotate(${d*-28} ${d*42} -56)" ${S(5)}/>`).join('');
   if(m.patch&&m.patch!=='none') s+=`<rect x="8" y="-44" width="24" height="22" rx="4" fill="${m.patch}" ${S(3.5)}/><rect x="11" y="-41" width="18" height="16" rx="3" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 3"/>`;
   if(t==='bear') s+=[-1,1].map(d=>`<circle cx="${d*27}" cy="${hy-28}" r="14" fill="${c}" ${S(5)}/><circle cx="${d*27}" cy="${hy-28}" r="7" fill="${lt}"/>`).join('');
   s+=`<circle cy="${hy}" r="36" fill="${c}" ${S(6)}/>`;
-  if(t==='elephant') s+=`<path d="M-8 ${hy+12} q-4 30 10 40 q12 6 14 -4 q-10 -2 -8 -14 q2 -14 8 -22 z" fill="${c}" ${S(5)}/>`;
+  /* each animal its own nose: the bear a round snout, the bunny a small pink nose and a w mouth, the elephant a trunk that curls up at the end */
+  const trunk=`M0 ${hy+6} C0 ${hy+22} 2 ${hy+34} 14 ${hy+34} q10 -1 10 -11`;
+  if(t==='elephant') s+=`<path d="${trunk}" fill="none" ${L(21,OUT)}/><path d="${trunk}" fill="none" ${L(12,c)}/><ellipse cy="${hy+4}" rx="9" ry="7" fill="${c}"/>`
+    +`<path d="M-5 ${hy+18} h10 M-3 ${hy+26} h10" stroke="${dk}" stroke-width="2.5" stroke-linecap="round"/>`;
+  else if(t==='bunny') s+=[-1,1].map(d=>`<circle cx="${d*7}" cy="${hy+16}" r="9" fill="${lt}"/>`).join('')
+    +`<path d="M-6 ${hy+6} h12 l-6 7 z" fill="#e58a8a" ${S(3)}/><path d="M0 ${hy+13} v4 M-8 ${hy+18} q4 5 8 -1 q4 6 8 1" fill="none" ${S(3)}/>`;
   else s+=`<ellipse cy="${hy+12}" rx="16" ry="12" fill="${lt}" ${S(4)}/><ellipse cy="${hy+6}" rx="6" ry="4.5" fill="${OUT}"/><path d="M-6 ${hy+16} q6 6 12 0" fill="none" ${S(3)}/>`;
   const eye=(x,stitch)=>stitch?`<path d="M${x-6} ${hy-14} l12 12 M${x+6} ${hy-14} l-12 12" ${S(4)}/>`
     :`<circle cx="${x}" cy="${hy-8}" r="7.5" fill="#3a3330" ${S(2.5)}/><circle cx="${x-2}" cy="${hy-9}" r="1.4" fill="#cfc6b6"/><circle cx="${x+2}" cy="${hy-7}" r="1.4" fill="#cfc6b6"/>`;
   s+=eye(-14,false)+eye(14,m.eyes==='one stitched');
   s+=`<circle cx="-24" cy="${hy+10}" r="6" fill="#e9a6a0" opacity=".55"/><circle cx="24" cy="${hy+10}" r="6" fill="#e9a6a0" opacity=".55"/>`;
-  if(m.bow&&m.bow!=='none') s+=`<path d="M0 -84 l-24 -12 v24 z M0 -84 l24 -12 v24 z" fill="${m.bow}" ${S(4)}/><circle cy="-84" r="7" fill="${m.bow}" ${S(4)}/>`;
+  /* a bow at the neck, under the chin; the elephant's trunk hangs there, so its bow sits on top of its head */
+  if(m.bow&&m.bow!=='none'){ const [bx,by,br]=t==='elephant'?[16,hy-32,18]:[0,hy+41,0];
+    s+=`<g transform="translate(${bx} ${by}) rotate(${br})"><path d="M0 0 l-18 -10 v20 z M0 0 l18 -10 v20 z" fill="${m.bow}" ${S(4)}/><circle r="5.5" fill="${m.bow}" ${S(3.5)}/></g>`; }
   return `<g transform="rotate(-4)">${s}</g>`;
 }
 /* the pieces a book places: {"who":"person","slot":"grownup1"}; the family fills the slot before drawing */
