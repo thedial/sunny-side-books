@@ -29,7 +29,7 @@ const castWrap=(x,y,s,sfxName,say,inner)=>`<g class="tap" data-react="boing" dat
 /* body sizes per role: head radius and center, shoulder and waist heights, half body width */
 const ROLE={grownup:{hr:44,hy:-206,sh:-158,wa:-70,bw:44},kid:{hr:42,hy:-150,sh:-106,wa:-44,bw:34},baby:{hr:40,hy:-104,sh:-64,wa:-22,bw:32}};
 /* hair hugs the head: an outer edge just outside the skull, a hairline across the forehead, sideburns by the ears.
-   (A dome that stops in a straight line at the ears reads as a hat.) Everything is in head units: hr is the head radius. */
+   Everything is in head units: hr is the head radius. */
 const f0=n=>(+n).toFixed(1);
 function hairBack(st,c,hr,hy){
   if(st==='long') return `<path d="M${-hr-10} ${hy} q0 ${-hr-12} ${hr+10} ${-hr-12} q${hr+10} 0 ${hr+10} ${hr+12} v${hr*1.3} q${-hr-10} 20 ${-2*hr-20} 0 z" fill="${c}" ${S(5)}/>`;
@@ -77,7 +77,6 @@ function person(m){
   const head=[-1,1].map(d=>`<circle cx="${d*hr}" cy="${hy+6}" r="10" fill="${sk}" ${S(5)}/>`).join('')+`<circle cy="${hy}" r="${hr}" fill="${sk}" ${S(6)}/>`;
   const ey=hy+4, ex=hr*.38;
   let face=[-1,1].map(d=>eyeRim(d*ex,ey,dark(sk))+`<circle cx="${d*ex}" cy="${ey}" r="5.5" fill="${OUT}"/><circle cx="${d*ex+1.5}" cy="${ey-2}" r="1.8" fill="#fff"/><circle cx="${d*hr*.62}" cy="${ey+15}" r="7" fill="#e9a6a0" opacity=".65"/>`).join('');
-  /* the beard sits below the smile and a small mustache above it, so the smile still shows */
   /* short: a soft band along the jaw; full: a rounder beard with a small mustache. Both sit below the smile */
   const bd=m.look!=='m'?'no':m.beard==='yes'?'full':m.beard;
   if(bd==='short'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.95} ${hy+2} Q${-hr*.9} ${hy+hr+4} 0 ${hy+hr+8} Q${hr*.9} ${hy+hr+4} ${hr*.95} ${hy+2} Q${hr*.75} ${hy+hr-6} 0 ${hy+hr-6} Q${-hr*.75} ${hy+hr-6} ${-hr*.95} ${hy+2}Z" fill="${hc}" ${S(4)}/>`;
@@ -123,7 +122,6 @@ function lovey(m){
   if(m.patch&&m.patch!=='none') s+=`<rect x="8" y="-44" width="24" height="22" rx="4" fill="${m.patch}" ${S(3.5)}/><rect x="11" y="-41" width="18" height="16" rx="3" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 3"/>`;
   if(t==='bear') s+=[-1,1].map(d=>`<circle cx="${d*27}" cy="${hy-28}" r="14" fill="${c}" ${S(5)}/><circle cx="${d*27}" cy="${hy-28}" r="7" fill="${lt}"/>`).join('');
   s+=`<circle cy="${hy}" r="36" fill="${c}" ${S(6)}/>`;
-  /* each animal its own nose: the bear a round snout, the bunny a small pink nose and a w mouth, the elephant a trunk that curls up at the end */
   const trunk=`M0 ${hy+6} C0 ${hy+22} 2 ${hy+34} 14 ${hy+34} q10 -1 10 -11`;
   if(t==='elephant') s+=`<path d="${trunk}" fill="none" ${L(21,OUT)}/><path d="${trunk}" fill="none" ${L(12,c)}/><ellipse cy="${hy+4}" rx="9" ry="7" fill="${c}"/>`
     +`<path d="M-5 ${hy+18} h10 M-3 ${hy+26} h10" stroke="${dk}" stroke-width="2.5" stroke-linecap="round"/>`;

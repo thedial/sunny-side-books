@@ -837,7 +837,7 @@ let AGESET=Math.min(5,Math.max(2,+store.get('ssb.age')||2)), AUTO=store.get('ssb
 const AGE=()=>Math.min(5,Math.max(2,AGESET+(AUTO?OFFSET:0))), AGEROW=()=>TABLES.ages[AGE()];
 const FINDK=()=>AGEROW().findScale, DECOYS=()=>AGEROW().decoys, HINTMS=()=>AGEROW().hintMs, HOLDMS=()=>AGEROW().holdMs, PACE=()=>AGEROW().pace;
 /* auto moves one step per page, timed per critter by the age's row in tables.auto: every critter found within upMs each and no hint
-   steps up; a critter still hidden after downMs each steps down. A hint never steps down (Scott, 2026-11-02). */
+   steps up; a critter still hidden after downMs each steps down. A hint never steps down. */
 let hintT=0, slowT=0, hinted=false, shownAt=0, graded=0, autoRow=null;
 function grade(d){ if(graded) return; graded=d; if(!AUTO) return; OFFSET=Math.max(-1,Math.min(1,OFFSET+d)); store.set('ssb.autoOffset',OFFSET); }
 function restartIdleHint(){ clearTimeout(hintT); if(finds(BOOK.pages[cur]).length) hintT=setTimeout(hint,HINTMS()); }

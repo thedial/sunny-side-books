@@ -19,9 +19,9 @@ STAGE_W, STAGE_H = 1600, 1000
 FIND_BOX = (40, 170, 1560, 1000)          # x0, y0, x1, y1: the part of the world a find may sit in (view top is y 170)
 PERCH_GAP = 150                           # pickPerch keeps perched finds this far apart
 
-PAGE_BUDGET = 200 * 1024                  # one-page build: 156.8 KB on 2026-11-02, about 30% headroom
-SITE_INDEX_BUDGET = 200 * 1024            # site/index.html: 157.6 KB on 2026-11-02
-BOOK_BUDGET = 16 * 1024                   # one book file: largest today 8.6 KB
+PAGE_BUDGET = 200 * 1024                  # one-page build; the build prints today's size
+SITE_INDEX_BUDGET = 200 * 1024            # site/index.html
+BOOK_BUDGET = 16 * 1024                   # one book file
 
 # art-layer-spec.md section 6, (target, hard limit) in bytes
 KB = 1024
@@ -842,8 +842,17 @@ def restates(comment, code):
     return sum(w in there for w in said) / len(said) >= 0.75
 
 
-def comment_sites(path, src):
-    """(line, comment, the code it sits on or above) for every line comment."""
+HISTORY = re.compile(r"\b(used to|no longer|any ?more|previously|instead of the old|(was|were) (removed|changed|replaced|added|moved|broken)"
+                     r"|(is|are) now|bug ?fix|fixed (a|the) bug|20\d\d-\d\d-\d\d)\b", re.I)
+
+
+def tells_history(comment):
+    """A comment that tells what the code was before, what changed or when: the commit message already keeps that."""
+    return bool(HISTORY.search(comment))
+
+
+def comment_sites(path, src, multiline=False):
+    """(line, comment, the code it sits on or above) for every line comment, and with multiline the block comments too."""
     lines = src.split('\n')
     def code_at(line_no, offset_in_line, text_line):
         before = text_line[:offset_in_line].strip()
@@ -868,7 +877,7 @@ def comment_sites(path, src):
         base = 0
     _, comments = scan_js(js)
     for off, text in comments:
-        if '\n' in text.strip():
+        if '\n' in text.strip() and not multiline:
             continue
         ln = base + js.count('\n', 0, off) + 1
         col = off - (js.rfind('\n', 0, off) + 1)
@@ -877,24 +886,32 @@ def comment_sites(path, src):
 
 LINT_KNOWS = [('show the next page', 'showNextPage(page)', True),
               ('a toddler taps at nothing in particular this often', 'wild: 0.25,', False)]
+HISTORY_KNOWS = [('the bow used to sit on the mouth', True), ('one-page build: 156.8 KB on 2026-11-02', True),
+                 ('a bow at the neck, under the chin', False), ('so taps know what was touched', False)]
 
 
 def check_comments(r):
-    """A comment that only says what the next line does is flagged: rename or reshape the code instead."""
+    """A comment that only says what the next line does is flagged: rename or reshape the code instead.
+    So is one that tells the edit's history (what it was, what changed, when): that is the commit message's job."""
     read = 0
     for comment, code, flagged in LINT_KNOWS:
         if restates(comment, code) != flagged:
             r.fail(f'comment lint: it no longer tells "{comment}" from its code correctly')
+    for comment, flagged in HISTORY_KNOWS:
+        if tells_history(comment) != flagged:
+            r.fail(f'comment lint: it no longer tells whether "{comment}" is edit history')
     for rel in LINTED:
         path = os.path.join(ROOT, rel)
         if not os.path.exists(path):
             continue
         src = open(path, encoding='utf-8').read()
-        for ln, text, code in comment_sites(rel, src):
+        for ln, text, code in comment_sites(rel, src, multiline=True):
             read += 1
-            if restates(text, code):
+            if tells_history(text):
+                r.lint.append(f'{rel}:{ln}: "{" ".join(text.split())[:80]}" tells edit history; that goes in the commit message')
+            elif '\n' not in text.strip() and restates(text, code):
                 r.lint.append(f'{rel}:{ln}: "{text.strip()}" only restates the code')
-    r.note(f'comment lint: {read} comments read, {len(r.lint)} only restate their code')
+    r.note(f'comment lint: {read} comments read, {len(r.lint)} flagged (restating the code or telling edit history)')
 
 
 # ---------------------------------------------------------------- run
