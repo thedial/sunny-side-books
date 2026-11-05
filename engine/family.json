@@ -1,7 +1,7 @@
 {
  "_note": "The sample family a new tablet starts with. A parent changes it behind the gear; their family stays on that tablet (localStorage ssb.family) and is never in this repo, the site or any AI model. Books name these slots: {grownup1} in text, {\"who\":\"person\",\"slot\":\"grownup1\"} as an actor.",
  "grownup1": {"kind": "person", "name": "Mama", "role": "grownup", "skin": "#efc6a6", "hair": "long", "hairColor": "#5a3a24", "shirt": "#e58a8a", "pants": "#3f6d8e", "glasses": "no", "beard": "no"},
- "grownup2": {"kind": "person", "name": "Daddy", "role": "grownup", "skin": "#dcaa84", "hair": "short", "hairColor": "#2b2220", "shirt": "#4f9c9b", "pants": "#6a9650", "glasses": "yes", "beard": "yes"},
+ "grownup2": {"kind": "person", "name": "Daddy", "role": "grownup", "skin": "#dcaa84", "hair": "short", "hairColor": "#5a3a24", "shirt": "#4f9c9b", "pants": "#3f6d8e", "glasses": "yes", "beard": "short"},
  "kid": {"kind": "person", "name": "Baby", "role": "baby", "skin": "#efc6a6", "hair": "tuft", "hairColor": "#94592f", "shirt": "#f0c055", "pants": "#f0c055", "glasses": "no", "beard": "no"},
  "pet": {"kind": "pet", "name": "Biscuit", "type": "dog", "coat": "#c98f4f", "marks": "patch", "ears": "floppy", "collar": "#d9826f"},
  "lovey": {"kind": "lovey", "name": "Bun-Bun", "type": "bunny", "fur": "#e9b5c0", "patch": "#f0c055", "bow": "#8d86c6", "eyes": "buttons"}

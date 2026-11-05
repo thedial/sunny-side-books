@@ -10,7 +10,7 @@ const SWATCH={
 };
 const CAST_OPTS={
   person:[['role','Who',['grownup','kid','baby']],['skin','Skin',SWATCH.skin],['hair','Hair',['short','long','bun','curly','ponytail','bald','tuft']],
-    ['hairColor','Hair color',SWATCH.hair],['shirt','Shirt',SWATCH.cloth],['pants','Pants',SWATCH.cloth],['glasses','Glasses',['no','yes']],['beard','Beard',['no','yes']]],
+    ['hairColor','Hair color',SWATCH.hair],['shirt','Shirt',SWATCH.cloth],['pants','Pants',SWATCH.cloth],['glasses','Glasses',['no','yes']],['beard','Beard',['no','short','full']]],
   pet:[['type','Pet',['dog','cat']],['coat','Coat',SWATCH.coat],['marks','Markings',['none','patch','spots','socks','stripes']],['ears','Ears',['floppy','pointy']],['collar','Collar',SWATCH.cloth]],
   lovey:[['type','Lovey',['bear','bunny','elephant']],['fur','Color',SWATCH.lovey],['patch','Patch',['none',...SWATCH.cloth]],['bow','Bow',['none',...SWATCH.cloth]],['eyes','Eyes',['buttons','one stitched']]]
 };
@@ -51,8 +51,11 @@ function person(m){
   const ey=hy+4, ex=hr*.38;
   let face=[-1,1].map(d=>eyeRim(d*ex,ey,dark(sk))+`<circle cx="${d*ex}" cy="${ey}" r="5.5" fill="${OUT}"/><circle cx="${d*ex+1.5}" cy="${ey-2}" r="1.8" fill="#fff"/><circle cx="${d*hr*.62}" cy="${ey+15}" r="7" fill="#e9a6a0" opacity=".65"/>`).join('');
   /* the beard sits below the smile and a small mustache above it, so the smile still shows */
-  if(m.beard==='yes'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.92} ${hy+6} Q${-hr*.85} ${hy+hr+16} 0 ${hy+hr+18} Q${hr*.85} ${hy+hr+16} ${hr*.92} ${hy+6} Q${hr*.6} ${hy+36} 0 ${hy+33} Q${-hr*.6} ${hy+36} ${-hr*.92} ${hy+6}Z" fill="${hc}" ${S(5)}/>`
-    +`<path d="M-16 ${ey+12} q8 -7 16 -1 q8 -6 16 1" fill="none" ${L(7,hc)}/>`;
+  /* short: a soft band along the jaw; full: a rounder beard with a small mustache. Both sit below the smile */
+  const bd=m.beard==='yes'?'full':m.beard;
+  if(bd==='short'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.95} ${hy+2} Q${-hr*.9} ${hy+hr+4} 0 ${hy+hr+8} Q${hr*.9} ${hy+hr+4} ${hr*.95} ${hy+2} Q${hr*.75} ${hy+hr-6} 0 ${hy+hr-6} Q${-hr*.75} ${hy+hr-6} ${-hr*.95} ${hy+2}Z" fill="${tint(hc,.18)}" ${S(4)}/>`;
+  if(bd==='full'&&!baby&&m.role!=='kid') face+=`<path d="M${-hr*.92} ${hy+4} Q${-hr*.8} ${hy+hr+10} 0 ${hy+hr+12} Q${hr*.8} ${hy+hr+10} ${hr*.92} ${hy+4} Q${hr*.6} ${hy+34} 0 ${hy+32} Q${-hr*.6} ${hy+34} ${-hr*.92} ${hy+4}Z" fill="${tint(hc,.15)}" ${S(5)}/>`
+    +`<path d="M-13 ${ey+12} q6.5 -5 13 -1 q6.5 -4 13 1" fill="none" ${L(6,tint(hc,.15))}/>`;
   face+=`<path d="M-11 ${ey+17} q11 11 22 0" fill="none" ${S(4.5)}/>`;
   if(m.glasses==='yes') face+=[-1,1].map(d=>`<circle cx="${d*ex}" cy="${ey}" r="13" fill="#fff" fill-opacity=".25" ${S(4)}/>`).join('')+`<path d="M${-ex+13} ${ey} h${2*ex-26}" ${S(4)}/>`;
   return hairBack(m.hair,hc,hr,hy)+legs+arm(-1)+arm(1)+body+neck+head+face+hairFront(m.hair,hc,hr,hy);
