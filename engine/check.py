@@ -170,6 +170,7 @@ class Engine:
         kit_code, self.kit_comments = scan_js(self.kit)
         code = kit_code + '\n' + self.js_code
         self.pieces = object_keys(code, 'const P={') | object_keys(code, 'Object.assign(P,{') | set(re.findall(r'\bP\.(\w+)=', code))
+        self.pieces |= {v['kind'] for k, v in self.family.items() if not k.startswith('_') and v['kind'] == 'siblings'}
         self.finds = object_keys(code, 'const FINDS={')
         self.flaps = object_keys(code, 'const FLAP={')
         self.decoys = object_keys(code, 'const DECOY={')

@@ -11,6 +11,7 @@
 //   peekaboo-family/p1+open       the same page with every flap lifted and every hidden actor found
 //   peekaboo-family/*             every page of a book
 //   cast:hair cast:pets cast:loveys   every option of the family cast, side by side
+//   pick:peekaboo-family          tap that book's cover on the shelf (Who's playing? when the family has 2+ kids); pick:peekaboo-family+2 also taps the third kid, then shoots the first page
 //
 // --eval runs a script file in the page before each target (a look prototype: looks/proto/fantasy.js).
 // --family takes a JSON file shaped like engine/family.json (any subset of slots) and plays it as the tablet's family.
@@ -66,10 +67,16 @@ try {
     const snap = async (name) => { const f = join(out, name.replace(/[^\w.+-]+/g, '_') + '.png'); writeFileSync(f, await page.screenshot()); console.log(f); };
     if (target === 'shelf' || target === 'hello') await snap(target);
     else if (target.startsWith('family')) {
-      const slot = target.split(':')[1];
+      const slot = target.split(':').slice(1).join(':');
       await page.evaluate(`document.getElementById('famBtn').click()`);
       if (slot) await page.evaluate(`document.querySelector('[data-slot="${slot}"]').click()`);
       await wait(200); await snap(target);
+    } else if (target.startsWith('pick:')) {
+      const [bookEnd, kid] = target.slice(5).split('+');
+      const i = await page.evaluate(`LIB.findIndex(b=>b.id.endsWith(${JSON.stringify(bookEnd)}))`);
+      if (i < 0) throw new Error(`no book whose id ends with "${bookEnd}"`);
+      await page.evaluate(`(()=>{ AGESET=${age}; AUTO=false; document.querySelector('[data-b="${i}"]').click(); })()`); await wait(300); await snap(target.replace('+' + kid, ''));
+      if (kid) { await page.evaluate(`document.querySelector('#pick [data-k="${kid}"]').click()`); await wait(700); await snap(target); await wait(1400); await snap(target + '-page'); }
     } else if (target.startsWith('cast:')) {
       const name = target.slice(5); if (!GALLERY[name]) throw new Error(`no gallery "${name}" (hair, pets, loveys)`);
       await page.resize(1500, name === 'hair' ? 1400 : 900); await page.evaluate(drawGallery(name)); await wait(300); await snap(target);
