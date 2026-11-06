@@ -9,7 +9,9 @@ args = sys.argv[1:]
 site = args[0] == '--site'
 if site: args = args[1:]
 out, files = args[0], args[1:]
-t = open(os.path.join(here, 'book-template.html'), encoding='utf-8').read()
+spec_r = importlib.util.spec_from_file_location('reader', os.path.join(here, 'reader.py'))
+reader = importlib.util.module_from_spec(spec_r); spec_r.loader.exec_module(reader)
+t = reader.assemble()[0]
 kit = open(os.path.join(here, 'kit.js'), encoding='utf-8').read() + '\n' + open(os.path.join(here, 'cast.js'), encoding='utf-8').read()
 family = json.load(open(os.path.join(here, 'family.json'), encoding='utf-8'))
 tables = json.load(open(os.path.join(here, 'tables.json'), encoding='utf-8'))

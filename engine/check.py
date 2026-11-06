@@ -8,10 +8,12 @@ Each problem is one plain line. Warnings print but never stop the build.
 Checks that need the browser's own layout (decoys against finds, measured tap sizes, the toddler bots)
 live in engine/toddler-bots.mjs.
 """
-import json, os, re, sys, tokenize, io
+import json, os, re, sys, tokenize, io, importlib.util
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+_spec = importlib.util.spec_from_file_location('reader', os.path.join(HERE, 'reader.py'))
+reader = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(reader)
 
 # Tablets the tap floor is measured on, landscape CSS px: iPad 9.7", iPad Air, 10" Android / Fire HD 10.
 TABLETS = [(1024, 768), (1180, 820), (1280, 800)]
@@ -157,7 +159,7 @@ def line_of(src, offset):
 
 class Engine:
     def __init__(self):
-        self.template = open(os.path.join(HERE, 'book-template.html'), encoding='utf-8').read()
+        self.template, self.parts = reader.assemble()
         self.cast = open(os.path.join(HERE, 'cast.js'), encoding='utf-8').read()
         self.kit = open(os.path.join(HERE, 'kit.js'), encoding='utf-8').read() + '\n' + self.cast
         self.family = json.load(open(os.path.join(HERE, 'family.json'), encoding='utf-8'))
@@ -181,7 +183,7 @@ class Engine:
         return {int(a): row for a, row in self.tables['ages'].items()}
 
     def js_line(self, offset):
-        return line_of(self.template, self.js_at + offset)
+        return reader.locate(self.parts, self.js_at + offset)
 
 
 # ---------------------------------------------------------------- 1. book rules
@@ -428,7 +430,7 @@ def check_family(book, eng, r):
 #   words  "[pet: Goodnight, {pet}. | other words]"  (the part after | is optional)
 #   pieces "needs": "pet" on any piece, flap or page; a piece with "slot" needs that slot without saying so
 #   else   "else": {...} is merged over the thing (dropping its slot) when what it needs is out; no else drops it
-# A dropped page is skipped: whatever went to it goes to its "next". personalize() in book-template.html does the same.
+# A dropped page is skipped: whatever went to it goes to its "next". personalize() in engine/reader/library.js does the same.
 BRANCH = re.compile(r'\[(\w+):([^\[\]|]*)(?:\|([^\[\]]*))?\]')
 DROP = object()
 
@@ -806,10 +808,10 @@ def check_gentle(eng, r):
                 r.warn(f'gentle: {sel} uses @keyframes {a["name"]}, which is not defined')
     for m in re.finditer(r'animation-duration:\$\{\((\d*\.?\d+)\+Math\.random\(\)\*', eng.js):
         if float(m.group(1)) < ANIM_FLOOR_S:
-            r.fail(f'gentle: engine line {eng.js_line(m.start())} sets an animation as short as {m.group(1)} s')
+            r.fail(f'gentle: engine {eng.js_line(m.start())} sets an animation as short as {m.group(1)} s')
     for m in re.finditer(r'\btween\((\d+)', eng.js_code):
         if int(m.group(1)) / 1000 < ANIM_FLOOR_S:
-            r.fail(f'gentle: engine line {eng.js_line(m.start())} tweens for {m.group(1)} ms, faster than the floor')
+            r.fail(f'gentle: engine {eng.js_line(m.start())} tweens for {m.group(1)} ms, faster than the floor')
     if re.search(r'\bsetInterval\(', eng.js_code + eng.kit):
         r.warn('gentle: the engine uses setInterval; check by eye that nothing blinks')
     r.note(f'gentle: quickest animation after pacing {quickest[0]:.2f} s ({quickest[1]}), floor {ANIM_FLOOR_S} s; '
@@ -842,18 +844,18 @@ def check_gain(eng, r):
         if len(args) >= 5:
             v = literal(args[4][1])
             if v is None:
-                r.warn(f'gentle: engine line {eng.js_line(m.start())}: cannot read the tone\'s gain "{args[4][1].strip()}"')
+                r.warn(f'gentle: engine {eng.js_line(m.start())}: cannot read the tone\'s gain "{args[4][1].strip()}"')
                 continue
             peak = max(peak, v)
             if v > VOICE_GAIN_CAP:
-                r.fail(f'gentle: engine line {eng.js_line(m.start())}: a tone at gain {v}, over the {VOICE_GAIN_CAP} cap')
+                r.fail(f'gentle: engine {eng.js_line(m.start())}: a tone at gain {v}, over the {VOICE_GAIN_CAP} cap')
     for m in re.finditer(r'\bvol:\s*([^,}]+)', code):
         v = literal(m.group(1))
         if v is None:
-            r.warn(f'gentle: engine line {eng.js_line(m.start())}: cannot read the gain "{m.group(1).strip()}"'); continue
+            r.warn(f'gentle: engine {eng.js_line(m.start())}: cannot read the gain "{m.group(1).strip()}"'); continue
         peak = max(peak, v)
         if v > VOICE_GAIN_CAP:
-            r.fail(f'gentle: engine line {eng.js_line(m.start())}: a voice at gain {v}, over the {VOICE_GAIN_CAP} cap')
+            r.fail(f'gentle: engine {eng.js_line(m.start())}: a voice at gain {v}, over the {VOICE_GAIN_CAP} cap')
     direct = len(re.findall(r'\.destination\b', code))
     if direct != 1 or not re.search(r'function soundBus\(', code):
         r.fail(f'gentle: every sound must reach the speakers through soundBus(), one gain node ({direct} places connect to the speakers)')
@@ -955,7 +957,7 @@ def check_statechart(eng, r):
     for m in re.finditer(r'\bsetTimeout\(', eng.js_code):
         args = call_args(eng.js_code, m.end() - 1)
         if args and LEFT_BEHIND.search(args[0][1]):
-            r.fail(f'statechart turn-leaves-nothing: template line {eng.js_line(m.start())} plays or shows something on a bare '
+            r.fail(f'statechart turn-leaves-nothing: {eng.js_line(m.start())} plays or shows something on a bare '
                    f'setTimeout, which outlives a turn; use later() so turning the page drops it')
     for name in ('show', 'shelf'):
         body = function_body(eng.js_code, name)
@@ -971,7 +973,7 @@ STOP = set('''a an the and or but if of to in on at by for with from into onto a
 these those so then than when while do does did not no yes we you she he they them her his our their one two all any each
 every some only just also here there what which who how why up down out off over under after before again still yet can
 will would should could may might must has have had get gets got set sets make makes use uses used new old'''.split())
-LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/cast.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs', 'engine/shots.mjs',
+LINTED = tuple('engine/reader/' + n for n in reader.ORDER if n.endswith('.js')) + ('engine/kit.js', 'engine/cast.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs', 'engine/shots.mjs',
           'engine/check.py', 'engine/build.py')
 
 

@@ -45,7 +45,7 @@ A bug gets its check before its fix. Write the check, watch it fail on the engin
 
 ## Layout
 - `engine/kit.js`: the drawing kit (every character and scene, drawn in code) and the tap behaviours
-- `engine/book-template.html`: the reader
+- `engine/reader/`: the reader, one file per part (styles, sound, drawing pieces, effects, scenes, flaps, age dial, library, page engine, gates, family screen, start); `engine/reader.py` joins them in order and says what each holds. build.py and check.py both read the page through it
 - `engine/build.py`: builds a page or the offline app from book files
 - `engine/check.py`: the build's checks; `engine/tables.json`: the age table, the perches and the bots' bands; `engine/page-states.json`: the page statechart
 - `engine/toddler-bots.mjs`, `engine/browser.mjs`: the toddler bots and the headless Chrome they play in

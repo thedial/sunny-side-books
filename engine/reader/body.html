@@ -1,0 +1,60 @@
+</style>
+
+<svg id="stage" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid meet" aria-label="Picture book page">
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".45"/></linearGradient>
+    <pattern id="grain" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="4" r="1.1" fill="#2a1d16" opacity=".06"/><circle cx="10" cy="11" r=".9" fill="#2a1d16" opacity=".05"/><circle cx="11" cy="3" r=".7" fill="#fff" opacity=".12"/></pattern>
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0 V9" stroke="#1f2a2e" stroke-width="2.2" opacity=".55"/></pattern>
+    <pattern id="hatch2" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><path d="M0 0 V9" stroke="#1f2a2e" stroke-width="1.8" opacity=".4"/></pattern>
+    <linearGradient id="shadeG" x1=".1" y1=".15" x2=".75" y2="1"><stop offset=".38" stop-color="#000"/><stop offset=".62" stop-color="#fff"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <linearGradient id="shadeG2" x1=".1" y1=".15" x2=".75" y2="1"><stop offset=".7" stop-color="#000"/><stop offset=".92" stop-color="#fff"/></linearGradient>
+    <mask id="shade" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#shadeG)"/></mask>
+    <mask id="shade2" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#shadeG2)"/></mask>
+    <filter id="ink" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="1" seed="9" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 .11  0 0 0 0 .14  0 0 0 0 .15  0 0 0 14 -9" result="speck"/>
+      <feComposite in="speck" in2="d" operator="in" result="sp"/>
+      <feMerge><feMergeNode in="d"/><feMergeNode in="sp"/></feMerge>
+    </filter>
+    <pattern id="dots" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="5.5" cy="5.5" r="2.4" fill="#1d1a17" opacity=".3"/></pattern>
+    <pattern id="dotsW" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="7" cy="7" r="2.6" fill="#ffffff" opacity=".35"/></pattern>
+    <pattern id="gingham" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#f6edd6"/><rect width="14" height="28" fill="#e58a8a" opacity=".55"/><rect width="28" height="14" fill="#e58a8a" opacity=".55"/></pattern>
+    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa79f"/><stop offset=".55" stop-color="#a9cbb6"/><stop offset=".8" stop-color="#f1dfb2"/></linearGradient>
+    <linearGradient id="nightG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16303a"/><stop offset=".7" stop-color="#2b5357"/><stop offset=".85" stop-color="#4f6e5e"/></linearGradient>
+  </defs>
+  <g id="world"></g><g id="fx" class="nohit"></g><g id="marks" class="nohit"></g>
+  <rect class="nohit" x="-2000" y="-2000" width="5600" height="5600" fill="url(#grain)"/>
+</svg>
+<div id="turn"><div class="card"><span class="phone" aria-hidden="true">📱</span><br>Turn sideways to see the whole picture<br><button id="anyway">Read this way</button></div></div>
+<div id="frame"></div><div id="shelf" hidden><h1>Sunny Side Books</h1><div class="covers"></div></div>
+<button id="home" class="gate" data-tip="Hold to go back to the books" aria-label="Back to the bookshelf (hold)">📚</button>
+<button id="letter" hidden aria-label="Letter sound"></button>
+<div id="hunt" hidden>Find the ladybug!</div>
+<div id="seed"></div>
+<div id="choices" hidden></div>
+<div id="words"></div>
+<button id="back" class="navbtn" aria-label="Previous page">◀</button>
+<button id="mute" class="gate" data-tip="Hold to turn the sound on or off" aria-label="Sound on or off (hold)">🔊</button>
+<button id="next" class="navbtn" aria-label="Next page">▶</button>
+<button id="gear" class="gate" hidden data-tip="Hold for grown-up settings" aria-label="Grown-ups: age setting (hold)">⚙️</button>
+<div id="ages" hidden><div class="card"><h2>How old is the reader?</h2><div id="ageNum">2</div><div id="ageRow"></div>
+  <button id="autoBtn" class="autoT">Auto on</button><small id="ageNote"></small><button id="famBtn">Our family</button><button id="ageDone">Done</button></div></div>
+<div id="holdTip" hidden></div>
+<div id="hello" hidden><div class="card">
+  <div id="hello1"><h2>Hi, grown-up!</h2>
+    <p>These books are made for little hands. The grown-up buttons need a held finger, so a toddler can't leave a book by accident:</p>
+    <p class="icons">📚 🔊 ⚙️</p><p>Try it: hold this until the ring fills.</p>
+    <button id="helloHold" class="gate">Hold me</button></div>
+  <div id="hello2" hidden><h2>That's it!</h2>
+    <p>Want your family in the books? Add the grown-ups, your little one, a pet and a favorite stuffed animal.</p>
+    <div class="row"><button class="go" id="helloFam">Set up our family</button><button id="helloLater">Maybe later</button></div>
+    <small>You can always find it later: hold the ⚙️ gear on the bookshelf.</small></div>
+</div></div>
+<div id="pick" hidden><h2>Who's playing?</h2><div class="row"></div><div class="go"></div></div>
+<div id="fam" hidden><div class="card"><h2>Who is in our books?</h2><div id="famWho"></div>
+  <svg id="famBig" viewBox="-170 -300 340 320" aria-hidden="true"></svg><div id="famEdit"></div>
+  <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><button id="famDone">Done</button></div></div></div>
+
+<script>
