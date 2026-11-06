@@ -14,16 +14,18 @@
     {"who": "person", "slot": "grownup1", "x": 560, "y": 960, "s": 0.9},
     {"who": "person", "slot": "kid", "x": 720, "y": 975, "s": 1},
     {"who": "person", "slot": "grownup2", "x": 880, "y": 960, "s": 0.9},
+    {"who": "siblings", "slot": "siblings", "x": 290, "y": 945, "gap": 110, "w": 290, "s": 0.85},
     {"who": "pet", "slot": "pet", "x": 1110, "y": 975, "s": 0.9}
    ],
    "next": "p1"
   },
   "p1": {
    "scene": "yard",
-   "text": "{kid} and {grownup1} go to the farm. Someone is hiding behind the barn door. Who is it? Lift the flap!",
+   "text": "{kid} and {grownup1} go to the farm. [siblings: And {siblings} too!] Someone is hiding behind the barn door. Who is it? Lift the flap!",
    "actors": [
     {"who": "person", "slot": "grownup1", "x": 760, "y": 960, "s": 0.9},
-    {"who": "person", "slot": "kid", "x": 920, "y": 975, "s": 1}
+    {"who": "person", "slot": "kid", "x": 920, "y": 975, "s": 1},
+    {"who": "siblings", "slot": "siblings", "x": 1210, "y": 935, "gap": 110, "w": 300, "s": 0.85}
    ],
    "flaps": [
     {"type": "door", "x": 300, "y": 730, "w": 140, "h": 150, "hide": {"who": "person", "slot": "grownup2", "s": 0.42, "dx": -18}, "say": "Peekaboo! It's {grownup2}!",

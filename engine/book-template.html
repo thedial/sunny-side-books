@@ -172,6 +172,20 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 #fam .card{background:var(--paper);border:6px solid var(--ink);border-radius:30px;padding:14px 22px 18px;box-shadow:10px 10px 0 var(--ink);color:var(--ink);font:600 16px/1.3 var(--display);
   width:min(96vw,980px);height:min(94vh,720px);box-sizing:border-box;display:grid;grid-template-columns:minmax(200px,38%) 1fr;grid-template-rows:auto auto minmax(0,1fr) auto;gap:10px 18px;overflow:hidden}
 #fam h2{grid-column:1/-1;margin:0;font:400 clamp(22px,3vw,32px) Bangers,var(--display);letter-spacing:2px;color:#d0452f;text-align:center}
+#pick{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.5vh;
+  background:repeating-conic-gradient(from 0deg at 50% 120%,#ffd23f 0 6deg,#ffc21f 6deg 12deg)}
+#pick[hidden]{display:none}
+#pick h2{font:400 clamp(44px,8vw,84px)/1 Bangers,var(--display);letter-spacing:2px;color:#fff;margin:0;-webkit-text-stroke:3px var(--ink);paint-order:stroke;text-shadow:5px 5px 0 var(--ink)}
+#pick .row{display:flex;flex-wrap:wrap;gap:2.2vw;justify-content:center;max-width:94vw}
+#pick .row.many{max-width:64vw}
+#pick button{all:unset;cursor:pointer;width:22vw;max-width:220px;display:flex;flex-direction:column;transform:skewX(-6deg);border:5px solid var(--ink);border-radius:14px;overflow:hidden;box-shadow:6px 6px 0 var(--ink);background:var(--paper);transition:transform .4s,opacity .4s}
+#pick .row.many button{width:17vw}
+#pick button svg{display:block;width:100%;height:auto;transform:skewX(6deg)}
+#pick button span{font:400 clamp(24px,3.4vw,40px)/1.1 Bangers,var(--display);letter-spacing:1px;text-align:center;padding:4px 0 6px;background:var(--ink);color:#fff}
+#pick.picked button{opacity:.5}
+#pick button.me{opacity:1;transform:skewX(-6deg) scale(1.14) translateY(-10px);border-color:var(--red);box-shadow:0 0 0 6px #fff,8px 10px 0 6px var(--ink)}
+#pick button.me span{background:var(--red)}
+#pick .go{font:400 clamp(36px,6vw,64px)/1 Bangers,var(--display);color:var(--red);-webkit-text-stroke:2px var(--ink);letter-spacing:2px;min-height:1em}
 #famWho{grid-column:1/-1;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 #famWho button{border:4px solid var(--ink);border-radius:16px;background:#efe9d8;padding:2px 8px 4px;font:800 14px var(--display);color:var(--ink);box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;align-items:center}
 #famWho button.on{background:var(--sun)}
@@ -251,6 +265,7 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
     <div class="row"><button class="go" id="helloFam">Set up our family</button><button id="helloLater">Maybe later</button></div>
     <small>You can always find it later: hold the ⚙️ gear on the bookshelf.</small></div>
 </div></div>
+<div id="pick" hidden><h2>Who's playing?</h2><div class="row"></div><div class="go"></div></div>
 <div id="fam" hidden><div class="card"><h2>Who is in our books?</h2><div id="famWho"></div>
   <svg id="famBig" viewBox="-170 -300 340 320" aria-hidden="true"></svg><div id="famEdit"></div>
   <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><button id="famDone">Done</button></div></div></div>
@@ -914,10 +929,17 @@ function nextSeed(id){ const key=BOOK.id+'/'+id, v=visits[key]=(visits[key]||0)+
 /* ---- the book (generated content goes here; the engine above never changes) ---- */
 /* our family: the book names slots ({kid} in words, "slot":"kid" on a piece); this tablet's family fills them in.
    The sample family comes with the app; a grown-up's own is kept in localStorage and nowhere else. */
-const FAMILY_SAMPLE=/*FAMILY*/, SLOTS=Object.keys(FAMILY_SAMPLE).filter(k=>k[0]!=='_');
+const FAMILY_SAMPLE=/*FAMILY*/, SLOTS=Object.keys(FAMILY_SAMPLE).filter(k=>k[0]!=='_'&&FAMILY_SAMPLE[k].kind!=='siblings'), MAX_KIDS=6;
 function loadFamily(){ let mine={}; try{ mine=JSON.parse(store.get('ssb.family')||'{}')||{}; }catch(e){}
   const f={}; for(const k of SLOTS){ f[k]={...FAMILY_SAMPLE[k],...(mine[k]||{}),kind:FAMILY_SAMPLE[k].kind}; f[k].name=cleanName(f[k].name)||FAMILY_SAMPLE[k].name;
-    f[k].out=!!(FAMILY_SAMPLE[k].optional&&f[k].out); } return f; }
+    f[k].out=!!(FAMILY_SAMPLE[k].optional&&f[k].out); }
+  f.more=(Array.isArray(mine.more)?mine.more:[]).slice(0,MAX_KIDS-1).map(m=>({...FAMILY_SAMPLE.kid,...m,kind:'person',out:false,name:cleanName(m&&m.name)||'Kid'}));
+  return f; }
+/* the family as one reading sees it: the kid it stars in the kid slot, every other kid in siblings. Never stored */
+let STAR=0;
+function reading(fam,star=STAR){ const kids=[fam.kid,...fam.more], k=kids[star]||kids[0], others=kids.filter(x=>x!==k), names=others.map(o=>o.name);
+  return {...fam,kid:k,siblings:{kind:'siblings',name:names.length<2?names.join(''):names.slice(0,-1).join(', ')+' and '+names[names.length-1],list:others,out:!others.length}}; }
+const usesKid=b=>/\{kid\}|"slot":\s*"kid"/.test(JSON.stringify(b));
 /* a name is words, not markup: it lands in bubbles and bursts that are built as SVG text */
 function cleanName(t){ return String(t||'').replace(/[<>&"\{}]/g,'').slice(0,14); }
 /* a member switched out of the family: "[pet: words | other words]" picks its words, "needs" and a slot piece drop out
@@ -927,7 +949,10 @@ function personalize(books,fam){
   const isOut=k=>!!(fam[k]&&fam[k].out), gated=o=>[].concat(o.needs||[],o.slot||[]).some(isOut);
   const words=s=>(s.includes('[')?s.replace(BRANCH,(m,k,a,b)=>(isOut(k)?b||'':a).trim()).replace(/\s{2,}/g,' ').trim():s)
     .replace(/\{(\w+)\}/g,(m,k)=>fam[k]?esc(fam[k].name):m);
-  const fill=o=>{ if(Array.isArray(o)) return o.map(fill).filter(x=>x!==DROP); if(typeof o==='string') return words(o); if(!o||typeof o!=='object') return o;
+  /* a siblings piece is one person per sibling in a row centered on x; "w" is the widest the row may get (gap and size give way) */
+  const group=o=>{ const list=fam.siblings.list, n=list.length, {who,slot,gap=110,w=gap*3,s=1,x,y,...rest}=o, g=n>1?Math.min(gap,w/(n-1)):0, k=Math.max(.75,g/gap||1);
+    return list.map((m,i)=>({...rest,who:'person',x:Math.round(x+(i-(n-1)/2)*g),y,s:+(s*k).toFixed(2),args:[m]})); };
+  const fill=o=>{ if(Array.isArray(o)) return o.flatMap(v=>v&&v.who==='siblings'&&v.slot&&!gated(v)?group(fill(v)):[fill(v)]).filter(x=>x!==DROP); if(typeof o==='string') return words(o); if(!o||typeof o!=='object') return o;
     if(gated(o)){ if(!o.else) return DROP; const {needs,else:alt,slot,...rest}=o; return fill({...rest,...alt}); }
     const r={}; for(const [k,v] of Object.entries(o)){ if(k==='needs'||k==='else') continue; const x=fill(v); if(x!==DROP) r[k]=x; }
     if(r.slot&&fam[r.slot]){ r.args=[fam[r.slot]]; if(r.icon) r.icon=CAST_ICON[fam[r.slot].type]||r.icon; } return r; };
@@ -937,7 +962,7 @@ function personalize(books,fam){
     for(const id of Object.keys(pages)) if(!gone.has(id)) out.pages[id]=fill(pages[id]);
     out.start=to(out.start); for(const p of Object.values(out.pages)){ if(p.next) p.next=to(p.next); for(const o of (p.choice&&p.choice.options)||[]) o.go=to(o.go); }
     return out; }); }
-const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,FAMILY); let BOOK = LIB[0];
+const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,reading(FAMILY)); let BOOK = LIB[0];
 
 /* ---- engine ---- */
 const world=$('world'), fx=$('fx'), marks=$('marks');
@@ -1001,7 +1026,7 @@ function burst(x,y,text,fill='#f6c84c',ink='#d0452f',size=54){ const w=Math.max(
 const SFXWORD={barn:['CREAK!',-400],cloud:['PITTER-PAT!',60],pond:['SPLASH!',-110],tree:['RUSTLE!',-420],pine:['RUSTLE!',-380],flower:['POP!',-150],hay:['SQUEAK!',-150],
   sun:['HELLO!',150],hive:['BZZZ!',-300],coral:['BLUB!',-220],kelp:['SWISH!',-360],clam:['SNAP!',-120],cabbage:['CRUNCH!',-140],carrot:['CRUNCH!',-120]};
 /* counting: tap each animal of a kind and it gets a number */
-const PLURAL={pig:'PIGS',hen:'HENS',chick:'CHICKS',duck:'DUCKS',cow:'COWS',fish:'FISH',crab:'CRABS',jelly:'JELLYFISH',beeBig:'BEES',butterfly:'BUTTERFLIES',frog:'FROGS',clam:'CLAMS',
+const PLURAL={person:'OF US',pig:'PIGS',hen:'HENS',chick:'CHICKS',duck:'DUCKS',cow:'COWS',fish:'FISH',crab:'CRABS',jelly:'JELLYFISH',beeBig:'BEES',butterfly:'BUTTERFLIES',frog:'FROGS',clam:'CLAMS',
   ladybug:'LADYBUGS',bee:'BEES',caterpillar:'CATERPILLARS',snail:'SNAILS',squid:'SQUID',starfish:'STARFISH',carrot:'CARROTS',flower:'FLOWERS'};
 let counted={}, found=new Set();
 function badge(x,y,n){ const g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','nohit');
@@ -1083,27 +1108,41 @@ gate($('gear'),()=>{ ctx(); sfx.chime(); ages(); });
 /* the family screen: pick a member along the top, change their name and looks, see them drawn as you go */
 let famPick=SLOTS[0];
 const castSvg=m=>recolor(P[m.kind](0,0,m));
-const famStage=()=>{ const m=FAMILY[famPick]; $('famBig').innerHTML=`<ellipse cx="0" cy="4" rx="150" ry="14" fill="#a9c49a"/><g opacity="${m.out?.25:1}">${castSvg(m)}</g>`; };
+/* extra kids live in FAMILY.more; their tab is "more:<index>" and they take the kid slot's sample and options */
+const mem=k=>k.startsWith('more:')?FAMILY.more[+k.slice(5)]:FAMILY[k], samp=k=>k.startsWith('more:')?FAMILY_SAMPLE.kid:FAMILY_SAMPLE[k];
+const tabs=()=>SLOTS.flatMap(k=>k==='kid'?['kid',...FAMILY.more.map((_,i)=>'more:'+i)]:[k]);
+const pickOf=a=>a[Math.floor(Math.random()*a.length)];
+/* a new kid takes after the grown-ups (skin and hair color) with a kid's hair style and shirt; the name is the one thing to type */
+function newKid(){ const ps=[FAMILY.grownup1,FAMILY.grownup2].filter(g=>!g.out), look=pickOf(['f','m']);
+  return {...FAMILY_SAMPLE.kid,kind:'person',out:false,name:'Kid',role:'kid',look,skin:pickOf(ps).skin,hairColor:pickOf(ps).hairColor,
+    hair:pickOf(HAIR[look].filter(h=>!/bald|tuft/.test(h))),shirt:pickOf(SWATCH.cloth),pants:pickOf(SWATCH.cloth),glasses:'no',beard:'no'}; }
+const famStage=()=>{ const m=mem(famPick); $('famBig').innerHTML=`<ellipse cx="0" cy="4" rx="150" ry="14" fill="#a9c49a"/><g opacity="${m.out?.25:1}">${castSvg(m)}</g>`; };
 function drawFamily(){
-  $('famWho').innerHTML=SLOTS.map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}${FAMILY[k].out?' out':''}"><svg viewBox="-150 -290 300 300">${castSvg(FAMILY[k])}</svg><span>${esc(FAMILY[k].name)}</span></button>`).join('');
-  const m=FAMILY[famPick]; famStage();
-  const inOut=FAMILY_SAMPLE[famPick].optional?`<div class="famRow"><button data-in="1" class="${m.out?'':'on'}">In our family</button><button data-in="0" class="${m.out?'on':''}">Not in our family</button></div>`:'';
+  if(!mem(famPick)) famPick='kid';
+  $('famWho').innerHTML=tabs().map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}${mem(k).out?' out':''}"><svg viewBox="-150 -290 300 300">${castSvg(mem(k))}</svg><span>${esc(mem(k).name)}</span></button>`).join('')
+    +(FAMILY.more.length<MAX_KIDS-1?`<button data-add><svg viewBox="-150 -290 300 300"><circle cy="-140" r="90" fill="#fff8e7" ${S(10)}/><path d="M0 -190 V-90 M-50 -140 H50" ${L(18,OUT)}/></svg><span>Add a kid</span></button>`:'');
+  const m=mem(famPick); famStage();
+  const inOut=famPick.startsWith('more:')?`<div class="famRow"><button data-drop>Take ${esc(m.name)} off</button></div>`
+    :samp(famPick).optional?`<div class="famRow"><button data-in="1" class="${m.out?'':'on'}">In our family</button><button data-in="0" class="${m.out?'on':''}">Not in our family</button></div>`:'';
   if(m.out){ $('famEdit').innerHTML=inOut+`<p class="famOut">Our books leave ${esc(m.name)} out. Switch back any time; the looks are kept.</p>`; return; }
   $('famEdit').innerHTML=inOut+`<label for="famName">Name</label><input id="famName" maxlength="14" autocomplete="off" value="${esc(m.name)}">`
     +CAST_OPTS[m.kind].map(([key,label,list])=>{ const vals=typeof list==='function'?list(m):list; if(!vals) return '';
       return (label?`<label>${label}</label>`:'')+`<div class="famRow">`+vals.map(v=>{ const sw=/^#/.test(v);
       return `<button data-key="${key}" data-v="${v}" class="${sw?'sw':''}${m[key]===v?' on':''}"${sw?` style="background:${v}" aria-label="${label} ${v}"`:''}>${sw?'':optLabel(key,v,m)}</button>`; }).join('')+`</div>`; }).join('');
 }
-function saveFamily(){ store.set('ssb.family',JSON.stringify(FAMILY)); const id=BOOK.id; LIB=personalize(LIB_RAW,FAMILY); BOOK=LIB.find(b=>b.id===id)||LIB[0]; }
+function saveFamily(){ store.set('ssb.family',JSON.stringify(FAMILY)); if(STAR>FAMILY.more.length) STAR=0; const id=BOOK.id; LIB=personalize(LIB_RAW,reading(FAMILY)); BOOK=LIB.find(b=>b.id===id)||LIB[0]; }
 $('famBtn').onclick=()=>{ ctx(); sfx.chime(); FAMILY=loadFamily(); $('ages').hidden=true; $('fam').hidden=false; drawFamily(); };
-$('famWho').addEventListener('click',e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
-$('famEdit').addEventListener('click',e=>{ const t=e.target.closest('[data-in]'); if(t){ sfx.pop(); FAMILY[famPick].out=t.dataset.in==='0'; saveFamily(); drawFamily(); return; }
-  const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); const m=FAMILY[famPick]; m[b.dataset.key]=b.dataset.v;
+$('famWho').addEventListener('click',e=>{ if(e.target.closest('[data-add]')){ sfx.pop(); FAMILY.more.push(newKid()); famPick='more:'+(FAMILY.more.length-1); saveFamily(); drawFamily();
+    const n=$('famName'); if(n){ n.focus(); n.select(); } return; }
+  const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
+$('famEdit').addEventListener('click',e=>{ const t=e.target.closest('[data-in]'); if(t){ sfx.pop(); mem(famPick).out=t.dataset.in==='0'; saveFamily(); drawFamily(); return; }
+  if(e.target.closest('[data-drop]')){ sfx.pop(); FAMILY.more.splice(+famPick.slice(5),1); famPick='kid'; STAR=0; saveFamily(); drawFamily(); return; }
+  const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); const m=mem(famPick); m[b.dataset.key]=b.dataset.v;
   if(m.kind==='person'){ if(!HAIR[m.look==='m'?'m':'f'].includes(m.hair)) m.hair=HAIR[m.look==='m'?'m':'f'][0]; if(m.look!=='m'||m.role!=='grownup') m.beard='no'; }
   saveFamily(); drawFamily(); });
-$('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=cleanName(e.target.value); saveFamily(); famStage();
+$('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; mem(famPick).name=cleanName(e.target.value); saveFamily(); famStage();
   const tab=$('famWho').querySelector(`[data-slot="${famPick}"] span`); if(tab) tab.textContent=e.target.value; });
-$('famEdit').addEventListener('change',e=>{ if(e.target.id==='famName'&&!e.target.value.trim()){ FAMILY[famPick].name=FAMILY_SAMPLE[famPick].name; saveFamily(); drawFamily(); } });
+$('famEdit').addEventListener('change',e=>{ if(e.target.id==='famName'&&!e.target.value.trim()){ mem(famPick).name=samp(famPick).name; saveFamily(); drawFamily(); } });
 function hello(){ $('hello').hidden=false; $('hello1').hidden=false; $('hello2').hidden=true; }
 gate($('helloHold'),()=>{ ctx(); sfx.chime(); store.set('ssb.welcomed','1'); $('hello1').hidden=true; $('hello2').hidden=false; });
 $('helloFam').onclick=()=>{ $('hello').hidden=true; $('famBtn').onclick(); };
@@ -1114,7 +1153,17 @@ function shelf(){ dropLater(); fx.innerHTML=''; marks.innerHTML=''; $('shelf').h
   const keep=BOOK; $('shelf').querySelector('.covers').innerHTML=LIB.map((b,i)=>{ BOOK=b; const c=b.pages[b.start];
     const svg=art({scene:c.scene,actors:c.actors}).replace(/class="tap[^"]*"/g,'class="nohit"');
     return `<button data-b="${i}" aria-label="${b.title}"><svg viewBox="${b.coverView||'100 250 1400 965'}" preserveAspectRatio="xMidYMid slice">${svg}</svg><span>${b.title}</span></button>`; }).join(''); BOOK=keep; }
-$('shelf').addEventListener('click',e=>{ const b=e.target.closest('[data-b]'); if(!b) return; ctx(); sfx.chime(); BOOK=LIB[+b.dataset.b]; history=[]; show(BOOK.start); });
+const openBook=i=>{ BOOK=LIB[i]; history=[]; show(BOOK.start); };
+$('shelf').addEventListener('click',e=>{ const b=e.target.closest('[data-b]'); if(!b) return; ctx(); sfx.chime();
+  if(FAMILY.more.length&&usesKid(LIB_RAW[+b.dataset.b])) whoPlays(+b.dataset.b); else openBook(+b.dataset.b); });
+/* "Who's playing?": each kid's card; the tapped one stars in this reading (kept until the app closes, never stored) */
+function whoPlays(i){ const kids=[FAMILY.kid,...FAMILY.more], el=$('pick'), row=el.querySelector('.row');
+  row.className='row'+(kids.length>4?' many':''); el.className=''; el.querySelector('.go').textContent='';
+  row.innerHTML=kids.map((k,j)=>`<button data-k="${j}" aria-label="${esc(k.name)}"><svg viewBox="${k.role==='baby'?'-95 -175 190 180':k.role==='grownup'?'-95 -280 190 180':'-95 -225 190 180'}"><rect x="-200" y="-400" width="400" height="500" fill="${tint(k.shirt||'#f0c055',.6)}"/>${recolor(person(k))}</svg><span>${esc(k.name)}</span></button>`).join('');
+  el.hidden=false;
+  row.onclick=e=>{ const c=e.target.closest('[data-k]'); if(!c||el.className) return; ctx(); sfx.fanfare(); STAR=+c.dataset.k; c.classList.add('me'); el.className='picked';
+    el.querySelector('.go').textContent=`Here comes ${kids[STAR].name}!`; LIB=personalize(LIB_RAW,reading(FAMILY));
+    setTimeout(()=>{ el.hidden=true; openBook(i); },1400); }; }
 gate($('home'),()=>{ ctx(); sfx.page(); shelf(); });
 $('letter').onclick=()=>{ ctx(); const L_=BOOK.pages[cur].letter; if(!L_) return; burst(800,330,`${L_[1]}  ${L_[2]}`,'#fff6d8','#d0452f',62); tone(660,880,.12,'triangle',.07); };
 function replay(seed){ const [bookId,pageId,visit,age]=seed.split('/'), b=LIB.find(x=>x.id===bookId);

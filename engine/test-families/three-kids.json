@@ -1,0 +1,43 @@
+{
+ "kid": {
+  "kind": "person",
+  "glasses": "no",
+  "beard": "no",
+  "pants": "#3f6d8e",
+  "name": "Sam",
+  "look": "m",
+  "role": "kid",
+  "skin": "#efc6a6",
+  "hair": "swoop",
+  "hairColor": "#5a3a24",
+  "shirt": "#4f9c9b"
+ },
+ "more": [
+  {
+   "kind": "person",
+   "glasses": "no",
+   "beard": "no",
+   "pants": "#8d86c6",
+   "name": "Rosie",
+   "look": "f",
+   "role": "kid",
+   "skin": "#dcaa84",
+   "hair": "pigtails",
+   "hairColor": "#5a3a24",
+   "shirt": "#e58a8a"
+  },
+  {
+   "kind": "person",
+   "glasses": "no",
+   "beard": "no",
+   "pants": "#f0c055",
+   "name": "Baby",
+   "look": "f",
+   "role": "baby",
+   "skin": "#efc6a6",
+   "hair": "tuft",
+   "hairColor": "#94592f",
+   "shirt": "#f0c055"
+  }
+ ]
+}
