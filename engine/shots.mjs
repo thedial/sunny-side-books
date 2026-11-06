@@ -1,7 +1,7 @@
 // Screenshots of the built reader, so a change can be shown instead of described.
 //
 //   python3 -I engine/build.py preview.html books/*.json
-//   node engine/shots.mjs [targets...] [--page preview.html] [--out reports/shots] [--age 2-5] [--size 1024x768] [--family my.json]
+//   node engine/shots.mjs [targets...] [--page preview.html] [--out reports/shots] [--age 2-5] [--size 1024x768] [--family my.json] [--eval look.js]
 //
 // Targets (default: shelf):
 //   shelf                         the bookshelf
@@ -12,6 +12,7 @@
 //   peekaboo-family/*             every page of a book
 //   cast:hair cast:pets cast:loveys   every option of the family cast, side by side
 //
+// --eval runs a script file in the page before each target (a look prototype: looks/proto/fantasy.js).
 // --family takes a JSON file shaped like engine/family.json (any subset of slots) and plays it as the tablet's family.
 // Exit 1 if the page throws, so a broken screen is not mistaken for a picture of one.
 import { launch, openPage } from './browser.mjs';
@@ -21,7 +22,7 @@ import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf('--' + k); return i < 0 ? d : args.splice(i, 2)[1]; };
 const pagePath = opt('page', 'preview.html'), out = opt('out', 'reports/shots'), age = +opt('age', 2);
-const [W, H] = opt('size', '1024x768').split('x').map(Number), famFile = opt('family', '');
+const [W, H] = opt('size', '1024x768').split('x').map(Number), famFile = opt('family', ''), evalFile = opt('eval', '');
 const targets = args.length ? args : ['shelf'];
 const url = pathToFileURL(resolve(pagePath)).href;
 mkdirSync(out, { recursive: true });
@@ -61,6 +62,7 @@ try {
   for (const target of targets) {
     const page = await openPage(browser, { width: W, height: H, preload: preload(target !== 'hello') });
     await page.goto(url); await wait(600);
+    if (evalFile) await page.evaluate(readFileSync(evalFile, 'utf-8'));
     const snap = async (name) => { const f = join(out, name.replace(/[^\w.+-]+/g, '_') + '.png'); writeFileSync(f, await page.screenshot()); console.log(f); };
     if (target === 'shelf' || target === 'hello') await snap(target);
     else if (target.startsWith('family')) {
