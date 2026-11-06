@@ -175,6 +175,9 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 #famWho{grid-column:1/-1;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 #famWho button{border:4px solid var(--ink);border-radius:16px;background:#efe9d8;padding:2px 8px 4px;font:800 14px var(--display);color:var(--ink);box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;align-items:center}
 #famWho button.on{background:var(--sun)}
+#famWho button.out svg{opacity:.3}
+#famWho button.out span{text-decoration:line-through}
+#famEdit .famOut{font-weight:700;margin:14px 0 0}
 #famWho svg{width:64px;height:64px}
 #famBig{width:100%;height:100%;min-height:0;background:#cfe3d6;border:4px solid var(--ink);border-radius:20px;box-sizing:border-box}
 #famEdit{overflow:auto;padding-right:6px;min-height:0}
@@ -913,14 +916,27 @@ function nextSeed(id){ const key=BOOK.id+'/'+id, v=visits[key]=(visits[key]||0)+
    The sample family comes with the app; a grown-up's own is kept in localStorage and nowhere else. */
 const FAMILY_SAMPLE=/*FAMILY*/, SLOTS=Object.keys(FAMILY_SAMPLE).filter(k=>k[0]!=='_');
 function loadFamily(){ let mine={}; try{ mine=JSON.parse(store.get('ssb.family')||'{}')||{}; }catch(e){}
-  const f={}; for(const k of SLOTS){ f[k]={...FAMILY_SAMPLE[k],...(mine[k]||{}),kind:FAMILY_SAMPLE[k].kind}; f[k].name=cleanName(f[k].name)||FAMILY_SAMPLE[k].name; } return f; }
+  const f={}; for(const k of SLOTS){ f[k]={...FAMILY_SAMPLE[k],...(mine[k]||{}),kind:FAMILY_SAMPLE[k].kind}; f[k].name=cleanName(f[k].name)||FAMILY_SAMPLE[k].name;
+    f[k].out=!!(FAMILY_SAMPLE[k].optional&&f[k].out); } return f; }
 /* a name is words, not markup: it lands in bubbles and bursts that are built as SVG text */
 function cleanName(t){ return String(t||'').replace(/[<>&"\{}]/g,'').slice(0,14); }
+/* a member switched out of the family: "[pet: words | other words]" picks its words, "needs" and a slot piece drop out
+   or take their "else", and a dropped page is skipped. check.py resolves the same way (resolve_book) to check every mix. */
+const BRANCH=/\[(\w+):([^\[\]|]*)(?:\|([^\[\]]*))?\]/g, DROP={};
 function personalize(books,fam){
-  const json=JSON.stringify(books).replace(/\{(\w+)\}/g,(m,k)=>fam[k]?JSON.stringify(esc(fam[k].name)).slice(1,-1):m);
-  const walk=o=>{ if(Array.isArray(o)) return o.forEach(walk); if(!o||typeof o!=='object') return;
-    if(o.slot&&fam[o.slot]){ o.args=[fam[o.slot]]; if(o.icon) o.icon=CAST_ICON[fam[o.slot].type]||o.icon; } Object.values(o).forEach(walk); };
-  const out=JSON.parse(json); walk(out); return out; }
+  const isOut=k=>!!(fam[k]&&fam[k].out), gated=o=>[].concat(o.needs||[],o.slot||[]).some(isOut);
+  const words=s=>(s.includes('[')?s.replace(BRANCH,(m,k,a,b)=>(isOut(k)?b||'':a).trim()).replace(/\s{2,}/g,' ').trim():s)
+    .replace(/\{(\w+)\}/g,(m,k)=>fam[k]?esc(fam[k].name):m);
+  const fill=o=>{ if(Array.isArray(o)) return o.map(fill).filter(x=>x!==DROP); if(typeof o==='string') return words(o); if(!o||typeof o!=='object') return o;
+    if(gated(o)){ if(!o.else) return DROP; const {needs,else:alt,slot,...rest}=o; return fill({...rest,...alt}); }
+    const r={}; for(const [k,v] of Object.entries(o)){ if(k==='needs'||k==='else') continue; const x=fill(v); if(x!==DROP) r[k]=x; }
+    if(r.slot&&fam[r.slot]){ r.args=[fam[r.slot]]; if(r.icon) r.icon=CAST_ICON[fam[r.slot].type]||r.icon; } return r; };
+  return books.map(b=>{ const gone=new Set(Object.keys(b.pages).filter(id=>gated(b.pages[id])&&!b.pages[id].else));
+    const to=id=>{ const seen=new Set(); while(gone.has(id)&&!seen.has(id)){ seen.add(id); id=b.pages[id].next; } return id; };
+    const {pages,...rest}=b, out=fill(rest); out.pages={};
+    for(const id of Object.keys(pages)) if(!gone.has(id)) out.pages[id]=fill(pages[id]);
+    out.start=to(out.start); for(const p of Object.values(out.pages)){ if(p.next) p.next=to(p.next); for(const o of (p.choice&&p.choice.options)||[]) o.go=to(o.go); }
+    return out; }); }
 const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,FAMILY); let BOOK = LIB[0];
 
 /* ---- engine ---- */
@@ -1067,11 +1083,13 @@ gate($('gear'),()=>{ ctx(); sfx.chime(); ages(); });
 /* the family screen: pick a member along the top, change their name and looks, see them drawn as you go */
 let famPick=SLOTS[0];
 const castSvg=m=>recolor(P[m.kind](0,0,m));
-const famStage=()=>{ $('famBig').innerHTML=`<ellipse cx="0" cy="4" rx="150" ry="14" fill="#a9c49a"/>`+castSvg(FAMILY[famPick]); };
+const famStage=()=>{ const m=FAMILY[famPick]; $('famBig').innerHTML=`<ellipse cx="0" cy="4" rx="150" ry="14" fill="#a9c49a"/><g opacity="${m.out?.25:1}">${castSvg(m)}</g>`; };
 function drawFamily(){
-  $('famWho').innerHTML=SLOTS.map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}"><svg viewBox="-150 -290 300 300">${castSvg(FAMILY[k])}</svg><span>${esc(FAMILY[k].name)}</span></button>`).join('');
+  $('famWho').innerHTML=SLOTS.map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}${FAMILY[k].out?' out':''}"><svg viewBox="-150 -290 300 300">${castSvg(FAMILY[k])}</svg><span>${esc(FAMILY[k].name)}</span></button>`).join('');
   const m=FAMILY[famPick]; famStage();
-  $('famEdit').innerHTML=`<label for="famName">Name</label><input id="famName" maxlength="14" autocomplete="off" value="${esc(m.name)}">`
+  const inOut=FAMILY_SAMPLE[famPick].optional?`<div class="famRow"><button data-in="1" class="${m.out?'':'on'}">In our family</button><button data-in="0" class="${m.out?'on':''}">Not in our family</button></div>`:'';
+  if(m.out){ $('famEdit').innerHTML=inOut+`<p class="famOut">Our books leave ${esc(m.name)} out. Switch back any time; the looks are kept.</p>`; return; }
+  $('famEdit').innerHTML=inOut+`<label for="famName">Name</label><input id="famName" maxlength="14" autocomplete="off" value="${esc(m.name)}">`
     +CAST_OPTS[m.kind].map(([key,label,list])=>{ const vals=typeof list==='function'?list(m):list; if(!vals) return '';
       return (label?`<label>${label}</label>`:'')+`<div class="famRow">`+vals.map(v=>{ const sw=/^#/.test(v);
       return `<button data-key="${key}" data-v="${v}" class="${sw?'sw':''}${m[key]===v?' on':''}"${sw?` style="background:${v}" aria-label="${label} ${v}"`:''}>${sw?'':optLabel(key,v,m)}</button>`; }).join('')+`</div>`; }).join('');
@@ -1079,7 +1097,8 @@ function drawFamily(){
 function saveFamily(){ store.set('ssb.family',JSON.stringify(FAMILY)); const id=BOOK.id; LIB=personalize(LIB_RAW,FAMILY); BOOK=LIB.find(b=>b.id===id)||LIB[0]; }
 $('famBtn').onclick=()=>{ ctx(); sfx.chime(); FAMILY=loadFamily(); $('ages').hidden=true; $('fam').hidden=false; drawFamily(); };
 $('famWho').addEventListener('click',e=>{ const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
-$('famEdit').addEventListener('click',e=>{ const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); const m=FAMILY[famPick]; m[b.dataset.key]=b.dataset.v;
+$('famEdit').addEventListener('click',e=>{ const t=e.target.closest('[data-in]'); if(t){ sfx.pop(); FAMILY[famPick].out=t.dataset.in==='0'; saveFamily(); drawFamily(); return; }
+  const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); const m=FAMILY[famPick]; m[b.dataset.key]=b.dataset.v;
   if(m.kind==='person'){ if(!HAIR[m.look==='m'?'m':'f'].includes(m.hair)) m.hair=HAIR[m.look==='m'?'m':'f'][0]; if(m.look!=='m'||m.role!=='grownup') m.beard='no'; }
   saveFamily(); drawFamily(); });
 $('famEdit').addEventListener('input',e=>{ if(e.target.id!=='famName') return; FAMILY[famPick].name=cleanName(e.target.value); saveFamily(); famStage();

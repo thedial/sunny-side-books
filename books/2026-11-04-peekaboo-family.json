@@ -26,7 +26,8 @@
     {"who": "person", "slot": "kid", "x": 920, "y": 975, "s": 1}
    ],
    "flaps": [
-    {"type": "door", "x": 300, "y": 730, "w": 140, "h": 150, "hide": {"who": "person", "slot": "grownup2", "s": 0.42, "dx": -18}, "say": "Peekaboo! It's {grownup2}!"}
+    {"type": "door", "x": 300, "y": 730, "w": 140, "h": 150, "hide": {"who": "person", "slot": "grownup2", "s": 0.42, "dx": -18}, "say": "Peekaboo! It's {grownup2}!",
+     "needs": "grownup2", "else": {"hide": {"who": "cow", "s": 0.42, "dx": -10, "dy": 10}, "say": "Moo! It's Cow!"}}
    ],
    "find": [["ladybug", 1250, 620]],
    "next": "p2"
@@ -35,7 +36,8 @@
    "scene": "yard",
    "text": "Something is wiggling in the bushes. Who could it be?",
    "flaps": [
-    {"type": "bush", "x": 640, "y": 980, "w": 290, "h": 200, "hide": {"who": "pet", "slot": "pet", "s": 0.75, "dx": -10}, "say": "It's {pet}!"},
+    {"type": "bush", "x": 640, "y": 980, "w": 290, "h": 200, "hide": {"who": "pet", "slot": "pet", "s": 0.75, "dx": -10}, "say": "It's {pet}!",
+     "needs": "pet", "else": {"hide": {"who": "bunny", "s": 0.8, "dx": -10}, "say": "Hop hop! A bunny!"}},
     {"type": "bush", "x": 1120, "y": 975, "w": 290, "h": 200, "hide": {"who": "duck", "s": 0.8}, "say": "Quack!"}
    ],
    "find": [["bee", 300, 520]],
@@ -43,11 +45,12 @@
   },
   "p3": {
    "scene": "meadow",
-   "text": "Oh no! {lovey} is lost in the flowers. Can you find {lovey}?",
+   "text": "[lovey: Oh no! {lovey} is lost in the flowers. Can you find {lovey}? | Someone is hiding in the flowers. Can you find who?]",
    "actors": [
     {"who": "person", "slot": "kid", "x": 980, "y": 975, "s": 1},
     {"who": "person", "slot": "grownup2", "x": 1170, "y": 960, "s": 0.9},
-    {"who": "lovey", "slot": "lovey", "x": 330, "y": 965, "s": 0.8, "hide": true, "icon": "🧸", "found": "THERE'S {lovey}!"}
+    {"who": "lovey", "slot": "lovey", "x": 330, "y": 965, "s": 0.8, "hide": true, "icon": "🧸", "found": "THERE'S {lovey}!",
+     "else": {"who": "bunny", "icon": "🐰", "found": "A BUNNY!"}}
    ],
    "front": [
     {"who": "flower", "x": 290, "y": 985, "args": ["#f4ead2", 1.15]},
@@ -60,9 +63,9 @@
   },
   "p4": {
    "scene": "barn",
-   "text": "{grownup2} and {kid} count the hens. One, two, three hens! Tap them and count.",
+   "text": "[grownup2: {grownup2} | {grownup1}] and {kid} count the hens. One, two, three hens! Tap them and count.",
    "actors": [
-    {"who": "person", "slot": "grownup2", "x": 300, "y": 960, "s": 0.9},
+    {"who": "person", "slot": "grownup2", "x": 300, "y": 960, "s": 0.9, "else": {"slot": "grownup1"}},
     {"who": "hen", "x": 620, "y": 950, "s": 0.8},
     {"who": "hen", "x": 800, "y": 965, "s": 0.8},
     {"who": "hen", "x": 980, "y": 950, "s": 0.8},
@@ -85,7 +88,7 @@
   },
   "end": {
    "scene": "night",
-   "text": "<b>The End.</b> Goodnight, {pet}. Goodnight, {lovey}. Goodnight, {kid}. We love you!",
+   "text": "<b>The End.</b> [pet: Goodnight, {pet}.] [lovey: Goodnight, {lovey}.] Goodnight, {kid}. We love you!",
    "actors": [
     {"who": "person", "slot": "grownup1", "x": 480, "y": 930, "s": 0.85},
     {"who": "person", "slot": "kid", "x": 640, "y": 940, "s": 0.95},
