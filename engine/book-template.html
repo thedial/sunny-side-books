@@ -203,7 +203,11 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 .famRow button.on{outline:4px solid #d0452f;outline-offset:2px}
 .famRow button.on:not(.sw){background:var(--sun)}
 #famFoot{grid-column:1/-1;display:flex;gap:12px;align-items:center;justify-content:space-between}
-#famFoot small{opacity:.75}
+#famFoot small{opacity:.75;flex:1}
+#famLook{display:flex;gap:6px;align-items:center;font-weight:800}
+#famLook button{border:3px solid var(--ink);border-radius:14px;background:#efe9d8;font:700 14px var(--display);color:var(--ink);padding:2px 8px 2px 2px;min-height:52px;display:flex;align-items:center;gap:2px}
+#famLook button.on{background:var(--sun);outline:4px solid #d0452f;outline-offset:2px}
+#famLook svg{width:46px;height:46px}
 #famDone{font:800 22px var(--display);color:var(--ink);background:var(--sun);border:5px solid var(--ink);border-radius:18px;padding:8px 30px;box-shadow:4px 4px 0 var(--ink)}
 @media (max-width:700px){#fam .card{grid-template-columns:1fr;grid-template-rows:auto auto 160px minmax(0,1fr) auto}}
 .nudge{animation:nudge .5s ease-in-out}@keyframes nudge{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
@@ -268,7 +272,7 @@ button:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 <div id="pick" hidden><h2>Who's playing?</h2><div class="row"></div><div class="go"></div></div>
 <div id="fam" hidden><div class="card"><h2>Who is in our books?</h2><div id="famWho"></div>
   <svg id="famBig" viewBox="-170 -300 340 320" aria-hidden="true"></svg><div id="famEdit"></div>
-  <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><button id="famDone">Done</button></div></div></div>
+  <div id="famFoot"><small>Names and looks stay on this tablet. Nothing is sent anywhere.</small><div id="famLook"></div><button id="famDone">Done</button></div></div></div>
 
 <script>
 const TABLES=/*TABLES*/;
@@ -967,6 +971,11 @@ const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,read
 /* ---- engine ---- */
 const world=$('world'), fx=$('fx'), marks=$('marks');
 let cur=BOOK.start, history=[];
+/* the family's look; every look starts again from the default pieces, so switching needs no reload */
+const P0={...P}, SCENE0={...SCENE}; let LOOK='', LOOKCOL={};
+function applyLook(name){ Object.assign(P,P0); Object.assign(SCENE,SCENE0); LOOK=LOOKS[name]?name:''; LOOKCOL=LOOK?LOOKS[LOOK].make():{}; }
+const lookColor=s=>s.replace(/#[0-9a-fA-F]{6}/g,m=>LOOKCOL[m.toLowerCase()]||m);
+applyLook(store.get('ssb.look')||'');
 const SCENEBG={night:'#2f4d40',barn:'#e2c48a',reef:'#2c6f7e',kelp:'#24585c',sand:'#d8c08c',deep:'#10293a',garden:'#8fae5a'};
 
 const SHADES=['#e2d6ba','#e5b94a','#d98a78','#a97c4c','#918d7f','#c7a63e','#d36d5a','#6a8f4a','#d3a94e','#c58b9e','#3d7f86'];
@@ -978,7 +987,7 @@ function art(page,seed=''){
   const pd=BOOK.art&&BOOK.art[page.scene], acts=page.actors||[];
   /* on narrow screens, center the crop on where the characters are */
   const focus=pd&&acts.length?acts.reduce((t,a)=>t+toPic(a.x,a.y)[0],0)/acts.length:null;
-  let s=pd?painted(pd,focus):SCENE[page.scene]();
+  let s=pd?painted(pd,focus):lookColor(SCENE[page.scene]());
   const at=(x,y)=>{ if(!pd) return [x,y,1]; const [px,py]=toPic(x,y); return [PX(px),PY(py),PK/CK]; };
   for(const a of acts){
     const fn=P[a.who]; if(!fn) continue; const [x,y,k]=at(a.x,a.y), sc=(a.s||1)*k*(pd||NOBIG.includes(a.who)?1:BIG);
@@ -1107,7 +1116,7 @@ $('ages').addEventListener('click',e=>{ if(e.target===$('ages')) $('ageDone').on
 gate($('gear'),()=>{ ctx(); sfx.chime(); ages(); });
 /* the family screen: pick a member along the top, change their name and looks, see them drawn as you go */
 let famPick=SLOTS[0];
-const castSvg=m=>recolor(P[m.kind](0,0,m));
+const castSvg=m=>recolor(P0[m.kind](0,0,m));
 /* extra kids live in FAMILY.more; their tab is "more:<index>" and they take the kid slot's sample and options */
 const mem=k=>k.startsWith('more:')?FAMILY.more[+k.slice(5)]:FAMILY[k], samp=k=>k.startsWith('more:')?FAMILY_SAMPLE.kid:FAMILY_SAMPLE[k];
 const tabs=()=>SLOTS.flatMap(k=>k==='kid'?['kid',...FAMILY.more.map((_,i)=>'more:'+i)]:[k]);
@@ -1121,6 +1130,8 @@ function drawFamily(){
   if(!mem(famPick)) famPick='kid';
   $('famWho').innerHTML=tabs().map(k=>`<button data-slot="${k}" class="${k===famPick?'on':''}${mem(k).out?' out':''}"><svg viewBox="-150 -290 300 300">${castSvg(mem(k))}</svg><span>${esc(mem(k).name)}</span></button>`).join('')
     +(FAMILY.more.length<MAX_KIDS-1?`<button data-add><svg viewBox="-150 -290 300 300"><circle cy="-140" r="90" fill="#fff8e7" ${S(10)}/><path d="M0 -190 V-90 M-50 -140 H50" ${L(18,OUT)}/></svg><span>Add a kid</span></button>`:'');
+  const keep=LOOK; $('famLook').innerHTML='Look:'+['',...Object.keys(LOOKS)].map(k=>{ applyLook(k);
+    return `<button data-look="${k}" class="${k===keep?'on':''}"><svg viewBox="-150 -330 300 340">${recolor(P.person(0,0,FAMILY.kid))}</svg>${k?LOOKS[k].name:'Sunny Side'}</button>`; }).join(''); applyLook(keep);
   const m=mem(famPick); famStage();
   const inOut=famPick.startsWith('more:')?`<div class="famRow"><button data-drop>Take ${esc(m.name)} off</button></div>`
     :samp(famPick).optional?`<div class="famRow"><button data-in="1" class="${m.out?'':'on'}">In our family</button><button data-in="0" class="${m.out?'on':''}">Not in our family</button></div>`:'';
@@ -1135,6 +1146,7 @@ $('famBtn').onclick=()=>{ ctx(); sfx.chime(); FAMILY=loadFamily(); $('ages').hid
 $('famWho').addEventListener('click',e=>{ if(e.target.closest('[data-add]')){ sfx.pop(); FAMILY.more.push(newKid()); famPick='more:'+(FAMILY.more.length-1); saveFamily(); drawFamily();
     const n=$('famName'); if(n){ n.focus(); n.select(); } return; }
   const b=e.target.closest('[data-slot]'); if(!b) return; sfx.pop(); famPick=b.dataset.slot; drawFamily(); });
+$('famLook').addEventListener('click',e=>{ const b=e.target.closest('[data-look]'); if(!b) return; sfx.pop(); applyLook(b.dataset.look); store.set('ssb.look',LOOK); drawFamily(); });
 $('famEdit').addEventListener('click',e=>{ const t=e.target.closest('[data-in]'); if(t){ sfx.pop(); mem(famPick).out=t.dataset.in==='0'; saveFamily(); drawFamily(); return; }
   if(e.target.closest('[data-drop]')){ sfx.pop(); FAMILY.more.splice(+famPick.slice(5),1); famPick='kid'; STAR=0; saveFamily(); drawFamily(); return; }
   const b=e.target.closest('[data-key]'); if(!b) return; sfx.pop(); const m=mem(famPick); m[b.dataset.key]=b.dataset.v;
