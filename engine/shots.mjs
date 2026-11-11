@@ -1,7 +1,7 @@
 // Screenshots of the built reader, so a change can be shown instead of described.
 //
 //   python3 -I engine/build.py preview.html books/*.json
-//   node engine/shots.mjs [targets...] [--page preview.html] [--out reports/shots] [--age 2-5] [--size 1024x768] [--family my.json] [--eval look.js]
+//   node engine/shots.mjs [targets...] [--page preview.html] [--out reports/shots] [--age 2-5] [--size 1024x768] [--family my.json] [--look fantasy] [--eval look.js]
 //
 // Targets (default: shelf):
 //   shelf                         the bookshelf
@@ -14,6 +14,7 @@
 //   pick:peekaboo-family          tap that book's cover on the shelf (Who's playing? when the family has 2+ kids); pick:peekaboo-family+2 also taps the third kid, then shoots the first page
 //
 // --eval runs a script file in the page before each target (a look prototype: looks/proto/fantasy.js).
+// --look picks a look (engine/looks.js), as if the family had chosen it on the family screen.
 // --family takes a JSON file shaped like engine/family.json (any subset of slots) and plays it as the tablet's family.
 // Exit 1 if the page throws, so a broken screen is not mistaken for a picture of one.
 import { launch, openPage } from './browser.mjs';
@@ -23,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf('--' + k); return i < 0 ? d : args.splice(i, 2)[1]; };
 const pagePath = opt('page', 'preview.html'), out = opt('out', 'reports/shots'), age = +opt('age', 2);
-const [W, H] = opt('size', '1024x768').split('x').map(Number), famFile = opt('family', ''), evalFile = opt('eval', '');
+const [W, H] = opt('size', '1024x768').split('x').map(Number), famFile = opt('family', ''), evalFile = opt('eval', ''), look = opt('look', '');
 const targets = args.length ? args : ['shelf'];
 const url = pathToFileURL(resolve(pagePath)).href;
 mkdirSync(out, { recursive: true });
@@ -31,6 +32,7 @@ mkdirSync(out, { recursive: true });
 const family = famFile ? readFileSync(famFile, 'utf-8') : '';
 const preload = (welcomed) => `try{ ${welcomed ? "localStorage.setItem('ssb.welcomed','1');" : "localStorage.removeItem('ssb.welcomed');"}
   localStorage.setItem('ssb.age','${age}'); localStorage.setItem('ssb.auto','0');
+  localStorage.setItem('ssb.look', ${JSON.stringify(look)});
   ${family ? `localStorage.setItem('ssb.family', ${JSON.stringify(family)});` : "localStorage.removeItem('ssb.family');"} }catch(e){}`;
 const wait = ms => new Promise(r => setTimeout(r, ms));
 

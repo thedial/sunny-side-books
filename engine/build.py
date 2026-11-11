@@ -10,7 +10,7 @@ site = args[0] == '--site'
 if site: args = args[1:]
 out, files = args[0], args[1:]
 t = open(os.path.join(here, 'book-template.html'), encoding='utf-8').read()
-kit = open(os.path.join(here, 'kit.js'), encoding='utf-8').read() + '\n' + open(os.path.join(here, 'cast.js'), encoding='utf-8').read()
+kit = open(os.path.join(here, 'kit.js'), encoding='utf-8').read() + '\n' + open(os.path.join(here, 'cast.js'), encoding='utf-8').read() + '\n' + open(os.path.join(here, 'looks.js'), encoding='utf-8').read()
 family = json.load(open(os.path.join(here, 'family.json'), encoding='utf-8'))
 tables = json.load(open(os.path.join(here, 'tables.json'), encoding='utf-8'))
 books = [json.load(open(f, encoding='utf-8')) for f in files]

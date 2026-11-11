@@ -1,7 +1,7 @@
 // Toddler bots: a headless player for each age (2-5) plays every page of every book in the real engine, in the
 // Chrome already on the machine, and the checks that need the browser's own layout run alongside.
 //
-//   node engine/toddler-bots.mjs preview.html [--runs 100] [--report reports/toddler-bots.json]
+//   node engine/toddler-bots.mjs preview.html [--runs 100] [--look fantasy] [--report reports/toddler-bots.json]
 //
 // Exit 1 when a page is outside its age's band or a layout check fails. Every failure that depends on a layout
 // prints the seed that replays it: open the page with ?debug&seed=<seed>.
@@ -13,9 +13,9 @@ import { dirname, resolve } from 'node:path';
 const args = process.argv.slice(2);
 const opt = (name, dflt) => { const i = args.indexOf('--' + name); return i >= 0 ? args[i + 1] : dflt; };
 const PAGE = args.find(a => a.endsWith('.html'));
-if (!PAGE) { console.error('usage: node engine/toddler-bots.mjs preview.html [--runs 100] [--report reports/toddler-bots.json]'); process.exit(2); }
+if (!PAGE) { console.error('usage: node engine/toddler-bots.mjs preview.html [--runs 100] [--look fantasy] [--report reports/toddler-bots.json]'); process.exit(2); }
 const RUNS = +opt('runs', 100);
-const REPORT = opt('report', 'reports/toddler-bots.json');
+const REPORT = opt('report', 'reports/toddler-bots.json'), LOOK = opt('look', '');
 
 // How a toddler plays, per age. These are assumptions, not measurements; watching her play is how they get tuned.
 // tapMs: typical gap between taps. pause/pauseMs: how often she stops to look or talk, and for how long.
@@ -38,7 +38,7 @@ const PLAY_ON = TABLETS[0];     // the smallest tablet: the smallest targets
 // setTimeout, requestAnimationFrame and performance.now run on virtual time, so a minute of play takes milliseconds
 // and every run replays. CSS animations still run on real time; only their classes come and go on the virtual clock.
 const PRELOAD = `(() => {
-  try { localStorage.setItem('ssb.welcomed', '1'); } catch (e) { } // the bots are not a new grown-up: skip the first-open card
+  try { localStorage.setItem('ssb.welcomed', '1'); localStorage.setItem('ssb.look', ${JSON.stringify(LOOK)}); } catch (e) { } // the bots are not a new grown-up: skip the first-open card
   let now = 0, seq = 0; const queue = [];
   window.__errors = [];
   window.__clock = {

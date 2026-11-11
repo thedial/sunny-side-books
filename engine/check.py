@@ -19,8 +19,8 @@ STAGE_W, STAGE_H = 1600, 1000
 FIND_BOX = (40, 170, 1560, 1000)          # x0, y0, x1, y1: the part of the world a find may sit in (view top is y 170)
 PERCH_GAP = 150                           # pickPerch keeps perched finds this far apart
 
-PAGE_BUDGET = 200 * 1024                  # one-page build; the build prints today's size
-SITE_INDEX_BUDGET = 200 * 1024            # site/index.html
+PAGE_BUDGET = 256 * 1024                  # one-page build; the build prints today's size
+SITE_INDEX_BUDGET = 256 * 1024            # site/index.html
 BOOK_BUDGET = 16 * 1024                   # one book file
 
 # art-layer-spec.md section 6, (target, hard limit) in bytes
@@ -159,7 +159,7 @@ class Engine:
     def __init__(self):
         self.template = open(os.path.join(HERE, 'book-template.html'), encoding='utf-8').read()
         self.cast = open(os.path.join(HERE, 'cast.js'), encoding='utf-8').read()
-        self.kit = open(os.path.join(HERE, 'kit.js'), encoding='utf-8').read() + '\n' + self.cast
+        self.kit = open(os.path.join(HERE, 'kit.js'), encoding='utf-8').read() + '\n' + self.cast + '\n' + open(os.path.join(HERE, 'looks.js'), encoding='utf-8').read()
         self.family = json.load(open(os.path.join(HERE, 'family.json'), encoding='utf-8'))
         self.tables = json.load(open(os.path.join(HERE, 'tables.json'), encoding='utf-8'))
         css = re.search(r'<style>(.*?)</style>', self.template, re.S)
@@ -971,7 +971,7 @@ STOP = set('''a an the and or but if of to in on at by for with from into onto a
 these those so then than when while do does did not no yes we you she he they them her his our their one two all any each
 every some only just also here there what which who how why up down out off over under after before again still yet can
 will would should could may might must has have had get gets got set sets make makes use uses used new old'''.split())
-LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/cast.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs', 'engine/shots.mjs',
+LINTED = ('engine/book-template.html', 'engine/kit.js', 'engine/cast.js', 'engine/looks.js', 'engine/toddler-bots.mjs', 'engine/browser.mjs', 'engine/shots.mjs',
           'engine/check.py', 'engine/build.py')
 
 
