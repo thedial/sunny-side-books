@@ -7,6 +7,8 @@ const dress=(fn,behind,front)=>(x,y,...a)=>{ const s=fn(x,y,...a), m=/<g class="
   while(d&&(t=re.exec(s))) d+=t[0]==='</g>'?-1:1;
   const close=t?t.index:s.length;
   return s.slice(0,open)+(behind?behind(...a):'')+s.slice(open,close)+(front?front(...a):'')+s.slice(close); };
+/* the same drawing in a look's colors: swap(P.hay,{'#e2b860':'#d7e0e0'}) */
+const swap=(fn,map)=>(...a)=>{ let t=fn(...a); for(const k in map) t=t.split(k).join(map[k]); return t; };
 const LOOKS={
 fantasy:{name:'Fantasy',make:()=>{
   const COLORS={'#6fa79f':'#9c93c9','#9dbba6':'#b7aed6','#a9bf74':'#9fbf86','#8fae5a':'#8fb27a','#7f9e4f':'#7ea36c','#6b8a45':'#6a8f5c'};
@@ -59,6 +61,41 @@ fantasy:{name:'Fantasy',make:()=>{
   P.pig=dress(P.pig,()=>`<g opacity=".9"><ellipse cx="-24" cy="-140" rx="34" ry="52" fill="#d9ecf5" transform="rotate(-30 -24 -140)" ${S(4)}/><ellipse cx="18" cy="-146" rx="30" ry="48" fill="#ead0f0" transform="rotate(18 18 -146)" ${S(4)}/></g>`);
   P.hen=dress(P.hen,()=>`<path d="M-48 -78 q-70 -40 -60 -110 q20 40 44 50 q-20 -50 4 -86 q10 50 34 74 z" fill="#d9826f" ${S(4)}/><path d="M-60 -100 q-24 -40 -20 -70" fill="none" ${L(5,'#f0c055')}/>`,
     ()=>`<path d="M26 -124 l0 -22 l8 10 l8 -14 l8 14 l8 -10 l0 22 z" fill="${gold}" ${S(3)}/>`);
+
+  /* rooms: the barn inside is a castle hall, the night barn a castle with one window lit */
+  P.barnInside=()=>{ let t=`<rect x="-2000" y="-2000" width="5600" height="2720" fill="#b7aed6"/>`;
+    for(let r=0;r<14;r++) for(let c=-3;c<17;c++) t+=`<rect x="${c*120+(r%2?60:0)}" y="${-100+r*60}" width="112" height="52" rx="8" fill="none" stroke="#9c93c9" stroke-width="4"/>`;
+    t+=`<path d="M-2000 330 H3600" ${L(26,'#6a5aa8')}/><path d="M-2000 318 H3600" stroke="${gold}" stroke-width="5"/>
+      <path d="M1120 550 V450 A110 110 0 0 1 1340 450 V550 Z" fill="#d9ecf5" stroke="${trim}" stroke-width="12"/><path d="M1230 340 V550 M1120 465 H1340" stroke="${trim}" stroke-width="8"/>
+      <path d="M1120 550 L900 1000 H1700 L1340 550 Z" fill="#fff3c0" opacity=".25"/>
+      ${[300,820].map(bx=>`<path d="M${bx-60} 344 h120 v230 l-60 -42 l-60 42 z" fill="#d9826f" ${L(6,OUT)}/><path d="M${bx} 420 l8 16 l17 3 l-12 12 l3 17 l-16 -8 l-16 8 l3 -17 l-12 -12 l17 -3 z" fill="${gold}" ${S(3)}/>`).join('')}
+      <path d="M-2000 720 H3600 V4000 H-2000 Z" fill="#e8d3a8"/>`;
+    for(let c=-2;c<16;c++) t+=`<path d="M${c*130} 720 L${c*130-60+(c%2)*20} 1100" stroke="#d3b98a" stroke-width="4"/>`;
+    t+=`<path d="M-2000 840 H3600 M-2000 980 H3600" stroke="#d3b98a" stroke-width="4"/><ellipse cx="700" cy="900" rx="520" ry="80" fill="#8d86c6" ${L(6,OUT)}/><ellipse cx="700" cy="900" rx="480" ry="62" fill="none" stroke="${gold}" stroke-width="6"/>`;
+    return t; };
+  P.barnNight=(x,y)=>{ const tw=tx=>`<rect x="${tx-40}" y="-330" width="80" height="330" fill="#3d3560"/><path d="M${tx-52} -326 L${tx} -440 L${tx+52} -326 Z" fill="#2a2546"/>`;
+    return `<g transform="translate(${x} ${y})">${tw(-150)}${tw(150)}${Array.from({length:6},(_,i)=>`<rect x="${-118+i*44}" y="-232" width="28" height="36" fill="#3d3560"/>`).join('')}
+    <path d="M-120 0 V-200 H120 V0 Z" fill="#3d3560"/><path d="M-164 -290 v-26 a14 14 0 0 1 28 0 v26 z" fill="#f2c35a"/><path d="M-164 -290 v-26 a14 14 0 0 1 28 0 v26 z" fill="#fff3c0" opacity=".4" class="blink"/>
+    <path d="M-70 0 V-110 A70 52 0 0 1 70 -110 V0 Z" fill="#2a2546"/></g>`; };
+  const hay0=P.hay, hayC={'#8a5e3c':'#6a5aa8'}; P.hay=swap(hay0,hayC);
+  /* flaps: same size and hinge as the farm's, drawn for the castle */
+  const arch=(w,h)=>`M0 ${h} V${w/2} A${w/2} ${w/2} 0 0 1 ${w} ${w/2} V${h} Z`;
+  FLAP.door={...FLAP.door,front:(w,h)=>`<path d="${arch(w,h)}" fill="#7a4b8f" stroke="${trim}" stroke-width="10"/><path d="${arch(w,h)}" fill="none" ${L(6,OUT)}/>
+      ${[.33,.66].map(f=>`<path d="M${w*f} ${w*.12} V${h-6}" stroke="#5f3a75" stroke-width="6"/>`).join('')}<path d="M8 ${h*.4} H${w-8} M8 ${h*.78} H${w-8}" ${L(9,gold)}/>
+      <circle cx="${w-26}" cy="${h*.6}" r="11" fill="none" ${L(6,gold)}/>`,
+    back:(w,h)=>`<path d="${arch(w,h)}" fill="#4b3f78" ${L(6,OUT)}/><path d="M0 ${h*.4} H${w} M0 ${h*.78} H${w}" ${L(4,'#3a2f60')}/>`};
+  const sparkle=(x,y,r=8)=>`<path d="M${x} ${y-r*2} l${r*.5} ${r*1.5} l${r*1.5} ${r*.5} l${-r*1.5} ${r*.5} l${-r*.5} ${r*1.5} l${-r*.5} ${-r*1.5} l${-r*1.5} ${-r*.5} l${r*1.5} ${-r*.5} z" fill="#fff3c0" ${S(2)}/>`;
+  const bush0=FLAP.bush;
+  FLAP.bush={...bush0,front:(w,h)=>swap(bush0.front,{'#5f8048':'#9a6fb0','#86a85c':'#d2aee0'})(w,h)+sparkle(w*.2,h*.3)+sparkle(w*.82,h*.25,6),back:swap(bush0.back,{'#3f6b36':'#6a4f86'})};
+  const wave=(w,h)=>`M0 0 H${w} V${h-20} q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 Z`;
+  FLAP.blanket={...FLAP.blanket,front:(w,h)=>`<path d="${wave(w,h)}" fill="#6a5aa8" ${L(6,OUT)}/><path d="M0 18 H${w}" ${L(7,gold)}/>`
+      +Array.from({length:7},(_,i)=>sparkle(w*(i>3?.25+(i-4)*.25:.12+i*.253),h*(i>3?.72:.42),7)).join('')};
+  FLAP.box={...FLAP.box,front:(w,h)=>`<rect width="${w}" height="${h}" rx="10" fill="#8a5e3c" ${L(6,OUT)}/><path d="M0 ${h*.32} H${w}" ${L(6,OUT)}/>
+      ${[.16,.84].map(f=>`<rect x="${w*f-9}" width="18" height="${h}" fill="${gold}" ${L(3,OUT)}/>`).join('')}
+      <rect x="${w/2-22}" y="${h*.22}" width="44" height="48" rx="8" fill="${gold}" ${L(4,OUT)}/><text x="${w/2}" y="${h*.22+38}" text-anchor="middle" font-family="Bangers,sans-serif" font-size="34" fill="#7a5530">?</text>`,
+    back:(w,h)=>`<rect width="${w}" height="${h}" rx="10" fill="#5e3f28" ${L(6,OUT)}/>`};
+  const hayF=FLAP.hay; FLAP.hay={...hayF,front:swap(hayF.front,hayC)};
+  const reeds0=FLAP.reeds; FLAP.reeds={...reeds0,front:(w,h)=>swap(reeds0.front,{'#7f9e4f':'#9c93c9','#8a5e3c':gold})(w,h),back:swap(reeds0.back,{'#5f8048':'#6a4f86'})};
   return COLORS;
 }},
 robots:{name:'Robots',make:()=>{
@@ -107,6 +144,40 @@ robots:{name:'Robots',make:()=>{
     +`<path d="M66 -130 v-24" ${L(4,OUT)}/><circle cx="66" cy="-160" r="8" fill="#f0c055" ${S(3)}/>`);
   P.hen=dress(P.hen,()=>`<g transform="translate(-50 -80) scale(.55)">${gear(30,8,'#9fb0b4')}</g>`,()=>`<path d="M44 -126 v-26" ${L(4,OUT)}/><circle cx="44" cy="-158" r="8" fill="#e58a8a" ${S(3)}/>`
     +`<g transform="translate(-6 -58)">${panel(40,26)}${rivet(-10,0)}${rivet(10,0)}</g>`);
+
+  /* rooms: the barn inside is the workshop floor, the night barn the workshop with its lights on */
+  P.barnInside=()=>{ let t=`<rect x="-2000" y="-2000" width="5600" height="2720" fill="${steel}"/>`;
+    for(let px=-320;px<2000;px+=160) t+=`<path d="M${px} -100 V720" stroke="${steelD}" stroke-width="5"/>`+rivet(px+14,360)+rivet(px+14,690);
+    t+=`<path d="M-2000 330 H3600" ${L(26,'#5f7378')}/><path d="M300 -100 V720 M1300 -100 V720" ${L(30,'#5f7378')}/>${[400,520,640].map(v=>rivet(300,v)+rivet(1300,v)).join('')}
+      <circle cx="1230" cy="465" r="100" fill="#a9cbb6" stroke="${trim}" stroke-width="14"/><path d="M1230 365 V565 M1130 465 H1330" stroke="${trim}" stroke-width="6"/>
+      ${Array.from({length:8},(_,i)=>rivet(1230+112*Math.cos(i*Math.PI/4),465+112*Math.sin(i*Math.PI/4))).join('')}
+      <path d="M1150 530 L900 1000 H1700 L1310 530 Z" fill="#f6e3a8" opacity=".25"/>
+      <g transform="translate(760 210)">${gear(56,10,'#f0c055')}<circle r="18" fill="${OUT}"/></g>
+      <path d="M-2000 600 H560 q30 0 30 -30 V330" fill="none" ${L(22,OUT)}/><path d="M-2000 600 H560 q30 0 30 -30 V330" fill="none" ${L(14,'#e58a8a')}/>
+      <path d="M-2000 720 H3600 V4000 H-2000 Z" fill="#c9cfc8"/>`;
+    for(let i=0;i<70;i++){ const dx=(i%14)*130-200+((i/14|0)%2)*65, dy=760+(i/14|0)*70; t+=`<path d="M${dx} ${dy} l22 -10 M${dx+40} ${dy} l22 10" stroke="#aab2ab" stroke-width="5" stroke-linecap="round"/>`; }
+    return t; };
+  P.barnNight=(x,y)=>`<g transform="translate(${x} ${y})"><path d="M0 -300 V-380" stroke="#2a3533" stroke-width="6"/><circle cy="-388" r="14" fill="#e58a8a"/><circle cy="-388" r="14" fill="#fff3c0" opacity=".5" class="blink"/>
+    <path d="M-176 -196 L-176 -250 Q0 -330 176 -250 L176 -196 Z" fill="#2a3533"/><path d="M-160 0 V-200 H160 V0 Z" fill="#3e5257"/>
+    <rect x="-120" y="-182" width="56" height="36" fill="#f2c35a"/><rect x="64" y="-182" width="56" height="36" fill="#f2c35a"/><rect x="64" y="-182" width="56" height="36" fill="#fff3c0" opacity=".4" class="blink"/>
+    <rect x="-70" y="-150" width="140" height="150" fill="#2f3d40"/></g>`;
+  const hayC={'#e2b860':'#b8c4c6','#ecca7c':'#d7e0e0','#c99a3e':'#8a9fa4','#8a5e3c':'#4f7fa0'}; P.hay=swap(P.hay,hayC);
+  /* flaps: same size and hinge as the farm's, drawn for the workshop */
+  FLAP.door={...FLAP.door,front:(w,h)=>`<rect width="${w}" height="${h}" fill="#8a9fa4" stroke="${trim}" stroke-width="10"/><rect width="${w}" height="${h}" fill="none" ${L(6,OUT)}/>
+      ${Array.from({length:Math.floor((h-24)/18)},(_,i)=>`<path d="M10 ${20+i*18} H${w-10}" stroke="#5f7378" stroke-width="4"/>`).join('')}<rect x="${w/2-26}" y="${h-30}" width="52" height="12" rx="6" fill="#f0c055" ${L(3,OUT)}/>`,
+    back:(w,h)=>`<rect width="${w}" height="${h}" fill="#5f7378" ${L(6,OUT)}/>`};
+  const bush0=FLAP.bush;
+  FLAP.bush={...bush0,front:(w,h)=>swap(bush0.front,{'#5f8048':'#5f9e8a','#86a85c':'#9cc6a3'})(w,h)+`<rect y="${h*.78}" width="${w}" height="${h*.22}" rx="6" fill="${steel}" ${L(5,OUT)}/>`+rivet(w*.1,h*.89)+rivet(w*.9,h*.89),
+    back:swap(bush0.back,{'#3f6b36':'#3f6b5e'})};
+  const wave=(w,h)=>`M0 0 H${w} V${h-20} q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 q-${w/8} 22 -${w/4} 0 Z`;
+  const nut=(x,y)=>`<path d="M${x-10} ${y} l5 -9 h10 l5 9 l-5 9 h-10 z" fill="#d7e0e0" ${S(2.5)}/><circle cx="${x}" cy="${y}" r="3.5" fill="#7fa7c9"/>`;
+  FLAP.blanket={...FLAP.blanket,front:(w,h)=>`<path d="${wave(w,h)}" fill="#7fa7c9" ${L(6,OUT)}/><path d="M0 18 H${w}" ${L(7,'#d7e0e0')}/>`
+      +Array.from({length:7},(_,i)=>nut(w*(i>3?.25+(i-4)*.25:.12+i*.253),h*(i>3?.72:.42))).join('')};
+  FLAP.box={...FLAP.box,front:(w,h)=>`<rect width="${w}" height="${h}" rx="6" fill="${steel}" ${L(6,OUT)}/><rect x="12" y="12" width="${w-24}" height="${h-24}" rx="4" fill="none" stroke="${steelD}" stroke-width="5"/>
+      ${[[18,18],[w-18,18],[18,h-18],[w-18,h-18]].map(([a,b])=>rivet(a,b)).join('')}<text x="${w/2}" y="${h*.66}" text-anchor="middle" font-family="Bangers,sans-serif" font-size="${h*.4}" fill="#f0c055" ${L(3,OUT)}>?</text>`,
+    back:(w,h)=>`<rect width="${w}" height="${h}" rx="6" fill="#5f7378" ${L(6,OUT)}/>`};
+  const hayF=FLAP.hay; FLAP.hay={...hayF,front:swap(hayF.front,hayC),back:swap(hayF.back,hayC)};
+  const reeds0=FLAP.reeds; FLAP.reeds={...reeds0,front:(w,h)=>swap(reeds0.front,{'#7f9e4f':'#8a9fa4','#8a5e3c':'#e58a8a'})(w,h),back:swap(reeds0.back,{'#5f8048':'#5f7378'})};
   return COLORS;
 }},
 };
