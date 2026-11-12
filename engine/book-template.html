@@ -495,6 +495,8 @@ Object.assign(P,{
       <path d="M-2000 720 H3600 V4000 H-2000 Z" fill="#e2c48a"/>`; _seed=5;
     for(let i=0;i<60;i++){ const sx=-200+sr()*2000, sy=740+sr()*300; t+=`<path d="M${sx} ${sy} l${20+sr()*20} ${-4+sr()*8}" ${L(3,'#c99a3e')}/>`; }
     return t; },
+  barnNight:(x,y)=>`<g transform="translate(${x} ${y})"><path d="M-160 0 V-200 H160 V0 Z" fill="#6b2f24"/><path d="M-182 -196 L-118 -300 L0 -344 L118 -300 L182 -196 Z" fill="#2a3533"/>
+       <rect x="-36" y="-282" width="72" height="62" fill="#f2c35a"/><rect x="-36" y="-282" width="72" height="62" fill="#fff3c0" opacity=".4" class="blink"/><rect x="-70" y="-150" width="140" height="150" fill="#57261d"/></g>`,
   moon:(x,y)=>`<g class="nohit" transform="translate(${x} ${y})"><circle r="150" fill="#f4e3a6" opacity=".08"/><path d="M14 -79 A80 80 0 1 0 79 14 A72 72 0 1 1 14 -79 Z" fill="#f4e3a6"/></g>`,
 });
 
@@ -684,8 +686,7 @@ const SCENE={
   meadow:()=>P.sky()+P.hills(640)+P.cloud(700,320,.95)+P.sun(1420,320)+P.ground(710)+P.tree(1180,830,1.05,'#e9874a')
      +P.flower(250,900,'#e58a8a')+P.flower(380,940,'#f0c055',.9)+P.flower(520,910,'#f4ead2')+P.flower(320,985,'#e9874a',.8)+P.flower(160,950,'#8d86c6',.85),
   night:()=>P.sky('night')+P.stars()+P.moon(1300,330)+P.hills(660,true)+P.ground(720,true)
-     +`<g transform="translate(330 730)"><path d="M-160 0 V-200 H160 V0 Z" fill="#6b2f24"/><path d="M-182 -196 L-118 -300 L0 -344 L118 -300 L182 -196 Z" fill="#2a3533"/>
-       <rect x="-36" y="-282" width="72" height="62" fill="#f2c35a"/><rect x="-36" y="-282" width="72" height="62" fill="#fff3c0" opacity=".4" class="blink"/><rect x="-70" y="-150" width="140" height="150" fill="#57261d"/></g>`
+     +P.barnNight(330,730)
      +Array.from({length:14},(_,i)=>`<circle class="blink nohit" style="animation-delay:${(i*.37%2).toFixed(2)}s" cx="${(i*151)%1600}" cy="${760+(i*67)%180}" r="5" fill="#f6e08a"/>`).join(''),
 };
 
@@ -972,8 +973,8 @@ const LIB_RAW = /*BOOKS*/; let FAMILY=loadFamily(), LIB=personalize(LIB_RAW,read
 const world=$('world'), fx=$('fx'), marks=$('marks');
 let cur=BOOK.start, history=[];
 /* the family's look; every look starts again from the default pieces, so switching needs no reload */
-const P0={...P}, SCENE0={...SCENE}; let LOOK='', LOOKCOL={};
-function applyLook(name){ Object.assign(P,P0); Object.assign(SCENE,SCENE0); LOOK=LOOKS[name]?name:''; LOOKCOL=LOOK?LOOKS[LOOK].make():{}; }
+const P0={...P}, SCENE0={...SCENE}, FLAP0={...FLAP}; let LOOK='', LOOKCOL={};
+function applyLook(name){ Object.assign(P,P0); Object.assign(SCENE,SCENE0); Object.assign(FLAP,FLAP0); LOOK=LOOKS[name]?name:''; LOOKCOL=LOOK?LOOKS[LOOK].make():{}; }
 const lookColor=s=>s.replace(/#[0-9a-fA-F]{6}/g,m=>LOOKCOL[m.toLowerCase()]||m);
 applyLook(store.get('ssb.look')||'');
 const SCENEBG={night:'#2f4d40',barn:'#e2c48a',reef:'#2c6f7e',kelp:'#24585c',sand:'#d8c08c',deep:'#10293a',garden:'#8fae5a'};
