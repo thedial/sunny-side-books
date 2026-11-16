@@ -495,6 +495,7 @@ Object.assign(P,{
       <path d="M-2000 720 H3600 V4000 H-2000 Z" fill="#e2c48a"/>`; _seed=5;
     for(let i=0;i<60;i++){ const sx=-200+sr()*2000, sy=740+sr()*300; t+=`<path d="M${sx} ${sy} l${20+sr()*20} ${-4+sr()*8}" ${L(3,'#c99a3e')}/>`; }
     return t; },
+  gardenRows:ys=>`<g class="nohit">${ys.map(y=>`<path d="M-2000 ${y} H3600" ${L(30,'#8a5e3c')}/><path d="M-2000 ${y} H3600" ${L(3,'#6e4a2f')}/>`).join('')}</g>`,
   barnNight:(x,y)=>`<g transform="translate(${x} ${y})"><path d="M-160 0 V-200 H160 V0 Z" fill="#6b2f24"/><path d="M-182 -196 L-118 -300 L0 -344 L118 -300 L182 -196 Z" fill="#2a3533"/>
        <rect x="-36" y="-282" width="72" height="62" fill="#f2c35a"/><rect x="-36" y="-282" width="72" height="62" fill="#fff3c0" opacity=".4" class="blink"/><rect x="-70" y="-150" width="140" height="150" fill="#57261d"/></g>`,
   moon:(x,y)=>`<g class="nohit" transform="translate(${x} ${y})"><circle r="150" fill="#f4e3a6" opacity=".08"/><path d="M14 -79 A80 80 0 1 0 79 14 A72 72 0 1 1 14 -79 Z" fill="#f4e3a6"/></g>`,
@@ -614,9 +615,10 @@ Object.assign(P,{
 /* ---- tag every kit piece so taps know what was touched; add sway, breathing and ground shadows ---- */
 const INKED=[];
 const SWAY=['tree','pine','flower'], BREATHE=['cow','pig','hen','duck','chick','frog','crab','octopus','clam','person','pet','lovey'], SHADOW={person:50,pet:75,lovey:50,crab:80,octopus:80,clam:70,hive:110,cow:110,pig:85,hen:55,duck:70,chick:40,frog:60,barn:180,hay:85,rock:50,potato:55,egg:36,scarecrow:70,bunny:45,tree:120,pine:100};
-for(const name of Object.keys(P)){
-  const orig=P[name]; if(typeof orig!=='function'||['sky','ground','hills','fence','stars','barnInside','leaf','button'].includes(name)) continue;
-  P[name]=(...args)=>{
+/* P_RAW keeps the unwrapped pieces so a look can redraw them and get wrapped the same way (applyLook) */
+const P_RAW={...P};
+const wrapPiece=(name,orig)=>{ if(typeof orig!=='function'||['sky','ground','hills','fence','stars','barnInside','leaf','button','gardenRows'].includes(name)) return orig;
+  return (...args)=>{
     const [x,y]=args; let inner=orig(...args);
     if(SWAY.includes(name)) inner=`<g class="sway" style="animation-duration:${(3+Math.random()*2).toFixed(1)}s;animation-delay:-${(Math.random()*3).toFixed(1)}s">${inner}</g>`;
     if(BREATHE.includes(name)) inner=`<g class="breathe" style="animation-delay:-${(Math.random()*3).toFixed(1)}s">${inner}</g>`;
@@ -628,7 +630,8 @@ for(const name of Object.keys(P)){
       inner=inner.replace(/<\/g><\/g>(?![\s\S]*<\/g><\/g>)/, m=>`<g class="nohit" mask="url(#shade)">${h.replace(/fill="(?!none)[^"]*"/g,'fill="url(#hatch)"').replace(/^[\s\S]*?<g class="anim[^"]*">/,'').replace(/<\/g><\/g>\s*$/,'')}</g><g class="nohit" mask="url(#shade2)">${h.replace(/fill="(?!none)[^"]*"/g,'fill="url(#hatch2)"').replace(/^[\s\S]*?<g class="anim[^"]*">/,'').replace(/<\/g><\/g>\s*$/,'')}</g>`+m); }
     return `<g class="actor" data-who="${name}" data-ax="${x}" data-ay="${y}">${sh}<g${ink}>${inner}</g></g>`;
   };
-}
+};
+for(const name of Object.keys(P_RAW)) P[name]=wrapPiece(name,P_RAW[name]);
 /* sky with a soft glow toward the horizon */
 
 const _sun=P.sun; P.sun=(x,y)=>`<circle class="nohit" cx="${x}" cy="${y}" r="150" fill="#f6e3a8" opacity=".35"/>`+_sun(x,y);
@@ -807,7 +810,7 @@ const sand=(y,deep)=>{ _seed=31; let t=`<path d="M-2000 ${y} Q 300 ${y-50} 800 $
   return `<g class="nohit">${t}</g>`; };
 Object.assign(SCENE,{
   garden:()=>P.sky()+P.sun(1380,320)+P.cloud(500,320,.9)+P.hills(650)+P.ground(720)
-     +`<g class="nohit">${[780,860,940].map(y=>`<path d="M-2000 ${y} H3600" ${L(30,'#8a5e3c')}/><path d="M-2000 ${y} H3600" ${L(3,'#6e4a2f')}/>`).join('')}</g>`
+     +P.gardenRows([780,860,940])
      +P.scarecrow(1420,830)+P.cabbage(160,790,.8)+P.cabbage(360,790,.8)+P.carrot(560,790)+P.carrot(660,790)+P.cabbage(240,870,.85)+P.carrot(820,870)+P.flower(1560,980,'#f0c055',.8),
   reef:()=>sea()+sand(740)+P.rockS(180,760,1.1)+P.coral(120,760,'#e58a8a')+P.coral(330,770,'#ef9a4f',.8)+P.coral(1300,760,'#c58b9e',1.1)+P.coral(1480,770,'#e58a8a',.85)+P.kelp(1560,760,380,.9),
   kelp:()=>sea()+sand(760)+[60,220,380,1180,1340,1500].map((x,i)=>P.kelp(x,770+(i%2)*20,420+(i%3)*90,1)).join('')+P.rockS(1420,790,.8),
@@ -974,7 +977,8 @@ const world=$('world'), fx=$('fx'), marks=$('marks');
 let cur=BOOK.start, history=[];
 /* the family's look; every look starts again from the default pieces, so switching needs no reload */
 const P0={...P}, SCENE0={...SCENE}, FLAP0={...FLAP}; let LOOK='', LOOKCOL={};
-function applyLook(name){ Object.assign(P,P0); Object.assign(SCENE,SCENE0); Object.assign(FLAP,FLAP0); LOOK=LOOKS[name]?name:''; LOOKCOL=LOOK?LOOKS[LOOK].make():{}; }
+function applyLook(name){ Object.assign(P,P_RAW); Object.assign(SCENE,SCENE0); Object.assign(FLAP,FLAP0); LOOK=LOOKS[name]?name:''; LOOKCOL=LOOK?LOOKS[LOOK].make():{};
+  for(const n of Object.keys(P_RAW)) P[n]=LOOK&&P[n]!==P_RAW[n]?wrapPiece(n,P[n]):P0[n]; }
 const lookColor=s=>s.replace(/#[0-9a-fA-F]{6}/g,m=>LOOKCOL[m.toLowerCase()]||m);
 applyLook(store.get('ssb.look')||'');
 const SCENEBG={night:'#2f4d40',barn:'#e2c48a',reef:'#2c6f7e',kelp:'#24585c',sand:'#d8c08c',deep:'#10293a',garden:'#8fae5a'};
