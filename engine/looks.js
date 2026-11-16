@@ -96,6 +96,16 @@ fantasy:{name:'Fantasy',make:()=>{
     back:(w,h)=>`<rect width="${w}" height="${h}" rx="10" fill="#5e3f28" ${L(6,OUT)}/>`};
   const hayF=FLAP.hay; FLAP.hay={...hayF,front:swap(hayF.front,hayC)};
   const reeds0=FLAP.reeds; FLAP.reeds={...reeds0,front:(w,h)=>swap(reeds0.front,{'#7f9e4f':'#9c93c9','#8a5e3c':gold})(w,h),back:swap(reeds0.back,{'#5f8048':'#6a4f86'})};
+  /* scenery: the words name the garden, the veggies and the pond, so those stay; the farm dressing around them changes */
+  P.scarecrow=(x,y)=>`<g class="tap" data-react="shake" data-say="Boo! Just kidding!" data-pitch="1.1" transform="translate(${x} ${y})"><g class="anim">
+    <ellipse cx="-30" cy="-8" rx="34" ry="16" fill="#8a5e3c" ${S(5)}/><ellipse cx="30" cy="-8" rx="34" ry="16" fill="#8a5e3c" ${S(5)}/>
+    <path d="M-70 -12 Q-82 -110 -40 -168 H40 Q82 -110 70 -12 Z" fill="${robe}" ${S(6)}/><rect x="-68" y="-74" width="136" height="16" fill="#4b3f78"/><rect x="-14" y="-78" width="28" height="24" rx="4" fill="${gold}" ${S(3)}/>
+    <path d="M-48 -196 Q-56 -110 0 -92 Q56 -110 48 -196 Z" fill="${ermine}" ${S(5)}/>
+    <circle cy="-204" r="40" fill="#f5d2b8" ${S(5)}/><circle cx="-14" cy="-212" r="5" fill="${OUT}"/><circle cx="14" cy="-212" r="5" fill="${OUT}"/><circle cy="-196" r="13" fill="#e9a6a0" ${S(3)}/>
+    <path d="M-58 -222 Q0 -246 58 -222 L12 -346 Q0 -362 -10 -346 Z" fill="#d9826f" ${S(6)}/>${sparkle(6,-300,10)}</g></g>`;
+  P.gardenRows=ys=>`<g class="nohit">${ys.map(y=>`<path d="M-2000 ${y} H3600" ${L(34,'#6e5a7e')}/><path d="M-2000 ${y-17} H3600 M-2000 ${y+17} H3600" stroke="${stone}" stroke-width="10" stroke-dasharray="44 5"/>`).join('')}</g>`;
+  P.pond=dress(swap(P.pond,{'#6b8a45':'#9c93c9','#8a5e3c':gold,'#e9a6a0':gold}),()=>`<ellipse rx="276" ry="96" fill="${stone}" ${L(6,OUT)}/><ellipse rx="262" ry="86" fill="none" stroke="${stoneD}" stroke-width="7" stroke-dasharray="34 22"/>`,()=>sparkle(-40,-10,9)+sparkle(160,40,7));
+  P.pine=dress(swap(P.pine,{'#3f6b55':'#7a5aa0','#4f7d60':'#9a6fb0'}),null,()=>sparkle(0,-368,16));
   return COLORS;
 }},
 robots:{name:'Robots',make:()=>{
@@ -178,6 +188,24 @@ robots:{name:'Robots',make:()=>{
     back:(w,h)=>`<rect width="${w}" height="${h}" rx="6" fill="#5f7378" ${L(6,OUT)}/>`};
   const hayF=FLAP.hay; FLAP.hay={...hayF,front:swap(hayF.front,hayC),back:swap(hayF.back,hayC)};
   const reeds0=FLAP.reeds; FLAP.reeds={...reeds0,front:(w,h)=>swap(reeds0.front,{'#7f9e4f':'#8a9fa4','#8a5e3c':'#e58a8a'})(w,h),back:swap(reeds0.back,{'#5f8048':'#5f7378'})};
+  /* scenery: the words name the garden, the veggies and the pond, so those stay; the farm dressing around them changes */
+  P.scarecrow=(x,y)=>`<g class="tap" data-react="shake" data-say="Beep boop! Just kidding!" data-pitch="1.1" transform="translate(${x} ${y})"><g class="anim">
+    <path d="M0 0 V-150" ${L(14,OUT)}/><path d="M0 0 V-150" ${L(8,steelD)}/>
+    <path d="M-60 -224 H-118 V-168 M60 -224 H118 V-168" fill="none" ${L(14,OUT)}/><path d="M-60 -224 H-118 V-168 M60 -224 H118 V-168" fill="none" ${L(8,steel)}/>
+    <circle cx="-118" cy="-160" r="14" fill="#e58a8a" ${S(4)}/><circle cx="118" cy="-160" r="14" fill="#f0c055" ${S(4)}/>
+    <rect x="-64" y="-256" width="128" height="110" rx="12" fill="${steel}" ${S(6)}/><g transform="translate(0 -200)">${panel(80,50)}</g>
+    <circle cx="-20" cy="-204" r="9" fill="#e58a8a"/><circle cx="4" cy="-204" r="9" fill="#f0c055"/><circle cx="28" cy="-204" r="9" fill="#7fae8a"/>
+    <path d="M0 -330 V-370" ${L(5,OUT)}/><circle cy="-376" r="11" fill="#e58a8a" ${S(3)}/><circle cy="-376" r="11" fill="#fff3c0" class="blink"/>
+    <rect x="-46" y="-334" width="92" height="74" rx="14" fill="#cdd8d9" ${S(6)}/><circle cx="-18" cy="-300" r="12" fill="#3d4f55"/><circle cx="18" cy="-300" r="12" fill="#3d4f55"/>
+    <circle cx="-14" cy="-304" r="4" fill="#fff"/><circle cx="22" cy="-304" r="4" fill="#fff"/><path d="M-16 -278 h32" ${L(4,OUT)}/>
+    ${rivet(-50,-246)}${rivet(50,-246)}${rivet(-50,-156)}${rivet(50,-156)}</g></g>`;
+  P.gardenRows=ys=>`<g class="nohit">${ys.map(y=>`<path d="M-2000 ${y} H3600" ${L(40,OUT)}/><path d="M-2000 ${y} H3600" ${L(32,steel)}/><path d="M-2000 ${y-12} H3600" stroke="#5a4636" stroke-width="8"/><path d="M-2000 ${y+6} H3600" stroke="#d7e0e0" stroke-width="9" stroke-dasharray="9 71"/>`).join('')}</g>`;
+  P.pond=dress(swap(P.pond,{'#6b8a45':'#8a9fa4','#8a5e3c':'#e58a8a'}),()=>`<ellipse rx="276" ry="96" fill="${steel}" ${L(6,OUT)}/><ellipse rx="264" ry="88" fill="none" stroke="#d7e0e0" stroke-width="9" stroke-dasharray="9 60"/>`);
+  P.pine=(x,y,s=1)=>`<g class="tap" data-react="shake" transform="translate(${x} ${y}) scale(${s})"><g class="anim">
+    <path d="M0 -340 L-110 0 H110 Z" fill="${steel}" opacity=".35"/>
+    <path d="M0 -340 L-110 0 M0 -340 L110 0 M-84 -80 L66 -136 M-66 -136 L48 -192 M-48 -192 L30 -248 M84 -80 L-66 -136 M66 -136 L-48 -192 M48 -192 L-30 -248" fill="none" ${L(16,OUT)}/>
+    <path d="M0 -340 L-110 0 M0 -340 L110 0 M-84 -80 L66 -136 M-66 -136 L48 -192 M-48 -192 L30 -248 M84 -80 L-66 -136 M66 -136 L-48 -192 M48 -192 L-30 -248" fill="none" ${L(9,steelD)}/>
+    <path d="M-120 0 H120" ${L(14,OUT)}/><path d="M0 -340 V-380" ${L(6,OUT)}/><circle cy="-388" r="16" fill="#e58a8a" ${S(4)}/><circle cy="-388" r="16" fill="#fff3c0" class="blink"/></g></g>`;
   return COLORS;
 }},
 };
